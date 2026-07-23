@@ -2,7 +2,7 @@
 
 GuardLAN uses SignalR to notify the Angular UI when operational data changes.
 
-The browser connects to:
+After login, the browser connects to:
 
 ```text
 /hubs/guardlan
@@ -45,30 +45,33 @@ Supported event types:
 
 API-hosted services publish through `IHubContext<GuardLanHub>`.
 
-The worker is a separate process, so it publishes by connecting back to the same hub as a SignalR client and invoking `PublishLiveUpdate`. This keeps scan completion, scheduled DNS ingestion and scheduled IDS ingestion visible to connected browsers.
+The worker is a separate process, so it publishes by calling an internal API relay endpoint protected by `X-GuardLAN-Internal-Key`. This keeps scan completion, scheduled DNS ingestion and scheduled IDS ingestion visible to connected browsers without exposing a public hub publishing method.
 
 Worker configuration:
 
 ```json
 {
+  "GuardLanAuth": {
+    "InternalPublisherKey": "replace-this"
+  },
   "LiveUpdates": {
-    "SignalR": {
+    "Http": {
       "Enabled": true,
-      "HubUrl": "http://localhost:5232/hubs/guardlan"
+      "EndpointUrl": "http://localhost:5232/api/internal/live-updates"
     }
   }
 }
 ```
 
-Docker Compose sets the worker hub URL to:
+Docker Compose sets the worker relay URL to:
 
 ```text
-http://api:8080/hubs/guardlan
+http://api:8080/api/internal/live-updates
 ```
 
 ## Angular Behavior
 
-The Angular app starts one SignalR connection from the app shell.
+The Angular app starts one SignalR connection from the app shell after a session is authenticated.
 
 Feature pages keep their one-request-per-view data model:
 
@@ -81,6 +84,8 @@ The UI does not currently show a persistent notification feed. Live events are u
 
 ## Security Notes
 
-The live update hub is intended for trusted local development at this stage. Authentication and authorization are part of the next hardening phase.
+The live update hub requires the same cookie session as the REST API.
 
-Before exposing GuardLAN outside a local network, protect the hub and publish method with the same authentication model as the REST API.
+The worker relay endpoint is not a browser endpoint. It accepts calls only when the API and worker share the same `GuardLanAuth__InternalPublisherKey` value.
+
+Before exposing GuardLAN outside a local network, change the default development credentials, set a unique internal publisher key, require HTTPS and keep the API behind trusted network boundaries.

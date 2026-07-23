@@ -168,7 +168,7 @@ Started:
 * SignalR hub at `/hubs/guardlan`
 * Backend live update abstraction
 * API publisher backed by `IHubContext`
-* Worker publisher that relays events to the API hub as a SignalR client
+* Worker publisher that relays events through an internal API endpoint
 * Live events for scan queueing, scan completion, scan failure, new devices, device online/offline changes, new alerts, alert resolution and DNS ingestion completion
 * Angular live update service with reconnect behavior
 * Dashboard, device, DNS and alert page refresh hooks
@@ -185,7 +185,6 @@ Deliverables:
 
 Remaining hardening:
 
-* Add authentication before exposing live update publishing beyond trusted local deployment
 * Add a cross-instance backplane if the API is scaled horizontally
 * Add user-facing notification history or toast UI if needed
 
@@ -193,7 +192,18 @@ Remaining hardening:
 
 Goal: protect the dashboard once it contains genuinely sensitive telemetry.
 
-Status: next.
+Status: complete enough for evidence-based device risk work.
+
+Started:
+
+* Local admin login endpoint
+* Cookie-based session management
+* Angular login page, auth guard and session service
+* Global API authorization fallback policy
+* Authenticated SignalR hub
+* Internal-key worker live-update relay
+* Docker auth and internal relay configuration
+* Secret handling, HTTPS, backup and restore documentation
 
 Deliverables:
 
@@ -205,8 +215,14 @@ Deliverables:
 * Backup and restore guidance
 * Deployment documentation
 
+Remaining hardening:
+
+* Replace single-admin configuration with persistent users or an external identity provider if GuardLAN becomes multi-user
+* Add role-based authorization once distinct operator roles exist
+* Add structured audit logging for login and administrative actions
+
 ## Deferred: Device Risk Classification
 
 Heavy automated risk classification should wait until DNS, connection, and IDS ingestion exist.
 
-Without those signals, GuardLAN does not have enough evidence to classify device risk reliably. Early labels should stay explainable and evidence-based.
+Those signals now exist in first form, so the next safe slice should stay explainable and evidence-based rather than attempting opaque automated classification.

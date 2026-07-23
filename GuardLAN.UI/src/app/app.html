@@ -1,42 +1,53 @@
-<div class="app-shell">
-  <aside class="sidebar" aria-label="Primary">
-    <div class="brand">
-      <span class="brand-mark">GL</span>
-      <span class="brand-name">GuardLAN</span>
-    </div>
+@if (auth.authenticated()) {
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary">
+      <div class="brand">
+        <span class="brand-mark">GL</span>
+        <span class="brand-name">GuardLAN</span>
+      </div>
 
-    <nav class="nav-list">
-      <a
-        class="nav-link"
-        routerLink="/"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        ariaCurrentWhenActive="page"
-      >
-        Dashboard
-      </a>
-      <a class="nav-link" routerLink="/devices" routerLinkActive="active" ariaCurrentWhenActive="page">
-        Devices
-      </a>
-      <a
-        class="nav-link"
-        routerLink="/connections"
-        routerLinkActive="active"
-        ariaCurrentWhenActive="page"
-      >
-        Connections
-      </a>
-      <a class="nav-link" routerLink="/dns" routerLinkActive="active" ariaCurrentWhenActive="page">
-        DNS
-      </a>
-      <a class="nav-link" routerLink="/alerts" routerLinkActive="active" ariaCurrentWhenActive="page">
-        Alerts
-      </a>
-      <span class="nav-link disabled">Settings</span>
-    </nav>
-  </aside>
+      <nav class="nav-list">
+        <a
+          class="nav-link"
+          routerLink="/"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+        >
+          Dashboard
+        </a>
+        <a class="nav-link" routerLink="/devices" routerLinkActive="active" ariaCurrentWhenActive="page">
+          Devices
+        </a>
+        <a
+          class="nav-link"
+          routerLink="/connections"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
+          Connections
+        </a>
+        <a class="nav-link" routerLink="/dns" routerLinkActive="active" ariaCurrentWhenActive="page">
+          DNS
+        </a>
+        <a class="nav-link" routerLink="/alerts" routerLinkActive="active" ariaCurrentWhenActive="page">
+          Alerts
+        </a>
+        <span class="nav-link disabled">Settings</span>
+      </nav>
 
-  <main class="workspace">
+      <div class="session-panel">
+        <span>{{ auth.username() }}</span>
+        <button type="button" (click)="logout()">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <router-outlet />
+    </main>
+  </div>
+} @else {
+  <main class="auth-workspace">
     <router-outlet />
   </main>
-</div>
+}

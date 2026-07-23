@@ -7,7 +7,8 @@ using GuardLan.Worker.Realtime;
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddGuardLanApplication();
 builder.Services.AddGuardLanInfrastructure(builder.Configuration);
-builder.Services.AddSingleton<ILiveUpdatePublisher, SignalRWorkerLiveUpdatePublisher>();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<ILiveUpdatePublisher, ApiWorkerLiveUpdatePublisher>();
 builder.Services.AddHostedService<Worker>();
 
 var host = builder.Build();

@@ -26,5 +26,4 @@ public static class LiveUpdateTypes
 public static class LiveUpdateMethods
 {
     public const string ClientUpdate = "liveUpdate";
-    public const string ServerPublish = "PublishLiveUpdate";
 }

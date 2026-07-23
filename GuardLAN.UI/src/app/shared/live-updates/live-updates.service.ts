@@ -56,7 +56,7 @@ export class LiveUpdatesService {
     }
 
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/guardlan')
+      .withUrl('/hubs/guardlan', { withCredentials: true })
       .withAutomaticReconnect()
       .build();
 
@@ -93,6 +93,10 @@ export class LiveUpdatesService {
     });
 
     this.connection.onclose(() => {
+      if (!this.connection) {
+        return;
+      }
+
       this.zone.run(() =>
         this.state.update((state) => ({
           ...state,
@@ -104,6 +108,27 @@ export class LiveUpdatesService {
     });
 
     void this.startConnection();
+  }
+
+  disconnect(): void {
+    if (this.retryHandle) {
+      clearTimeout(this.retryHandle);
+      this.retryHandle = null;
+    }
+
+    const connection = this.connection;
+    this.connection = null;
+
+    if (connection) {
+      void connection.stop();
+    }
+
+    this.state.update((state) => ({
+      ...state,
+      connected: false,
+      connecting: false,
+      error: null
+    }));
   }
 
   ofTypes(...types: readonly LiveUpdateType[]): Observable<LiveUpdateDto> {
@@ -147,7 +172,7 @@ export class LiveUpdatesService {
   }
 
   private scheduleReconnect(): void {
-    if (this.retryHandle) {
+    if (!this.connection || this.retryHandle) {
       return;
     }
 

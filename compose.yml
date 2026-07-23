@@ -12,6 +12,9 @@ services:
       ASPNETCORE_URLS: ${ASPNETCORE_URLS:-http://+:8080}
       HttpsRedirection__Enabled: ${HttpsRedirection__Enabled:-false}
       ConnectionStrings__GuardLanDb: Host=database;Port=5432;Database=${POSTGRES_DB:-guardlan};Username=${POSTGRES_USER:-guardlan};Password=${POSTGRES_PASSWORD:-guardlan}
+      GuardLanAuth__AdminUsername: ${GuardLanAuth__AdminUsername:-guardlan}
+      GuardLanAuth__AdminPassword: ${GuardLanAuth__AdminPassword:-guardlan}
+      GuardLanAuth__InternalPublisherKey: ${GuardLanAuth__InternalPublisherKey:-guardlan-dev-internal}
     ports:
       - "${API_HOST_PORT:-5232}:8080"
     depends_on:
@@ -33,8 +36,9 @@ services:
     environment:
       DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__GuardLanDb: Host=database;Port=5432;Database=${POSTGRES_DB:-guardlan};Username=${POSTGRES_USER:-guardlan};Password=${POSTGRES_PASSWORD:-guardlan}
-      LiveUpdates__SignalR__Enabled: ${LiveUpdates__SignalR__Enabled:-true}
-      LiveUpdates__SignalR__HubUrl: ${LiveUpdates__SignalR__HubUrl:-http://api:8080/hubs/guardlan}
+      GuardLanAuth__InternalPublisherKey: ${GuardLanAuth__InternalPublisherKey:-guardlan-dev-internal}
+      LiveUpdates__Http__Enabled: ${LiveUpdates__Http__Enabled:-true}
+      LiveUpdates__Http__EndpointUrl: ${LiveUpdates__Http__EndpointUrl:-http://api:8080/api/internal/live-updates}
     depends_on:
       api:
         condition: service_healthy

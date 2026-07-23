@@ -47,7 +47,7 @@ This starts:
 
 ## Environment
 
-Safe defaults are provided in [.env.example](../.env.example). Copy it when you want local overrides:
+Development defaults are provided in [.env.example](../.env.example). Copy it when you want local overrides:
 
 ```bash
 cp .env.example .env
@@ -59,7 +59,7 @@ PowerShell:
 Copy-Item .env.example .env
 ```
 
-Do not commit a real `.env` file with private credentials.
+Do not commit a real `.env` file with private credentials. Change the default admin password and internal publisher key before using GuardLAN beyond local development.
 
 Useful variables:
 
@@ -71,8 +71,11 @@ POSTGRES_HOST_PORT=5432
 API_HOST_PORT=5232
 UI_HOST_PORT=4200
 ASPNETCORE_ENVIRONMENT=Development
-LiveUpdates__SignalR__Enabled=true
-LiveUpdates__SignalR__HubUrl=http://api:8080/hubs/guardlan
+GuardLanAuth__AdminUsername=guardlan
+GuardLanAuth__AdminPassword=guardlan
+GuardLanAuth__InternalPublisherKey=guardlan-dev-internal
+LiveUpdates__Http__Enabled=true
+LiveUpdates__Http__EndpointUrl=http://api:8080/api/internal/live-updates
 ```
 
 ## Services
@@ -110,10 +113,10 @@ The `worker` service builds from [GuardLAN.API/Dockerfile.worker](../GuardLAN.AP
 
 It processes queued scans, scheduled DNS ingestion, scheduled Zeek imports and scheduled Suricata imports. The worker image includes `nmap` for active discovery.
 
-The worker publishes live updates by connecting to the API SignalR hub:
+The worker publishes live updates by calling the API's internal live-update relay endpoint:
 
 ```text
-http://api:8080/hubs/guardlan
+http://api:8080/api/internal/live-updates
 ```
 
 ### UI
@@ -227,8 +230,9 @@ If live updates do not connect, check that:
 
 - Nginx is proxying `/hubs` requests
 - the API service is healthy
-- the worker has `LiveUpdates__SignalR__HubUrl=http://api:8080/hubs/guardlan`
+- the worker has `LiveUpdates__Http__EndpointUrl=http://api:8080/api/internal/live-updates`
+- the API and worker share the same `GuardLanAuth__InternalPublisherKey`
 
 ## Production Notes
 
-This Compose setup is for local development and first-run evaluation. Production deployment still needs managed secrets, HTTPS termination, authentication, backups, telemetry retention, monitoring and stricter network exposure rules.
+This Compose setup is for local development and first-run evaluation. Production deployment still needs managed secrets, HTTPS termination, backups, telemetry retention, monitoring and stricter network exposure rules. See [Security hardening](SECURITY_HARDENING.md).

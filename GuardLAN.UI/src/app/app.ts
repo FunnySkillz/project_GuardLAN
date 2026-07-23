@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { take } from 'rxjs';
 
-import { LiveUpdatesService } from './shared/live-updates/live-updates.service';
+import { AuthService } from './shared/auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -11,9 +12,13 @@ import { LiveUpdatesService } from './shared/live-updates/live-updates.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class App implements OnInit {
-  private readonly liveUpdates = inject(LiveUpdatesService);
+  protected readonly auth = inject(AuthService);
 
   ngOnInit(): void {
-    this.liveUpdates.connect();
+    this.auth.initialize().pipe(take(1)).subscribe();
+  }
+
+  protected logout(): void {
+    this.auth.logout();
   }
 }

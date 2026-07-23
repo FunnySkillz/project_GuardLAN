@@ -24,6 +24,7 @@ The current implementation includes:
 * Connection overview API, normalized connection import endpoint, Zeek connection/DNS/TLS importers, dashboard traffic widgets and Angular connection activity page
 * Suricata Eve JSON alert importer with device and connection association
 * SignalR live updates for scan, device, alert and DNS ingestion changes
+* Local-user authentication with cookie sessions for the API, UI and SignalR hub
 * Local Docker Compose infrastructure for the UI, API, worker and PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.
@@ -42,6 +43,15 @@ This starts:
 - the ASP.NET Core API at http://localhost:5232
 - the scanner and ingestion worker
 - PostgreSQL at localhost:5432
+
+The development login is:
+
+```text
+Username: guardlan
+Password: guardlan
+```
+
+Change `GuardLanAuth__AdminPassword` and `GuardLanAuth__InternalPublisherKey` in `.env` before using GuardLAN beyond a local development machine.
 
 Useful follow-up commands:
 
@@ -352,6 +362,9 @@ Useful API endpoints:
 
 ```text
 GET   http://localhost:5232/api/health
+GET   http://localhost:5232/api/auth/session
+POST  http://localhost:5232/api/auth/login
+POST  http://localhost:5232/api/auth/logout
 GET   http://localhost:5232/api/dashboard
 GET   http://localhost:5232/api/dashboard/overview
 GET   http://localhost:5232/api/connections/overview?page=1&pageSize=25&protocol=tcp&search=443
@@ -459,6 +472,7 @@ Detailed project conventions are documented separately:
 * [Zeek integration](docs/ZEEK.md)
 * [Suricata integration](docs/SURICATA.md)
 * [SignalR live updates](docs/LIVE_UPDATES.md)
+* [Security hardening](docs/SECURITY_HARDENING.md)
 * [MDAC mobile collector plan](docs/MDAC/README.md)
 * [Backend architecture](GuardLAN.API/docs/BACKEND_ARCHITECTURE.md)
 * [Frontend architecture](GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md)

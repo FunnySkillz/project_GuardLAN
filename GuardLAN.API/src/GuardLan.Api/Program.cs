@@ -1,9 +1,12 @@
+using GuardLan.Api.Auth;
 using GuardLan.Api.Hubs;
 using GuardLan.Api.Realtime;
 using GuardLan.Application;
 using GuardLan.Application.Abstractions;
 using GuardLan.Infrastructure;
 using GuardLan.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,8 +26,47 @@ if (allowedOrigins.Length == 0)
 
 builder.Services.AddGuardLanApplication();
 builder.Services.AddGuardLanInfrastructure(builder.Configuration);
+builder.Services.Configure<GuardLanAuthOptions>(
+    builder.Configuration.GetSection(GuardLanAuthOptions.SectionName));
+builder.Services.AddSingleton<LocalUserAuthenticator>();
+builder.Services.AddSingleton<InternalPublisherKeyValidator>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ILiveUpdatePublisher, SignalRLiveUpdatePublisher>();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        var authOptions = builder.Configuration
+            .GetSection(GuardLanAuthOptions.SectionName)
+            .Get<GuardLanAuthOptions>() ?? new GuardLanAuthOptions();
+        var sessionHours = Math.Clamp(authOptions.SessionHours, 1, 24);
+
+        options.Cookie.Name = string.IsNullOrWhiteSpace(authOptions.CookieName)
+            ? "GuardLAN.Session"
+            : authOptions.CookieName;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = authOptions.RequireSecureCookies || enableHttpsRedirection
+            ? CookieSecurePolicy.Always
+            : CookieSecurePolicy.SameAsRequest;
+        options.ExpireTimeSpan = TimeSpan.FromHours(sessionHours);
+        options.SlidingExpiration = true;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("GuardLanWeb", policy =>
@@ -67,13 +109,14 @@ if (enableHttpsRedirection)
 }
 
 app.UseCors("GuardLanWeb");
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/health", () => Results.Ok(CreateHealthResponse()));
-app.MapGet("/api/health", () => Results.Ok(CreateHealthResponse()));
+app.MapGet("/health", () => Results.Ok(CreateHealthResponse())).AllowAnonymous();
+app.MapGet("/api/health", () => Results.Ok(CreateHealthResponse())).AllowAnonymous();
 
 app.MapControllers();
-app.MapHub<GuardLanHub>("/hubs/guardlan");
+app.MapHub<GuardLanHub>("/hubs/guardlan").RequireAuthorization();
 
 app.Run();
 

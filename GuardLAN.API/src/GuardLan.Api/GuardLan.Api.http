@@ -5,6 +5,26 @@ Accept: application/json
 
 ###
 
+GET {{GuardLan.Api_HostAddress}}/api/auth/session
+Accept: application/json
+
+###
+
+POST {{GuardLan.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "guardlan",
+  "password": "guardlan"
+}
+
+###
+
+POST {{GuardLan.Api_HostAddress}}/api/auth/logout
+Accept: application/json
+
+###
+
 GET {{GuardLan.Api_HostAddress}}/api/dashboard
 Accept: application/json
 

@@ -10,4 +10,5 @@ This folder contains project-level documentation that does not belong exclusivel
 * [Zeek integration](ZEEK.md)
 * [Suricata integration](SURICATA.md)
 * [SignalR live updates](LIVE_UPDATES.md)
+* [Security hardening](SECURITY_HARDENING.md)
 * [MDAC - Mobile Device Activity Collector](MDAC/README.md)
