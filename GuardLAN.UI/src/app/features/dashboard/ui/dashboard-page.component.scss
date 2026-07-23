@@ -97,7 +97,7 @@ button.secondary:hover {
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  grid-template-columns: repeat(6, minmax(130px, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -126,6 +126,7 @@ button.secondary:hover {
   color: #18211e;
   font-size: 2rem;
   line-height: 1;
+  overflow-wrap: anywhere;
 }
 
 .metric-card.warning {
@@ -159,7 +160,7 @@ button.secondary:hover {
 }
 
 .device-panel {
-  grid-row: span 3;
+  grid-row: span 5;
 }
 
 .panel-header {
@@ -247,6 +248,7 @@ code {
 
 .alert-list,
 .domain-list,
+.protocol-list,
 .scan-list {
   display: grid;
 }
@@ -264,6 +266,7 @@ code {
 
 .alert-row,
 .domain-row,
+.protocol-row,
 .scan-row {
   display: flex;
   align-items: center;
@@ -276,27 +279,32 @@ code {
 
 .alert-row:last-child,
 .domain-row:last-child,
+.protocol-row:last-child,
 .scan-row:last-child {
   border-bottom: 0;
 }
 
 .alert-row > div,
 .domain-row > div,
+.protocol-row > div,
 .scan-row > div {
   min-width: 0;
 }
 
 .alert-row strong,
 .domain-row strong,
+.protocol-row strong,
 .scan-row strong,
 .alert-row small,
 .domain-row small,
+.protocol-row small,
 .scan-row small {
   display: block;
 }
 
 .alert-row strong,
 .domain-row strong,
+.protocol-row strong,
 .scan-row strong {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -305,6 +313,7 @@ code {
 
 .alert-row small,
 .domain-row small,
+.protocol-row small,
 .scan-row small {
   margin-top: 4px;
   color: #66756f;
@@ -317,6 +326,7 @@ code {
 }
 
 .domain-row > span,
+.protocol-row > span,
 .scan-row > span {
   flex: 0 0 auto;
   color: #60706a;
@@ -326,6 +336,58 @@ code {
 
 .domain-row > span.blocked {
   color: #a33f30;
+}
+
+.traffic-list {
+  display: grid;
+}
+
+.traffic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 68px;
+  border-bottom: 1px solid #edf0ea;
+  padding: 14px 16px;
+}
+
+.traffic-row:last-child {
+  border-bottom: 0;
+}
+
+.traffic-row > div {
+  min-width: 0;
+}
+
+.traffic-row strong,
+.traffic-row small {
+  display: block;
+}
+
+.traffic-row strong {
+  color: #18211e;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.traffic-row.primary strong {
+  color: #176151;
+  font-size: 1.55rem;
+}
+
+.traffic-row small {
+  margin-top: 4px;
+  color: #66756f;
+  font-size: 0.78rem;
+}
+
+.traffic-row > span {
+  flex: 0 0 auto;
+  color: #60706a;
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 @media (max-width: 1100px) {

@@ -61,7 +61,7 @@ Work order:
 
 Goal: represent connection metadata without packet-content capture.
 
-Status: active.
+Status: complete enough for Zeek ingestion work.
 
 Started:
 
@@ -70,6 +70,7 @@ Started:
 * Protocol, destination and device traffic summaries from stored connection data
 * Backend pagination and server-side protocol/search filtering for connection history
 * Normalized connection import endpoint with duplicate prevention and device matching
+* Dashboard protocol and traffic summary widgets
 
 Deliverables:
 
@@ -94,6 +95,8 @@ Work order:
 ## Phase 3: Zeek Ingestion
 
 Goal: populate DNS, connection, TLS, and protocol metadata from structured Zeek logs.
+
+Status: next.
 
 Deliverables:
 

@@ -21,7 +21,7 @@ The current implementation includes:
 * A queued network scanner flow backed by a worker service
 * An Angular dashboard wired to the backend overview endpoint
 * DNS overview API and Angular DNS activity page for stored DNS query data
-* Connection overview API, normalized connection import endpoint and Angular connection activity page
+* Connection overview API, normalized connection import endpoint, dashboard traffic widgets and Angular connection activity page
 * Local Docker Compose infrastructure for the UI, API and PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.

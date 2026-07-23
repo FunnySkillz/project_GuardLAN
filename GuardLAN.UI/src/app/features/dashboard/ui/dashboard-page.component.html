@@ -49,6 +49,12 @@
     <strong>{{ summary()?.blockedDomainsToday ?? '-' }}</strong>
     <small>last 24 hours</small>
   </article>
+
+  <article class="metric-card">
+    <span>Traffic</span>
+    <strong>{{ summary() ? totalTraffic() : '-' }}</strong>
+    <small>last 24 hours</small>
+  </article>
 </section>
 
 <section class="dashboard-grid">
@@ -156,6 +162,69 @@
             <span [class.blocked]="domain.blockedRequests > 0">
               {{ domain.blockedRequests }} blocked
             </span>
+          </article>
+        }
+      }
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Traffic</p>
+        <h2>24h Volume</h2>
+      </div>
+    </div>
+
+    @if (!summary() && loading()) {
+      <p class="empty-state">Loading traffic...</p>
+    } @else {
+      <div class="traffic-list">
+        <article class="traffic-row primary">
+          <div>
+            <strong>{{ totalTraffic() }}</strong>
+            <small>{{ trafficDirection() }}</small>
+          </div>
+        </article>
+
+        <article class="traffic-row">
+          <div>
+            <strong>{{ traffic().totalConnections }}</strong>
+            <small>connections</small>
+          </div>
+          <span>{{ traffic().activeDevices }} active devices</span>
+        </article>
+
+        <article class="traffic-row">
+          <div>
+            <strong>{{ traffic().uniqueDestinations }}</strong>
+            <small>destinations</small>
+          </div>
+          <span>{{ protocols().length }} protocols</span>
+        </article>
+      </div>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Connections</p>
+        <h2>Protocols</h2>
+      </div>
+    </div>
+
+    <div class="protocol-list">
+      @if (protocols().length === 0) {
+        <p class="empty-state">{{ loading() ? 'Loading protocols...' : 'No connection activity yet' }}</p>
+      } @else {
+        @for (protocol of protocols(); track protocol.protocol) {
+          <article class="protocol-row">
+            <div>
+              <strong>{{ protocol.protocol }}</strong>
+              <small>{{ protocol.connections }} connections | {{ protocolShare(protocol) }}</small>
+            </div>
+            <span>{{ protocolTraffic(protocol) }}</span>
           </article>
         }
       }

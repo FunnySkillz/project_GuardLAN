@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
 
 import { DashboardFacade } from '../data-access/dashboard.facade';
-import { NetworkScanDto } from '../models/dashboard-overview';
+import { NetworkScanDto, ProtocolActivityDto } from '../models/dashboard-overview';
 import {
   DeviceDto,
   deviceDisplayName,
@@ -22,6 +22,8 @@ export class DashboardPageComponent implements OnInit {
   protected readonly devices = this.dashboard.devices;
   protected readonly alerts = this.dashboard.alerts;
   protected readonly domains = this.dashboard.domains;
+  protected readonly traffic = this.dashboard.traffic;
+  protected readonly protocols = this.dashboard.protocols;
   protected readonly scans = this.dashboard.scans;
   protected readonly loading = this.dashboard.loading;
   protected readonly error = this.dashboard.error;
@@ -60,6 +62,32 @@ export class DashboardPageComponent implements OnInit {
     }
 
     return this.formatBytes(activity.bytesSent + activity.bytesReceived);
+  }
+
+  protected totalTraffic(): string {
+    const traffic = this.traffic();
+
+    return this.formatBytes(traffic.bytesSent + traffic.bytesReceived);
+  }
+
+  protected trafficDirection(): string {
+    const traffic = this.traffic();
+
+    return `${this.formatBytes(traffic.bytesSent)} sent | ${this.formatBytes(traffic.bytesReceived)} received`;
+  }
+
+  protected protocolTraffic(protocol: ProtocolActivityDto): string {
+    return this.formatBytes(protocol.bytesSent + protocol.bytesReceived);
+  }
+
+  protected protocolShare(protocol: ProtocolActivityDto): string {
+    const totalConnections = this.traffic().totalConnections;
+
+    if (totalConnections === 0) {
+      return '0%';
+    }
+
+    return `${Math.round((protocol.connections / totalConnections) * 100)}%`;
   }
 
   protected alertDevice(alert: AlertDto): string {

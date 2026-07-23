@@ -25,6 +25,17 @@ export class DashboardFacade {
   readonly devices = computed(() => this.state().data?.devices ?? []);
   readonly alerts = computed(() => this.state().data?.summary.recentAlerts ?? []);
   readonly domains = computed(() => this.state().data?.summary.mostContactedExternalDomains ?? []);
+  readonly traffic = computed(
+    () =>
+      this.state().data?.summary.connectionTraffic ?? {
+        totalConnections: 0,
+        activeDevices: 0,
+        uniqueDestinations: 0,
+        bytesSent: 0,
+        bytesReceived: 0
+      }
+  );
+  readonly protocols = computed(() => this.state().data?.summary.topConnectionProtocols ?? []);
   readonly scans = computed(() => this.state().data?.recentScans ?? []);
   readonly error = computed(() => this.state().error);
   readonly loading = computed(() => this.state().loading);

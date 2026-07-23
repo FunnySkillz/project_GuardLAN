@@ -44,6 +44,16 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
     {
         var deviceLookup = data.Devices.ToDictionary(device => device.Id);
 
+        var connectionTraffic = new TrafficSummaryDto(
+            data.Connections.Count,
+            data.Connections.Select(connection => connection.DeviceId).Distinct().Count(),
+            data.Connections
+                .Select(GetDestinationKey)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count(),
+            data.Connections.Sum(connection => connection.BytesSent),
+            data.Connections.Sum(connection => connection.BytesReceived));
+
         var mostActiveDevices = data.Connections
             .GroupBy(connection => connection.DeviceId)
             .Select(group =>
@@ -59,6 +69,18 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
                     group.Count());
             })
             .OrderByDescending(activity => activity.BytesSent + activity.BytesReceived)
+            .Take(5)
+            .ToArray();
+
+        var topProtocols = data.Connections
+            .GroupBy(connection => NormalizeProtocolLabel(connection.Protocol), StringComparer.OrdinalIgnoreCase)
+            .Select(group => new ProtocolActivityDto(
+                group.Key,
+                group.Count(),
+                group.Sum(connection => connection.BytesSent),
+                group.Sum(connection => connection.BytesReceived)))
+            .OrderByDescending(protocol => protocol.BytesSent + protocol.BytesReceived)
+            .ThenBy(protocol => protocol.Protocol)
             .Take(5)
             .ToArray();
 
@@ -88,9 +110,23 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
             data.DnsQueries.Count(query => query.WasBlocked),
             data.Alerts.Count(alert => alert.ResolvedUtc is null),
             data.Alerts.Count(alert => alert.ResolvedUtc is null && alert.Severity >= AlertSeverity.Critical),
+            connectionTraffic,
             mostActiveDevices,
+            topProtocols,
             topDomains,
             recentAlerts);
+    }
+
+    private static string GetDestinationKey(NetworkConnection connection)
+    {
+        return string.IsNullOrWhiteSpace(connection.DestinationDomain)
+            ? connection.DestinationIp
+            : connection.DestinationDomain;
+    }
+
+    private static string NormalizeProtocolLabel(string protocol)
+    {
+        return string.IsNullOrWhiteSpace(protocol) ? "OTHER" : protocol.Trim().ToUpperInvariant();
     }
 
     private sealed record DashboardData(

@@ -18,7 +18,9 @@ export interface DashboardSnapshotDto {
   readonly blockedDomainsToday: number;
   readonly openAlerts: number;
   readonly criticalAlerts: number;
+  readonly connectionTraffic: TrafficSummaryDto;
   readonly mostActiveDevices: readonly DeviceActivityDto[];
+  readonly topConnectionProtocols: readonly ProtocolActivityDto[];
   readonly mostContactedExternalDomains: readonly DomainActivityDto[];
   readonly recentAlerts: readonly AlertDto[];
 }
@@ -30,6 +32,21 @@ export interface DeviceActivityDto {
   readonly bytesSent: number;
   readonly bytesReceived: number;
   readonly connectionCount: number;
+}
+
+export interface TrafficSummaryDto {
+  readonly totalConnections: number;
+  readonly activeDevices: number;
+  readonly uniqueDestinations: number;
+  readonly bytesSent: number;
+  readonly bytesReceived: number;
+}
+
+export interface ProtocolActivityDto {
+  readonly protocol: string;
+  readonly connections: number;
+  readonly bytesSent: number;
+  readonly bytesReceived: number;
 }
 
 export interface DomainActivityDto {

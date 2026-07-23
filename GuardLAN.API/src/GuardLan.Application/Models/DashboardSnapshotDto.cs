@@ -9,7 +9,9 @@ public sealed record DashboardSnapshotDto(
     int BlockedDomainsToday,
     int OpenAlerts,
     int CriticalAlerts,
+    TrafficSummaryDto ConnectionTraffic,
     IReadOnlyList<DeviceActivityDto> MostActiveDevices,
+    IReadOnlyList<ProtocolActivityDto> TopConnectionProtocols,
     IReadOnlyList<DomainActivityDto> MostContactedExternalDomains,
     IReadOnlyList<AlertDto> RecentAlerts);
 
@@ -25,6 +27,19 @@ public sealed record DeviceActivityDto(
     long BytesSent,
     long BytesReceived,
     int ConnectionCount);
+
+public sealed record TrafficSummaryDto(
+    int TotalConnections,
+    int ActiveDevices,
+    int UniqueDestinations,
+    long BytesSent,
+    long BytesReceived);
+
+public sealed record ProtocolActivityDto(
+    string Protocol,
+    int Connections,
+    long BytesSent,
+    long BytesReceived);
 
 public sealed record DomainActivityDto(
     string Domain,
