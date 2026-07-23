@@ -63,7 +63,6 @@ Implemented in:
 
 ## Next Improvements
 
-* Add a device-detail view that shows the supporting alerts, DNS queries and connections behind each risk reason.
 * Add review or suppression states so known-benign devices do not stay noisy.
 * Tune thresholds after testing with real home-network data.
 * Add trend comparison, such as "newly contacted destination" or "higher traffic than normal".

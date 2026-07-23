@@ -9,4 +9,10 @@ public interface IDnsQueryRepository : IGenericRepository<DnsQuery>
     Task<IReadOnlyList<DnsQuery>> GetSinceWithDevicesAsync(
         DateTime sinceUtc,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<DnsQuery>> GetRecentForDeviceAsync(
+        Guid deviceId,
+        DateTime sinceUtc,
+        int limit,
+        CancellationToken cancellationToken = default);
 }

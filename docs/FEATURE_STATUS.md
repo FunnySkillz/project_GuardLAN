@@ -20,19 +20,19 @@ This document is the primary project-level tracker for GuardLAN features and tec
 
 GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, protect the dashboard with local-user authentication, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, accept normalized connection metadata, import Zeek connection/DNS/TLS logs, import Suricata Eve JSON IDS alerts, publish SignalR live updates, and present device, alert, DNS and connection views in the Angular UI.
 
-DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. SignalR live updates refresh the dashboard, devices, DNS and alerts views after operational changes. The first authentication and hardening slice is implemented, and device inventory responses now include explainable risk summaries based on current evidence. Deeper multi-user identity, roles and audit logging remain future work.
+DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. SignalR live updates refresh the dashboard, devices, DNS and alerts views after operational changes. The first authentication and hardening slice is implemented. Device inventory responses include explainable risk summaries, and device detail pages now show recent alert, DNS and connection evidence. Deeper multi-user identity, roles and audit logging remain future work.
 
 ## Feature Overview
 
 | Feature | Status | Current State | Next Required Change | Main Area |
 |---|---|---|---|---|
 | Device discovery | Implemented | Nmap-based scanning detects hosts and stores them as devices. | Improve classification and review support for newly discovered devices. | API / UI |
-| Device inventory | Implemented | Devices can be listed, viewed and updated through API and UI. | Add stronger review and enrichment workflows. | API / UI |
+| Device inventory | Implemented | Devices can be listed, viewed, updated and opened in a detail evidence page through API and UI. | Add stronger review and enrichment workflows. | API / UI |
 | Manual network scanning | Implemented | A scan can be queued from the API and triggered from the dashboard UI. | Add scan result detail views and user-facing scan history improvements. | API / UI |
 | Scheduled or background scanning | Partially Implemented | A background worker processes queued scans on an interval. | Add a clear scheduling model and scan policy management. | Worker |
 | Device trust management | Implemented | Devices can be marked trusted or untrusted through the API and UI. | Add review workflows for suspicious or unknown devices. | API / UI |
 | Device classification | Partially Implemented | Device types are modeled and editable, but classification is still manual. | Introduce automatic or semi-automatic classification logic. | API / UI |
-| Device risk signals | Partially Implemented | Devices receive explainable risk summaries from open alerts, trust state, unknown type, first-seen time, blocked DNS and recent traffic. | Add device-detail evidence drill-downs and tune thresholds with real network data. | API / UI |
+| Device risk signals | Partially Implemented | Devices receive explainable risk summaries from open alerts, trust state, unknown type, first-seen time, blocked DNS and recent traffic, with detail pages showing supporting evidence. | Add known-benign review states and tune thresholds with real network data. | API / UI |
 | Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity, recent alerts, DNS domains, connection traffic/protocol widgets and device risk pills. | Add richer time-based analytics and deeper drill-down views. | API / UI |
 | Alert management | Partially Implemented | Alerts are created, listed, resolved, enriched from Suricata IDS imports, and given basic lifecycle history. | Add richer alert detail, review states and false-positive handling. | API / UI |
 | DNS monitoring | Partially Implemented | Stored DNS queries are exposed through a DNS overview API and Angular DNS activity page, with a configurable Pi-hole ingestion pipeline for importing DNS history. | Validate the importer against a live Pi-hole instance and add retention plus newly contacted domain detection. | API / Worker / UI |
@@ -78,19 +78,23 @@ Introduce a device-review workflow that supports naming, classification and trus
 **Current State**
 - Device inventory is exposed through the backend device controller and service layer.
 - The UI includes a dedicated devices page with filtering, searching and trust updates.
+- The API exposes a device evidence endpoint for recent alerts, DNS queries and connections.
+- The UI includes a detail page at `/devices/:id` and links to it from the dashboard and device inventory.
 
 **Implemented In**
 - [GuardLAN.API/src/GuardLan.Api/Controllers/DevicesController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/DevicesController.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/DeviceService.cs](../GuardLAN.API/src/GuardLan.Application/Services/DeviceService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Models/DeviceEvidenceDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/DeviceEvidenceDto.cs)
 - [GuardLAN.UI/src/app/features/devices/ui/devices-page.component.ts](../GuardLAN.UI/src/app/features/devices/ui/devices-page.component.ts)
+- [GuardLAN.UI/src/app/features/devices/ui/device-evidence-page.component.ts](../GuardLAN.UI/src/app/features/devices/ui/device-evidence-page.component.ts)
 - [GuardLAN.UI/src/app/features/devices/data-access/devices.facade.ts](../GuardLAN.UI/src/app/features/devices/data-access/devices.facade.ts)
 
 **Missing or Incomplete**
-- Device enrichment beyond hostname, type and trust state
-- Better review and grouping for unknown or suspicious devices
+- Device enrichment beyond hostname, type, trust state and current evidence
+- Better review grouping for unknown or suspicious devices
 
 **Next Change**
-Add a richer device-detail experience that combines inventory data with recent alerts, DNS activity and connection history.
+Add operator notes and review state to the device-detail experience.
 
 ### Network Scanning
 
@@ -161,6 +165,7 @@ Introduce a classification engine that infers device categories from scan metada
 - Risk is calculated from open alerts, device trust state, unknown device type, first-seen time, blocked DNS requests and recent connection traffic.
 - The dashboard and device inventory table show risk pills and the first evidence reason.
 - The devices page includes a risk summary metric and elevated-risk filter.
+- The device evidence page shows the recent alerts, DNS queries and connections behind the device summary.
 - Backend tests cover normal, combined-evidence and resolved-alert behavior.
 
 **Implemented In**
@@ -173,16 +178,16 @@ Introduce a classification engine that infers device categories from scan metada
 - [GuardLAN.UI/src/app/shared/models/network-device.ts](../GuardLAN.UI/src/app/shared/models/network-device.ts)
 - [GuardLAN.UI/src/app/features/devices/data-access/devices.facade.ts](../GuardLAN.UI/src/app/features/devices/data-access/devices.facade.ts)
 - [GuardLAN.UI/src/app/features/devices/ui/devices-page.component.ts](../GuardLAN.UI/src/app/features/devices/ui/devices-page.component.ts)
+- [GuardLAN.UI/src/app/features/devices/ui/device-evidence-page.component.ts](../GuardLAN.UI/src/app/features/devices/ui/device-evidence-page.component.ts)
 - [GuardLAN.UI/src/app/features/dashboard/ui/dashboard-page.component.ts](../GuardLAN.UI/src/app/features/dashboard/ui/dashboard-page.component.ts)
 
 **Missing or Incomplete**
-- No device-detail view yet shows the supporting alerts, DNS queries and connections behind the score.
 - Thresholds have not been tuned against real home-network data.
 - Known-benign review or suppression states do not exist yet.
 - Trend signals such as newly contacted destinations are not implemented yet.
 
 **Next Change**
-Add a device-detail evidence view that explains the recent alerts, DNS queries and connections behind each risk summary.
+Add known-benign review or suppression state, then tune thresholds against real home-network data.
 
 ### Dashboard
 
@@ -496,16 +501,16 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 ## Current Development Focus
 
-Evidence-based device risk classification.
+Integration health reporting.
 
-Phase 7 now introduces explainable device risk summaries based on existing DNS, connection, IDS and inventory evidence. The next implementation slice should add device-detail evidence drill-downs so operators can inspect the supporting data behind each risk score.
+Phase 8 now adds a device evidence page for the recent alerts, DNS queries and connections behind each device summary. The next implementation slice should expose import health reporting across Pi-hole, Zeek and Suricata so operators can see whether telemetry sources are fresh and working.
 
 ## Known Technical Gaps
 
 - Authentication is single-admin only; persistent users, roles and audit logging are future work.
 - Live updates have no cross-instance SignalR backplane yet.
 - External integrations are only partially normalized behind shared ingestion contracts.
-- Device risk is a first evidence summary only; it does not yet include drill-down detail pages, suppression states or tuned behavioral baselines.
+- Device risk does not yet include suppression states or tuned behavioral baselines.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation and operational diagnostics.
 - Suricata IDS alert ingestion still needs live sensor validation and richer review workflows.
 - The local deployment story is containerized for first-run development, but production hardening remains incomplete.

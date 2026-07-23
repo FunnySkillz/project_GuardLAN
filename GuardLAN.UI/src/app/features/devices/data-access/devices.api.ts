@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { DeviceEvidenceDto } from '../models/device-evidence';
 import { DeviceDto, UpdateDeviceRequest } from '../../../shared/models/network-device';
 
 @Injectable({ providedIn: 'root' })
@@ -15,5 +16,9 @@ export class DevicesApi {
 
   update(deviceId: string, request: UpdateDeviceRequest): Observable<DeviceDto> {
     return this.http.patch<DeviceDto>(`${this.apiBaseUrl}/${deviceId}`, request);
+  }
+
+  evidence(deviceId: string): Observable<DeviceEvidenceDto> {
+    return this.http.get<DeviceEvidenceDto>(`${this.apiBaseUrl}/${deviceId}/evidence`);
   }
 }

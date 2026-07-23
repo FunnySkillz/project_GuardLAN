@@ -225,7 +225,7 @@ Remaining hardening:
 
 Goal: prioritize device review using explainable evidence that GuardLAN already collects.
 
-Status: complete enough for device-detail evidence work.
+Status: complete.
 
 Started:
 
@@ -248,7 +248,34 @@ Deliverables:
 
 Remaining hardening:
 
-* Add device detail pages that show the supporting alerts, DNS queries and connections
 * Add known-benign review or suppression state for noisy devices
 * Tune thresholds against real home-network data
 * Add behavior trends such as newly contacted destinations or unusual traffic volume
+
+## Phase 8: Device Evidence Drill-Down
+
+Goal: let operators inspect the telemetry behind a device risk summary.
+
+Status: complete enough for integration health reporting work.
+
+Started:
+
+* Device evidence DTO with device summary, risk, evidence counters and recent telemetry lists
+* `GET /api/devices/{id}/evidence` endpoint
+* Targeted repository queries for recent per-device alerts, DNS queries and connections
+* Angular route at `/devices/:id`
+* Device evidence page with risk reasons, summary metrics, recent alerts, recent DNS and recent connections
+* Dashboard and device inventory links into the detail route
+
+Deliverables:
+
+* Device evidence API
+* Single-request Angular detail page
+* Recent alert, DNS and connection evidence lists
+* Links from device inventory and dashboard
+
+Remaining hardening:
+
+* Add deep links into future alert, DNS and connection detail pages
+* Add operator review notes or known-benign suppression
+* Add longer-range trend comparison after historical baselines exist

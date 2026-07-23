@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 
 import { DashboardFacade } from '../data-access/dashboard.facade';
 import { NetworkScanDto, ProtocolActivityDto } from '../models/dashboard-overview';
@@ -14,6 +15,7 @@ import { LiveUpdatesService } from '../../../shared/live-updates/live-updates.se
 
 @Component({
   selector: 'app-dashboard-page',
+  imports: [RouterLink],
   templateUrl: './dashboard-page.component.html',
   styleUrl: './dashboard-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

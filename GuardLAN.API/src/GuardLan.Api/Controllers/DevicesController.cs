@@ -22,6 +22,14 @@ public sealed class DevicesController(IDeviceService deviceService) : Controller
         return device is null ? NotFound() : Ok(device);
     }
 
+    [HttpGet("{id:guid}/evidence")]
+    public async Task<ActionResult<DeviceEvidenceDto>> GetEvidence(Guid id, CancellationToken cancellationToken)
+    {
+        var evidence = await deviceService.GetEvidenceAsync(id, cancellationToken);
+
+        return evidence is null ? NotFound() : Ok(evidence);
+    }
+
     [HttpPatch("{id:guid}")]
     public async Task<ActionResult<DeviceDto>> Update(
         Guid id,

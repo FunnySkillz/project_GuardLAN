@@ -20,6 +20,13 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'devices/:id',
+        loadComponent: () =>
+          import('./features/devices/ui/device-evidence-page.component').then(
+            (module) => module.DeviceEvidencePageComponent
+          )
+      },
+      {
         path: 'devices',
         loadComponent: () =>
           import('./features/devices/ui/devices-page.component').then(

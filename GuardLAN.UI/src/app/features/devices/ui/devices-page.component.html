@@ -107,7 +107,9 @@
             <tr [class.review-row]="needsReview(device)" [class.offline-row]="!device.isOnline">
               <td>
                 <label class="device-name-field">
-                  <span>{{ deviceName(device) }}</span>
+                  <a class="device-detail-link" [routerLink]="['/devices', device.id]">
+                    {{ deviceName(device) }}
+                  </a>
                   <input
                     type="text"
                     [value]="draftHostname(device)"
@@ -166,6 +168,13 @@
               </td>
               <td>
                 <div class="action-group">
+                  <button
+                    class="secondary"
+                    type="button"
+                    [routerLink]="['/devices', device.id]"
+                  >
+                    Details
+                  </button>
                   <button
                     type="button"
                     (click)="save(device)"

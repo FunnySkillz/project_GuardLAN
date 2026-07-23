@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { DevicesApi } from './devices.api';
 import { DeviceDto } from '../../../shared/models/network-device';
+import { DeviceEvidenceDto } from '../models/device-evidence';
 
 describe('DevicesApi', () => {
   const device: DeviceDto = {
@@ -22,6 +23,24 @@ describe('DevicesApi', () => {
       score: 0,
       reasons: ['No recent risk evidence.']
     }
+  };
+  const evidence: DeviceEvidenceDto = {
+    device,
+    summary: {
+      sinceUtc: '2026-07-23T10:00:00Z',
+      alerts: 1,
+      openAlerts: 1,
+      dnsQueries: 2,
+      blockedDnsQueries: 1,
+      uniqueDomains: 2,
+      connections: 1,
+      uniqueDestinations: 1,
+      bytesSent: 100,
+      bytesReceived: 200
+    },
+    recentAlerts: [],
+    recentDnsQueries: [],
+    recentConnections: []
   };
 
   let api: DevicesApi;
@@ -61,5 +80,15 @@ describe('DevicesApi', () => {
     expect(request.request.method).toBe('PATCH');
     expect(request.request.body).toEqual(changes);
     request.flush({ ...device, hostname: 'workstation' });
+  });
+
+  it('should request device evidence', () => {
+    api.evidence(device.id).subscribe((result) => {
+      expect(result).toEqual(evidence);
+    });
+
+    const request = http.expectOne(`/api/devices/${device.id}/evidence`);
+    expect(request.request.method).toBe('GET');
+    request.flush(evidence);
   });
 });

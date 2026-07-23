@@ -406,6 +406,20 @@ public sealed class ZeekIngestionTests
         {
             throw new NotSupportedException();
         }
+
+        public Task<IReadOnlyList<NetworkConnection>> GetRecentForDeviceAsync(
+            Guid deviceId,
+            DateTime sinceUtc,
+            int limit,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<NetworkConnection>>(
+                Connections
+                    .Where(connection => connection.DeviceId == deviceId && connection.LastSeenUtc >= sinceUtc)
+                    .OrderByDescending(connection => connection.LastSeenUtc)
+                    .Take(limit)
+                    .ToArray());
+        }
     }
 
     private abstract class ThrowingRepository<TEntity> : IGenericRepository<TEntity>
@@ -450,6 +464,15 @@ public sealed class ZeekIngestionTests
 
         public Task<IReadOnlyList<DnsQuery>> GetSinceWithDevicesAsync(
             DateTime sinceUtc,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<IReadOnlyList<DnsQuery>> GetRecentForDeviceAsync(
+            Guid deviceId,
+            DateTime sinceUtc,
+            int limit,
             CancellationToken cancellationToken = default)
         {
             throw new NotSupportedException();
@@ -505,6 +528,15 @@ public sealed class ZeekIngestionTests
         }
 
         public Task<SecurityAlert?> GetByIdWithDeviceAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<IReadOnlyList<SecurityAlert>> GetEvidenceForDeviceAsync(
+            Guid deviceId,
+            DateTime sinceUtc,
+            int limit,
+            CancellationToken cancellationToken = default)
         {
             throw new NotSupportedException();
         }

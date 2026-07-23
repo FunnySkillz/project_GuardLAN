@@ -11,4 +11,10 @@ public interface ISecurityAlertRepository : IGenericRepository<SecurityAlert>
     Task<IReadOnlyList<SecurityAlert>> GetOpenAsync(CancellationToken cancellationToken = default);
 
     Task<SecurityAlert?> GetByIdWithDeviceAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<SecurityAlert>> GetEvidenceForDeviceAsync(
+        Guid deviceId,
+        DateTime sinceUtc,
+        int limit,
+        CancellationToken cancellationToken = default);
 }

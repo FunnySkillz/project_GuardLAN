@@ -91,7 +91,9 @@
             @for (device of devices(); track device.id) {
               <tr>
                 <td>
-                  <strong>{{ deviceName(device) }}</strong>
+                  <a class="device-detail-link" [routerLink]="['/devices', device.id]">
+                    {{ deviceName(device) }}
+                  </a>
                   <small>{{ deviceVendor(device) }}</small>
                 </td>
                 <td>

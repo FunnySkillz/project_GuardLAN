@@ -35,6 +35,11 @@ Accept: application/json
 
 ###
 
+GET {{GuardLan.Api_HostAddress}}/api/devices/00000000-0000-0000-0000-000000000000/evidence
+Accept: application/json
+
+###
+
 GET {{GuardLan.Api_HostAddress}}/api/alerts
 Accept: application/json
 

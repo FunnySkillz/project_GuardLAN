@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 
 import { DeviceFilter, DevicesFacade } from '../data-access/devices.facade';
 import {
@@ -27,6 +28,7 @@ interface DeviceFilterOption {
 
 @Component({
   selector: 'app-devices-page',
+  imports: [RouterLink],
   templateUrl: './devices-page.component.html',
   styleUrl: './devices-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

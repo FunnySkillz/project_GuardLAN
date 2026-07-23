@@ -252,7 +252,8 @@ td {
 
 td strong,
 td small,
-.device-name-field span {
+.device-name-field span,
+.device-detail-link {
   display: block;
 }
 
@@ -270,6 +271,16 @@ td small {
 
 .device-name-field span {
   font-weight: 800;
+}
+
+.device-detail-link {
+  color: #174f45;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.device-detail-link:hover {
+  text-decoration: underline;
 }
 
 code {

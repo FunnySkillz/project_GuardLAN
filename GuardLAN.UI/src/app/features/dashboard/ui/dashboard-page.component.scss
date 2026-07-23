@@ -209,8 +209,19 @@ td {
 }
 
 td strong,
-td small {
+td small,
+.device-detail-link {
   display: block;
+}
+
+.device-detail-link {
+  color: #174f45;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.device-detail-link:hover {
+  text-decoration: underline;
 }
 
 td small {

@@ -10,6 +10,8 @@ public sealed class DeviceService(
     IDeviceRiskEvaluator deviceRiskEvaluator,
     TimeProvider timeProvider) : IDeviceService
 {
+    private const int DeviceEvidenceLimit = 25;
+
     public async Task<IReadOnlyList<DeviceDto>> ListAsync(CancellationToken cancellationToken)
     {
         var devices = await unitOfWork.Devices.GetInventoryAsync(cancellationToken);
@@ -30,6 +32,42 @@ public sealed class DeviceService(
         var risks = await LoadDeviceRisksAsync([device], cancellationToken);
 
         return DeviceDto.FromEntity(device, risks[device.Id]);
+    }
+
+    public async Task<DeviceEvidenceDto?> GetEvidenceAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var device = await unitOfWork.Devices.GetByIdAsync(id, cancellationToken);
+
+        if (device is null)
+        {
+            return null;
+        }
+
+        var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+        var sinceUtc = nowUtc.AddHours(-24);
+        var alerts = await unitOfWork.SecurityAlerts.GetEvidenceForDeviceAsync(
+            device.Id,
+            sinceUtc,
+            DeviceEvidenceLimit,
+            cancellationToken);
+        var dnsQueries = await unitOfWork.DnsQueries.GetRecentForDeviceAsync(
+            device.Id,
+            sinceUtc,
+            DeviceEvidenceLimit,
+            cancellationToken);
+        var connections = await unitOfWork.NetworkConnections.GetRecentForDeviceAsync(
+            device.Id,
+            sinceUtc,
+            DeviceEvidenceLimit,
+            cancellationToken);
+        var risks = deviceRiskEvaluator.Evaluate([device], alerts, dnsQueries, connections, nowUtc);
+
+        return new DeviceEvidenceDto(
+            DeviceDto.FromEntity(device, risks[device.Id]),
+            BuildEvidenceSummary(sinceUtc, alerts, dnsQueries, connections),
+            alerts.Select(AlertDto.FromEntity).ToArray(),
+            dnsQueries.Select(DnsQueryDto.FromEntity).ToArray(),
+            connections.Select(ConnectionDto.FromEntity).ToArray());
     }
 
     public async Task<DeviceDto?> UpdateAsync(Guid id, UpdateDeviceCommand command, CancellationToken cancellationToken)
@@ -75,5 +113,29 @@ public sealed class DeviceService(
         var connections = await unitOfWork.NetworkConnections.GetSinceAsync(sinceUtc, cancellationToken);
 
         return deviceRiskEvaluator.Evaluate(devices, alerts, dnsQueries, connections, nowUtc);
+    }
+
+    private static DeviceEvidenceSummaryDto BuildEvidenceSummary(
+        DateTime sinceUtc,
+        IReadOnlyList<SecurityAlert> alerts,
+        IReadOnlyList<DnsQuery> dnsQueries,
+        IReadOnlyList<NetworkConnection> connections)
+    {
+        return new DeviceEvidenceSummaryDto(
+            sinceUtc,
+            alerts.Count,
+            alerts.Count(alert => alert.ResolvedUtc is null),
+            dnsQueries.Count,
+            dnsQueries.Count(query => query.WasBlocked),
+            dnsQueries.Select(query => query.Domain).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+            connections.Count,
+            connections
+                .Select(connection => string.IsNullOrWhiteSpace(connection.DestinationDomain)
+                    ? connection.DestinationIp
+                    : connection.DestinationDomain)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count(),
+            connections.Sum(connection => connection.BytesSent),
+            connections.Sum(connection => connection.BytesReceived));
     }
 }

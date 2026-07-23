@@ -59,6 +59,21 @@ public sealed class NetworkConnectionRepository(GuardLanDbContext dbContext)
             totalCount);
     }
 
+    public async Task<IReadOnlyList<NetworkConnection>> GetRecentForDeviceAsync(
+        Guid deviceId,
+        DateTime sinceUtc,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(connection => connection.Device)
+            .Where(connection => connection.DeviceId == deviceId && connection.LastSeenUtc >= sinceUtc)
+            .OrderByDescending(connection => connection.LastSeenUtc)
+            .Take(limit)
+            .ToArrayAsync(cancellationToken);
+    }
+
     private static IQueryable<NetworkConnection> ApplyConnectionFilters(
         IQueryable<NetworkConnection> query,
         NetworkConnectionQuery connectionQuery)

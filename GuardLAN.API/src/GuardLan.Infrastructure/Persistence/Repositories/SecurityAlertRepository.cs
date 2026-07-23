@@ -53,4 +53,22 @@ public sealed class SecurityAlertRepository(GuardLanDbContext dbContext)
             .Include(alert => alert.History)
             .FirstOrDefaultAsync(alert => alert.Id == id, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<SecurityAlert>> GetEvidenceForDeviceAsync(
+        Guid deviceId,
+        DateTime sinceUtc,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(alert => alert.Device)
+            .Include(alert => alert.Connection)
+            .Include(alert => alert.History)
+            .Where(alert => alert.DeviceId == deviceId && (alert.ResolvedUtc == null || alert.CreatedUtc >= sinceUtc))
+            .OrderByDescending(alert => alert.ResolvedUtc == null)
+            .ThenByDescending(alert => alert.CreatedUtc)
+            .Take(limit)
+            .ToArrayAsync(cancellationToken);
+    }
 }
