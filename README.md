@@ -25,6 +25,7 @@ The current implementation includes:
 * Connection overview API, normalized connection import endpoint, Zeek connection/DNS/TLS importers, dashboard traffic widgets and Angular connection activity page
 * Suricata Eve JSON alert importer with device and connection association
 * Alert review states for reviewed, resolved, false-positive, suppressed and reopened alerts
+* Alert detail drill-down pages with related device, connection and lifecycle evidence
 * SignalR live updates for scan, device, alert and DNS ingestion changes
 * Local-user authentication with cookie sessions for the API, UI and SignalR hub
 * Explainable device risk signals based on alerts, DNS, connection and inventory evidence
@@ -387,6 +388,7 @@ POST  http://localhost:5232/api/dns/import/pihole
 GET   http://localhost:5232/api/devices
 PATCH http://localhost:5232/api/devices/{id}
 GET   http://localhost:5232/api/alerts
+GET   http://localhost:5232/api/alerts/{id}
 PATCH http://localhost:5232/api/alerts/{id}/resolve
 PATCH http://localhost:5232/api/alerts/{id}/review
 PATCH http://localhost:5232/api/alerts/{id}/false-positive

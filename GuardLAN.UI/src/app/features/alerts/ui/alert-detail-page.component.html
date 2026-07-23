@@ -1,0 +1,272 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Alert Detail</p>
+    <h1>{{ pageTitle() }}</h1>
+  </div>
+
+  <div class="header-actions">
+    <a class="secondary-link" routerLink="/alerts">Alerts</a>
+    @if (facade.alert(); as alert) {
+      @if (alert.deviceId) {
+        <a class="secondary-link" [routerLink]="['/devices', alert.deviceId]">Device</a>
+      }
+    }
+    <button class="secondary" type="button" (click)="retry()" [disabled]="facade.loading()">
+      {{ facade.loading() ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </div>
+</header>
+
+@if (facade.error(); as message) {
+  <section class="status-panel" role="status">
+    <span>{{ message }}</span>
+    <button class="secondary" type="button" (click)="retry()">Retry</button>
+  </section>
+}
+
+@if (facade.detail(); as detail) {
+  <section class="summary-panel" [class.closed]="!isOpen(detail.alert)">
+    <div>
+      <span
+        class="severity-pill"
+        [class.severity-medium]="detail.alert.severity === 'Medium'"
+        [class.severity-high]="detail.alert.severity === 'High'"
+        [class.severity-critical]="detail.alert.severity === 'Critical'"
+      >
+        {{ detail.alert.severity }}
+      </span>
+      <strong>{{ reviewStatus(detail.alert) }}</strong>
+      <small>{{ isPriority(detail.alert) ? 'Priority investigation' : 'Watch item' }}</small>
+    </div>
+
+    <dl>
+      <div>
+        <dt>Created</dt>
+        <dd>{{ formatRelativeTime(detail.alert.createdUtc) }}</dd>
+      </div>
+      <div>
+        <dt>Reviewed</dt>
+        <dd>{{ formatDate(detail.alert.reviewedUtc) }}</dd>
+      </div>
+      <div>
+        <dt>Resolved</dt>
+        <dd>{{ formatDate(detail.alert.resolvedUtc) }}</dd>
+      </div>
+      <div>
+        <dt>Source</dt>
+        <dd>{{ alertSource(detail.alert) }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="detail-grid">
+    <section class="panel alert-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Evidence</p>
+          <h2>Alert context</h2>
+        </div>
+      </div>
+
+      <div class="detail-list">
+        <div>
+          <span>Message</span>
+          <strong>{{ detail.alert.message }}</strong>
+        </div>
+
+        @if (detail.alert.evidenceSummary) {
+          <div>
+            <span>Evidence summary</span>
+            <strong>{{ detail.alert.evidenceSummary }}</strong>
+          </div>
+        }
+
+        <div>
+          <span>Source endpoint</span>
+          <strong>{{ sourceEndpoint(detail.alert) }}</strong>
+        </div>
+
+        <div>
+          <span>Destination endpoint</span>
+          <strong>{{ destinationEndpoint(detail.alert) }}</strong>
+        </div>
+
+        @if (detail.alert.sourceRecordId) {
+          <div>
+            <span>Source record</span>
+            <strong>{{ detail.alert.sourceRecordId }}</strong>
+          </div>
+        }
+
+        @if (detail.alert.reviewNote) {
+          <div>
+            <span>Latest review note</span>
+            <strong>{{ detail.alert.reviewNote }}</strong>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="panel review-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Review</p>
+          <h2>Lifecycle actions</h2>
+        </div>
+      </div>
+
+      <div class="review-body">
+        <label class="review-note-field">
+          <span>Note</span>
+          <input
+            type="text"
+            [value]="facade.noteDraft()"
+            (input)="updateNote($event)"
+            placeholder="Optional review note"
+            [disabled]="facade.updating()"
+          />
+        </label>
+
+        <div class="action-buttons">
+          @if (isOpen(detail.alert)) {
+            @if (detail.alert.reviewStatus === 'Open') {
+              <button
+                class="secondary"
+                type="button"
+                (click)="submitAction('review')"
+                [disabled]="facade.updating()"
+              >
+                Review
+              </button>
+            }
+
+            <button type="button" (click)="submitAction('resolve')" [disabled]="facade.updating()">
+              Resolve
+            </button>
+
+            <button
+              class="secondary"
+              type="button"
+              (click)="submitAction('falsePositive')"
+              [disabled]="facade.updating()"
+            >
+              False positive
+            </button>
+
+            <button
+              class="secondary"
+              type="button"
+              (click)="submitAction('suppress')"
+              [disabled]="facade.updating()"
+            >
+              Suppress
+            </button>
+          } @else {
+            <button
+              class="secondary"
+              type="button"
+              (click)="submitAction('reopen')"
+              [disabled]="facade.updating()"
+            >
+              Reopen
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Device</p>
+          <h2>Related device</h2>
+        </div>
+      </div>
+
+      <div class="detail-list">
+        <div>
+          <span>Name</span>
+          <strong>{{ alertDevice(detail.alert) }}</strong>
+        </div>
+        <div>
+          <span>IP address</span>
+          <strong>{{ detail.alert.deviceIpAddress ?? 'Unknown' }}</strong>
+        </div>
+        <div>
+          <span>MAC address</span>
+          <strong>{{ detail.alert.deviceMacAddress ?? 'Unknown' }}</strong>
+        </div>
+        @if (detail.alert.deviceId) {
+          <a class="inline-link" [routerLink]="['/devices', detail.alert.deviceId]">
+            Open device evidence
+          </a>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Connection</p>
+          <h2>Related flow</h2>
+        </div>
+      </div>
+
+      @if (detail.relatedConnection; as connection) {
+        <div class="detail-list">
+          <div>
+            <span>Destination</span>
+            <strong>{{ connectionDestination(connection) }}</strong>
+          </div>
+          <div>
+            <span>Endpoint</span>
+            <strong>{{ connectionEndpoint(connection) }}</strong>
+          </div>
+          <div>
+            <span>Traffic</span>
+            <strong>{{ totalTraffic(connection) }}</strong>
+          </div>
+          <div>
+            <span>First seen</span>
+            <strong>{{ formatDate(connection.firstSeenUtc) }}</strong>
+          </div>
+          <div>
+            <span>Last seen</span>
+            <strong>{{ formatRelativeTime(connection.lastSeenUtc) }}</strong>
+          </div>
+        </div>
+      } @else {
+        <p class="empty-state">No related connection is linked to this alert.</p>
+      }
+    </section>
+
+    <section class="panel history-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">History</p>
+          <h2>Lifecycle history</h2>
+        </div>
+      </div>
+
+      @if (detail.alert.history.length === 0) {
+        <p class="empty-state">No lifecycle events have been recorded for this alert.</p>
+      } @else {
+        <div class="timeline">
+          @for (event of detail.alert.history; track event.id) {
+            <article>
+              <span>{{ event.eventType }}</span>
+              <div>
+                <strong>{{ event.description }}</strong>
+                <small>{{ formatDate(event.createdUtc) }}</small>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  </section>
+} @else {
+  <section class="panel">
+    <p class="empty-state">{{ facade.loading() ? 'Loading alert details...' : 'No alert loaded' }}</p>
+  </section>
+}

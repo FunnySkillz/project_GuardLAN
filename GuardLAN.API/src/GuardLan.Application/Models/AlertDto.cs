@@ -58,6 +58,18 @@ public sealed record AlertDto(
     }
 }
 
+public sealed record AlertDetailDto(
+    AlertDto Alert,
+    ConnectionDto? RelatedConnection)
+{
+    public static AlertDetailDto FromEntity(SecurityAlert alert)
+    {
+        return new AlertDetailDto(
+            AlertDto.FromEntity(alert),
+            alert.Connection is null ? null : ConnectionDto.FromEntity(alert.Connection));
+    }
+}
+
 public sealed record AlertReviewCommand(string? Note);
 
 public sealed record AlertHistoryDto(

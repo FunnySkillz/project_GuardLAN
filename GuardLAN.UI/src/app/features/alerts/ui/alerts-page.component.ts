@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 
 import { AlertAction, AlertFilter, AlertsFacade } from '../data-access/alerts.facade';
 import {
@@ -18,6 +19,7 @@ interface AlertFilterOption {
 
 @Component({
   selector: 'app-alerts-page',
+  imports: [RouterLink],
   templateUrl: './alerts-page.component.html',
   styleUrl: './alerts-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

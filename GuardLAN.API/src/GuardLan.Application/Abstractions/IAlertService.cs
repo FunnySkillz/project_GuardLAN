@@ -6,6 +6,8 @@ public interface IAlertService
 {
     Task<IReadOnlyList<AlertDto>> ListAsync(CancellationToken cancellationToken);
 
+    Task<AlertDetailDto?> GetAsync(Guid id, CancellationToken cancellationToken);
+
     Task<AlertDto?> MarkReviewedAsync(
         Guid id,
         AlertReviewCommand command,

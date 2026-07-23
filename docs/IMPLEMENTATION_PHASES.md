@@ -154,7 +154,6 @@ Deliverables:
 Remaining hardening:
 
 * Validate against a live Suricata sensor
-* Add richer alert detail and history views in the UI
 * Add duplicate suppression rules if real sensors produce noisy repeated signatures
 
 ## Phase 5: SignalR Live Updates
@@ -248,7 +247,7 @@ Deliverables:
 
 Remaining hardening:
 
-* Add known-benign review or suppression state for noisy devices
+* Add device-level known-benign policy if alert-level suppression is not enough
 * Tune thresholds against real home-network data
 * Add behavior trends such as newly contacted destinations or unusual traffic volume
 
@@ -276,8 +275,8 @@ Deliverables:
 
 Remaining hardening:
 
-* Add deep links into future alert, DNS and connection detail pages
-* Add operator review notes or known-benign suppression
+* Add deep links into future DNS and connection detail pages
+* Add device-level operator notes or known-benign policy
 * Add longer-range trend comparison after historical baselines exist
 
 ## Phase 9: Integration Health Reporting
@@ -387,5 +386,31 @@ Deliverables:
 
 Remaining hardening:
 
-* Add dedicated alert detail and full history views
 * Add duplicate/noisy signature suppression rules after live IDS validation
+
+## Phase 13: Alert Detail and History Drilldown
+
+Goal: let operators inspect a single alert with its full lifecycle and related evidence.
+
+Status: complete.
+
+Started:
+
+* `GET /api/alerts/{id}` detail endpoint
+* Alert detail DTO with the alert, lifecycle history and related connection metadata
+* Repository loading for alert device, connection device and history data
+* Angular route at `/alerts/:id`
+* Alert detail page with source metadata, related device, related flow, review note and lifecycle actions
+* Links from the alert queue and device evidence recent-alert list
+
+Deliverables:
+
+* Single-alert API read model
+* Full lifecycle history view
+* Related device and connection evidence
+* Review, resolve, false-positive, suppress and reopen controls from the detail page
+
+Remaining hardening:
+
+* Add duplicate/noisy signature suppression rules after live IDS validation
+* Add notification workflows once alert volume and operator needs are clearer

@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { AlertDto } from '../../../shared/models/security-alert';
+import { AlertDetailDto } from '../models/alert-detail';
 
 export interface AlertReviewRequest {
   readonly note: string | null;
@@ -15,6 +16,10 @@ export class AlertsApi {
 
   list(): Observable<readonly AlertDto[]> {
     return this.http.get<readonly AlertDto[]>(this.apiBaseUrl);
+  }
+
+  detail(alertId: string): Observable<AlertDetailDto> {
+    return this.http.get<AlertDetailDto>(`${this.apiBaseUrl}/${alertId}`);
   }
 
   review(alertId: string, request: AlertReviewRequest): Observable<AlertDto> {

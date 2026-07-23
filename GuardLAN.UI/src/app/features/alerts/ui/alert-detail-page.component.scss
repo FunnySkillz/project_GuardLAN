@@ -6,8 +6,9 @@
 .header-actions,
 .status-panel,
 .panel-header,
-.device-summary,
-.event-row {
+.summary-panel,
+.action-buttons,
+.timeline article {
   display: flex;
   align-items: center;
 }
@@ -35,8 +36,7 @@ h1,
 h2,
 p,
 dl,
-dd,
-ul {
+dd {
   margin: 0;
 }
 
@@ -96,7 +96,7 @@ button:disabled {
   padding: 12px 14px;
 }
 
-.device-summary {
+.summary-panel {
   justify-content: space-between;
   gap: 20px;
   border: 1px solid #dfe4dc;
@@ -106,30 +106,32 @@ button:disabled {
   padding: 16px;
 }
 
-.device-summary > div {
+.summary-panel.closed {
+  background: #fafbf8;
+}
+
+.summary-panel > div {
   display: grid;
   gap: 6px;
   min-width: 180px;
 }
 
-.device-summary strong {
+.summary-panel strong {
   color: #18211e;
   font-size: 1.8rem;
   line-height: 1;
 }
 
-.device-summary small,
-.metric-card small,
-.panel-header span,
-.event-row small,
-td small {
+.summary-panel small,
+.detail-list span,
+.timeline small {
   color: #66756f;
   font-size: 0.78rem;
 }
 
 dl {
   display: grid;
-  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
   gap: 12px;
   width: 100%;
 }
@@ -147,11 +149,46 @@ dd {
   overflow-wrap: anywhere;
 }
 
+.severity-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  min-height: 30px;
+  border-radius: 999px;
+  background: #e7f4ef;
+  color: #176151;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.severity-medium {
+  background: #fff3da;
+  color: #735208;
+}
+
+.severity-high,
+.severity-critical {
+  background: #fbe7e3;
+  color: #a33f30;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
 .panel {
   border: 1px solid #dfe4dc;
   border-radius: 8px;
   background: #ffffff;
   min-width: 0;
+}
+
+.alert-panel,
+.history-panel {
+  grid-column: 1 / -1;
 }
 
 .panel-header {
@@ -162,115 +199,95 @@ dd {
   padding: 16px;
 }
 
-.risk-reasons {
-  margin-bottom: 18px;
-}
-
-.risk-reasons ul {
+.detail-list,
+.review-body,
+.timeline {
   display: grid;
-  gap: 8px;
-  padding: 16px 18px 18px 34px;
 }
 
-.risk-reasons li {
-  color: #26322e;
-  font-size: 0.92rem;
-}
-
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.metric-card {
-  min-height: 118px;
-  border: 1px solid #dfe4dc;
-  border-radius: 8px;
-  background: #ffffff;
+.detail-list {
+  gap: 14px;
   padding: 16px;
 }
 
-.metric-card span {
-  color: #64746e;
-  font-size: 0.82rem;
+.detail-list div,
+.review-note-field {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
 }
 
-.metric-card strong {
-  display: block;
-  margin: 8px 0 6px;
+.detail-list strong {
   color: #18211e;
-  font-size: 2rem;
-  line-height: 1;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
-.metric-card.danger {
-  border-color: #e2aaa1;
+.inline-link {
+  color: #1f6d5f;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
 }
 
-.metric-card.danger strong {
-  color: #a83f30;
+.inline-link:hover {
+  text-decoration: underline;
 }
 
-.risk-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 76px;
-  min-height: 28px;
-  border-radius: 999px;
-  background: #eef4f1;
-  color: #44615b;
-  font-size: 0.78rem;
+.review-body {
+  gap: 12px;
+  padding: 16px;
+}
+
+.review-note-field span {
+  color: #60706a;
+  font-size: 0.76rem;
   font-weight: 800;
 }
 
-.risk-pill.low {
-  background: #e7f4ef;
-  color: #176151;
+input {
+  min-height: 38px;
+  width: 100%;
+  border: 1px solid #cbd6d1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17201d;
+  padding: 0 10px;
 }
 
-.risk-pill.medium {
-  background: #fff3da;
-  color: #735208;
+input:focus {
+  border-color: #1f6d5f;
+  outline: 3px solid #d7eee8;
 }
 
-.risk-pill.high,
-.risk-pill.critical {
-  background: #fbe7e3;
-  color: #a33f30;
+.action-buttons {
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.evidence-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+.action-buttons button {
+  flex: 1 1 132px;
+  min-height: 36px;
+  padding: 0 10px;
 }
 
-.connections-panel {
-  grid-column: 1 / -1;
-}
-
-.event-list {
-  display: grid;
-}
-
-.event-row {
+.timeline article {
+  align-items: flex-start;
   gap: 12px;
   border-bottom: 1px solid #edf0ea;
   padding: 14px 16px;
 }
 
-.event-row:last-child {
+.timeline article:last-child {
   border-bottom: 0;
 }
 
-.event-row > span {
+.timeline article > span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 82px;
+  min-width: 118px;
   min-height: 28px;
   border-radius: 999px;
   background: #eef4f1;
@@ -279,69 +296,17 @@ dd {
   font-weight: 800;
 }
 
-.event-row.alert.open > span,
-.event-row.dns.blocked > span {
-  background: #fbe7e3;
-  color: #a33f30;
-}
-
-.event-row div {
+.timeline div {
   min-width: 0;
 }
 
-.event-link,
-.event-row strong,
-td strong {
+.timeline strong {
   display: block;
   color: #1a2420;
-  font-weight: 800;
-  text-decoration: none;
   overflow-wrap: anywhere;
 }
 
-.event-link:hover {
-  color: #1f6d5f;
-  text-decoration: underline;
-}
-
-.event-row p {
-  color: #52625c;
-  font-size: 0.82rem;
-  line-height: 1.4;
-  margin-top: 6px;
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  min-width: 760px;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  border-bottom: 1px solid #edf0ea;
-  padding: 14px 16px;
-  text-align: left;
-  vertical-align: middle;
-}
-
-th {
-  color: #60706a;
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-td {
-  color: #1a2420;
-  font-size: 0.92rem;
-}
-
-td small {
+.timeline small {
   display: block;
   margin-top: 4px;
 }
@@ -354,12 +319,8 @@ td small {
 }
 
 @media (max-width: 1180px) {
-  .metrics,
+  .detail-grid,
   dl {
-    grid-template-columns: repeat(2, minmax(150px, 1fr));
-  }
-
-  .evidence-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -368,19 +329,18 @@ td small {
   .page-header,
   .header-actions,
   .status-panel,
-  .device-summary {
+  .summary-panel {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .metrics,
-  dl {
-    grid-template-columns: 1fr;
   }
 
   .header-actions button,
   .secondary-link {
     justify-content: center;
     width: 100%;
+  }
+
+  .timeline article {
+    flex-direction: column;
   }
 }

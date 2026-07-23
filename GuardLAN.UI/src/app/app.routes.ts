@@ -46,6 +46,13 @@ export const routes: Routes = [
           import('./features/dns/ui/dns-page.component').then((module) => module.DnsPageComponent)
       },
       {
+        path: 'alerts/:id',
+        loadComponent: () =>
+          import('./features/alerts/ui/alert-detail-page.component').then(
+            (module) => module.AlertDetailPageComponent
+          )
+      },
+      {
         path: 'alerts',
         loadComponent: () =>
           import('./features/alerts/ui/alerts-page.component').then(

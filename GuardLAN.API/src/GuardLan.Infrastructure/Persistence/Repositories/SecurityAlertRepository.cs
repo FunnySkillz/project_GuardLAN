@@ -50,6 +50,7 @@ public sealed class SecurityAlertRepository(GuardLanDbContext dbContext)
         return DbSet
             .Include(alert => alert.Device)
             .Include(alert => alert.Connection)
+            .ThenInclude(connection => connection!.Device)
             .Include(alert => alert.History)
             .FirstOrDefaultAsync(alert => alert.Id == id, cancellationToken);
     }

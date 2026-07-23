@@ -118,7 +118,7 @@
             <article class="event-row alert" [class.open]="alert.resolvedUtc === null">
               <span>{{ alert.severity }}</span>
               <div>
-                <strong>{{ alertType(alert) }}</strong>
+                <a class="event-link" [routerLink]="['/alerts', alert.id]">{{ alertType(alert) }}</a>
                 <small>{{ alertStatus(alert) }} | {{ formatRelativeTime(alert.createdUtc) }}</small>
                 @if (alert.evidenceSummary) {
                   <p>{{ alert.evidenceSummary }}</p>

@@ -20,7 +20,7 @@ This document is the primary project-level tracker for GuardLAN features and tec
 
 GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, protect the dashboard with local-user authentication, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, accept normalized connection metadata, import Zeek connection/DNS/TLS logs, import Suricata Eve JSON IDS alerts, publish SignalR live updates, record integration health, and present device, alert, DNS, connection and integration views in the Angular UI.
 
-DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. SignalR live updates refresh the dashboard, devices, DNS and alerts views after operational changes. The first authentication and hardening slice is implemented. Device inventory responses include explainable risk summaries, device detail pages now show recent alert, DNS and connection evidence, and the Integrations page shows source health, stale state and import history for Pi-hole, Zeek and Suricata. Deeper multi-user identity, roles and audit logging remain future work.
+DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. SignalR live updates refresh the dashboard, devices, DNS and alerts views after operational changes. The first authentication and hardening slice is implemented. Device inventory responses include explainable risk summaries, device detail pages show recent alert, DNS and connection evidence, alert detail pages show source, device, connection and lifecycle evidence, and the Integrations page shows source health, stale state and import history for Pi-hole, Zeek and Suricata. Deeper multi-user identity, roles and audit logging remain future work.
 
 ## Feature Overview
 
@@ -33,8 +33,8 @@ DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`
 | Device trust management | Implemented | Devices can be marked trusted or untrusted through the API and UI. | Add review workflows for suspicious or unknown devices. | API / UI |
 | Device classification | Partially Implemented | Device types are modeled and editable, but classification is still manual. | Introduce automatic or semi-automatic classification logic. | API / UI |
 | Device risk signals | Partially Implemented | Devices receive explainable risk summaries from open alerts, trust state, unknown type, first-seen time, blocked DNS and recent traffic, with closed false-positive and suppressed alerts excluded from open evidence. | Tune thresholds with real network data. | API / UI |
-| Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity, recent alerts, DNS domains, connection traffic/protocol widgets and device risk pills. | Add richer time-based analytics and deeper drill-down views. | API / UI |
-| Alert management | Partially Implemented | Alerts are created, listed, enriched from Suricata IDS imports, reviewed, resolved, suppressed, reopened and marked false-positive with lifecycle history. | Add dedicated alert detail and full history views. | API / UI |
+| Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity, recent alerts, DNS domains, connection traffic/protocol widgets and device risk pills. | Add richer time-based analytics and deeper domain or device behavior drill-downs. | API / UI |
+| Alert management | Partially Implemented | Alerts are created, listed, opened in detail views, enriched from Suricata IDS imports, reviewed, resolved, suppressed, reopened and marked false-positive with lifecycle history. | Add noisy-signature suppression rules after live IDS validation. | API / UI |
 | DNS monitoring | Partially Implemented | Stored DNS queries are exposed through a DNS overview API and Angular DNS activity page, with a configurable Pi-hole ingestion pipeline for importing DNS history. | Validate the importer against a live Pi-hole instance and add retention plus newly contacted domain detection. | API / Worker / UI |
 | Network connection monitoring | Partially Implemented | Connection entities, dashboard traffic/protocol aggregation, normalized import, Zeek connection/TLS import, a paged connection overview API and an Angular connection activity page exist. | Add connection detail views and deeper traffic analytics. | API / Worker / UI |
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger, worker schedule, latest health, stale detection and import history exist, but live-appliance validation is still incomplete. | Validate response shapes against Pi-hole's local API docs. | API / Worker |
@@ -184,11 +184,11 @@ Introduce a classification engine that infers device categories from scan metada
 
 **Missing or Incomplete**
 - Thresholds have not been tuned against real home-network data.
-- Known-benign review or suppression states do not exist yet.
+- Device-level known-benign policies are not implemented yet.
 - Trend signals such as newly contacted destinations are not implemented yet.
 
 **Next Change**
-Add known-benign review or suppression state, then tune thresholds against real home-network data.
+Tune thresholds against real home-network data, then add device-level known-benign policy only if alert-level suppression is not enough.
 
 ### Dashboard
 
@@ -207,7 +207,7 @@ Add known-benign review or suppression state, then tune thresholds against real 
 
 **Missing or Incomplete**
 - Time-series charts and trend views
-- Deeper drill-downs for alerts, domains and device behavior
+- Deeper drill-downs for domains and device behavior
 
 **Next Change**
 Add richer analytics widgets and trend-oriented views without overloading the initial dashboard screen.
@@ -221,6 +221,8 @@ Add richer analytics widgets and trend-oriented views without overloading the in
 - Alert creation is already wired into scan execution for discovered-device and disappearance events.
 - Suricata IDS imports create alerts with source metadata, severity mapping, evidence summaries, optional connection association and lifecycle history entries.
 - Alerts can be reviewed, resolved, marked false-positive, suppressed and reopened with optional operator notes.
+- `GET /api/alerts/{id}` returns a detail DTO with full lifecycle history and related connection evidence when present.
+- The Angular UI includes an alert detail page at `/alerts/:id`, with links from the alert queue and device evidence page.
 
 **Implemented In**
 - [GuardLAN.API/src/GuardLan.Api/Controllers/AlertsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/AlertsController.cs)
@@ -230,16 +232,18 @@ Add richer analytics widgets and trend-oriented views without overloading the in
 - [GuardLAN.API/src/GuardLan.Domain/Enums/AlertReviewStatus.cs](../GuardLAN.API/src/GuardLan.Domain/Enums/AlertReviewStatus.cs)
 - [GuardLAN.API/src/GuardLan.Domain/Entities/SecurityAlertHistory.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/SecurityAlertHistory.cs)
 - [GuardLAN.UI/src/app/features/alerts/ui/alerts-page.component.ts](../GuardLAN.UI/src/app/features/alerts/ui/alerts-page.component.ts)
+- [GuardLAN.UI/src/app/features/alerts/ui/alert-detail-page.component.ts](../GuardLAN.UI/src/app/features/alerts/ui/alert-detail-page.component.ts)
+- [GuardLAN.UI/src/app/features/alerts/data-access/alert-detail.facade.ts](../GuardLAN.UI/src/app/features/alerts/data-access/alert-detail.facade.ts)
 - [GuardLAN.UI/src/app/features/alerts/data-access/alerts.facade.ts](../GuardLAN.UI/src/app/features/alerts/data-access/alerts.facade.ts)
 - [docs/ALERT_LIFECYCLE.md](ALERT_LIFECYCLE.md)
 
 **Missing or Incomplete**
 - Correlation rules beyond basic event creation
-- Dedicated alert detail and history views
+- Duplicate or noisy-signature suppression rules
 - Notification workflows
 
 **Next Change**
-Add an alert-detail view that explains related device, connection, IDS evidence and full lifecycle history.
+Validate IDS alerts against live Suricata output, then add duplicate or noisy-signature suppression rules.
 
 ### DNS Monitoring
 
@@ -396,10 +400,10 @@ Make integration freshness thresholds configurable per source type.
 
 **Missing or Incomplete**
 - Live validation against a real Suricata sensor
-- Dedicated IDS alert detail and history UI
+- Duplicate or noisy-signature suppression rules
 
 **Next Change**
-Validate against live Suricata Eve output and add alert detail views.
+Validate against live Suricata Eve output and add noisy-signature suppression rules.
 
 ### SignalR Real-Time Updates
 
@@ -510,9 +514,9 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 ## Current Development Focus
 
-Alert detail and lifecycle history drilldown.
+Live integration validation and noisy alert handling.
 
-Phase 12 added reviewed, resolved, false-positive, suppressed and reopened alert lifecycle actions. The next implementation slice should add a dedicated alert detail page with full history and related evidence.
+Phase 13 added a dedicated alert detail page with full history and related evidence. The next implementation slice should validate Pi-hole, Zeek and Suricata against live sources, then tighten noisy alert handling based on real telemetry.
 
 ## Known Technical Gaps
 
@@ -522,7 +526,7 @@ Phase 12 added reviewed, resolved, false-positive, suppressed and reopened alert
 - Device risk still needs tuned behavioral baselines.
 - Integration freshness thresholds are fixed at 15 minutes and should become configurable per source type.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation.
-- Suricata IDS alert ingestion still needs live sensor validation and richer alert detail workflows.
+- Suricata IDS alert ingestion still needs live sensor validation and noisy-signature suppression rules.
 - The local deployment story is containerized for first-run development, but production hardening remains incomplete.
 
 ## Update Rules

@@ -18,6 +18,13 @@ public sealed class AlertService(
         return alerts.Select(AlertDto.FromEntity).ToArray();
     }
 
+    public async Task<AlertDetailDto?> GetAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var alert = await unitOfWork.SecurityAlerts.GetByIdWithDeviceAsync(id, cancellationToken);
+
+        return alert is null ? null : AlertDetailDto.FromEntity(alert);
+    }
+
     public Task<AlertDto?> MarkReviewedAsync(
         Guid id,
         AlertReviewCommand command,

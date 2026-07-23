@@ -10,6 +10,55 @@ namespace GuardLan.Tests;
 public sealed class AlertServiceTests
 {
     [Fact]
+    public async Task GetAsyncReturnsAlertDetailWithRelatedConnection()
+    {
+        var createdUtc = new DateTime(2026, 7, 23, 10, 0, 0, DateTimeKind.Utc);
+        var alert = CreateAlert(createdUtc);
+        var device = new NetworkDevice
+        {
+            Id = alert.DeviceId!.Value,
+            Hostname = "desktop",
+            IpAddress = "192.168.1.22",
+            MacAddress = "02:00:00:00:00:22",
+            DeviceType = DeviceType.Desktop,
+            FirstSeenUtc = createdUtc.AddDays(-1),
+            LastSeenUtc = createdUtc,
+            IsOnline = true
+        };
+        var connection = new NetworkConnection
+        {
+            Id = Guid.NewGuid(),
+            DeviceId = device.Id,
+            Device = device,
+            DestinationIp = "203.0.113.10",
+            DestinationDomain = "example.test",
+            Protocol = "tcp",
+            DestinationPort = 443,
+            BytesSent = 1200,
+            BytesReceived = 4096,
+            FirstSeenUtc = createdUtc.AddMinutes(-5),
+            LastSeenUtc = createdUtc
+        };
+        alert.Device = device;
+        alert.ConnectionId = connection.Id;
+        alert.Connection = connection;
+
+        var service = new AlertService(
+            new FakeUnitOfWork(alert),
+            TimeProvider.System,
+            new CapturingLiveUpdatePublisher());
+
+        var result = await service.GetAsync(alert.Id, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(alert.Id, result.Alert.Id);
+        Assert.NotNull(result.RelatedConnection);
+        Assert.Equal(connection.Id, result.RelatedConnection.Id);
+        Assert.Equal("desktop", result.RelatedConnection.DeviceName);
+        Assert.Equal("example.test", result.RelatedConnection.DestinationDomain);
+    }
+
+    [Fact]
     public async Task MarkFalsePositiveAsyncClosesAlertAndWritesHistory()
     {
         var nowUtc = new DateTime(2026, 7, 23, 12, 0, 0, DateTimeKind.Utc);

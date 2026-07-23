@@ -104,7 +104,7 @@
             </span>
             <div>
               <div class="alert-title">
-                <strong>{{ alertType(alert) }}</strong>
+                <a [routerLink]="['/alerts', alert.id]">{{ alertType(alert) }}</a>
                 <span>{{ priorityLabel(alert) }}</span>
                 <span>{{ reviewStatus(alert) }}</span>
               </div>

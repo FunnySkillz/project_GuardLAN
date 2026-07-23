@@ -15,6 +15,14 @@ public sealed class AlertsController(IAlertService alertService) : ControllerBas
         return alertService.ListAsync(cancellationToken);
     }
 
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<AlertDetailDto>> Get(Guid id, CancellationToken cancellationToken)
+    {
+        var alert = await alertService.GetAsync(id, cancellationToken);
+
+        return alert is null ? NotFound() : Ok(alert);
+    }
+
     [HttpPatch("{id:guid}/resolve")]
     public async Task<ActionResult<AlertDto>> Resolve(
         Guid id,

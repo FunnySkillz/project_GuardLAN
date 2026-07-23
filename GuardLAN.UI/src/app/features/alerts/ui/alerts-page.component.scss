@@ -260,11 +260,18 @@ input:focus {
   margin-bottom: 6px;
 }
 
-.alert-title strong {
+.alert-title a {
   overflow: hidden;
   color: #1a2420;
+  font-weight: 800;
+  text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.alert-title a:hover {
+  color: #1f6d5f;
+  text-decoration: underline;
 }
 
 .alert-title span {

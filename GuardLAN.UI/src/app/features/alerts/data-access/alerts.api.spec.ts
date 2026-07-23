@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { AlertsApi } from './alerts.api';
 import { AlertDto } from '../../../shared/models/security-alert';
+import { AlertDetailDto } from '../models/alert-detail';
 
 describe('AlertsApi', () => {
   const alert: AlertDto = {
@@ -55,6 +56,21 @@ describe('AlertsApi', () => {
     const request = http.expectOne('/api/alerts');
     expect(request.request.method).toBe('GET');
     request.flush([alert]);
+  });
+
+  it('should request alert details', () => {
+    const detail: AlertDetailDto = {
+      alert,
+      relatedConnection: null
+    };
+
+    api.detail(alert.id).subscribe((response) => {
+      expect(response).toEqual(detail);
+    });
+
+    const request = http.expectOne(`/api/alerts/${alert.id}`);
+    expect(request.request.method).toBe('GET');
+    request.flush(detail);
   });
 
   it('should resolve an alert', () => {
