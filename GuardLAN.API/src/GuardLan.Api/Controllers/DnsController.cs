@@ -6,7 +6,9 @@ namespace GuardLan.Api.Controllers;
 
 [ApiController]
 [Route("api/dns")]
-public sealed class DnsController(IDnsService dnsService) : ControllerBase
+public sealed class DnsController(
+    IDnsService dnsService,
+    IDnsIngestionService dnsIngestionService) : ControllerBase
 {
     [HttpGet("overview")]
     public Task<DnsOverviewDto> GetOverview(
@@ -15,5 +17,11 @@ public sealed class DnsController(IDnsService dnsService) : ControllerBase
         CancellationToken cancellationToken = default)
     {
         return dnsService.GetOverviewAsync(hours, limit, cancellationToken);
+    }
+
+    [HttpPost("import/pihole")]
+    public Task<DnsIngestionResultDto> ImportPiHole(CancellationToken cancellationToken)
+    {
+        return dnsIngestionService.ImportRecentAsync(cancellationToken);
     }
 }

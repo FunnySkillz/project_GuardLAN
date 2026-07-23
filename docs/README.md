@@ -4,4 +4,5 @@ This folder contains project-level documentation that does not belong exclusivel
 
 * [Feature status](FEATURE_STATUS.md)
 * [Implementation phases](IMPLEMENTATION_PHASES.md)
+* [Pi-hole integration](PIHOLE.md)
 * [MDAC - Mobile Device Activity Collector](MDAC/README.md)

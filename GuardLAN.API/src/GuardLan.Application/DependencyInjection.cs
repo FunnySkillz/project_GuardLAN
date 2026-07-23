@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IDeviceService, DeviceService>();
         services.AddScoped<IDnsService, DnsService>();
+        services.AddScoped<IDnsIngestionService, DnsIngestionService>();
         services.AddScoped<IAlertService, AlertService>();
         services.AddScoped<INetworkScanService, NetworkScanService>();
         services.AddScoped<IScanExecutionService, ScanExecutionService>();

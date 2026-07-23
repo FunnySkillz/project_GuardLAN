@@ -29,6 +29,9 @@ Started:
 * Stored DNS query overview API
 * DNS history page in the Angular app
 * Top domains and top clients summaries from stored DNS data
+* Configurable Pi-hole DNS query importer
+* Manual and scheduled DNS ingestion entry points
+* Duplicate prevention and client-IP device matching during import
 
 Deliverables:
 
@@ -49,9 +52,10 @@ Work order:
 
 1. Expose stored DNS data through purpose-built backend DTOs.
 2. Add a DNS page that uses one initial overview request.
-3. Add Pi-hole configuration and validate connectivity.
+3. Add Pi-hole configuration and a manual import path.
 4. Implement ingestion with idempotency and client-IP device matching.
-5. Add new-domain alerts and retention cleanup.
+5. Validate against a live Pi-hole instance and record import diagnostics.
+6. Add new-domain alerts and retention cleanup.
 
 ## Phase 2: Network Connection Model
 

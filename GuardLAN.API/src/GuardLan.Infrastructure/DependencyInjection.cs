@@ -1,3 +1,5 @@
+using GuardLan.Application.Dns;
+using GuardLan.Infrastructure.Dns;
 using GuardLan.Application.Scanning;
 using GuardLan.Infrastructure.Persistence;
 using GuardLan.Infrastructure.Persistence.Repositories;
@@ -31,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ISecurityAlertRepository, SecurityAlertRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<INetworkScanner, NmapNetworkScanner>();
+        services.AddScoped<IDnsQuerySource, PiHoleDnsQuerySource>();
 
         return services;
     }
