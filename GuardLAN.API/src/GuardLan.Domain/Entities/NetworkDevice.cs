@@ -28,5 +28,7 @@ public class NetworkDevice
 
     public ICollection<DnsQuery> DnsQueries { get; } = [];
 
+    public ICollection<TlsObservation> TlsObservations { get; } = [];
+
     public ICollection<SecurityAlert> Alerts { get; } = [];
 }

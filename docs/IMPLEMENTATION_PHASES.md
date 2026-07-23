@@ -96,15 +96,21 @@ Work order:
 
 Goal: populate DNS, connection, TLS, and protocol metadata from structured Zeek logs.
 
-Status: active.
+Status: complete enough for Suricata ingestion work.
 
 Started:
 
 * Configurable Zeek `conn.log` reader
 * Manual Zeek connection import endpoint
-* Scheduled worker path for Zeek connection imports
-* Line-number checkpointing for incremental `conn.log` reads
+* Configurable Zeek `dns.log` reader
+* Configurable Zeek `ssl.log` reader for TLS metadata
+* Aggregate manual Zeek import endpoint
+* Scheduled worker path for Zeek imports
+* Line-number checkpointing for incremental Zeek log reads
 * Mapping from Zeek connection rows into the normalized connection ingestion contract
+* Mapping from Zeek DNS rows into DNS history
+* TLS observation storage with device and connection matching
+* Tests for malformed rows, delayed/appended rows and duplicate connection records
 
 Deliverables:
 
@@ -120,6 +126,8 @@ GuardLAN should ingest structured Zeek output rather than capturing and parsing 
 ## Phase 4: Suricata Integration
 
 Goal: import real IDS alerts and connect them to GuardLAN devices and network evidence.
+
+Status: active.
 
 Deliverables:
 

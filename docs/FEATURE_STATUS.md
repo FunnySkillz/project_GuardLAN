@@ -20,7 +20,7 @@ This document is the primary project-level tracker for GuardLAN features and tec
 
 GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, accept normalized connection metadata, and present device, alert, DNS and connection views in the Angular UI.
 
-DNS visibility now has a first ingestion path through Pi-hole. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, and a first Zeek `conn.log` importer, but it still needs Zeek DNS/TLS enrichment and production hardening. Authentication, real-time updates, and most external monitoring integrations remain incomplete.
+DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Authentication, real-time updates, Suricata ingestion and deployment hardening remain incomplete.
 
 ## Feature Overview
 
@@ -35,9 +35,9 @@ DNS visibility now has a first ingestion path through Pi-hole. Network connectio
 | Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity, recent alerts, DNS domains, and connection traffic/protocol widgets. | Add richer time-based analytics and deeper drill-down views. | API / UI |
 | Alert management | Implemented | Alerts are created, listed, and resolved through API and UI. | Add richer correlation, severity handling and alert history. | API / UI |
 | DNS monitoring | Partially Implemented | Stored DNS queries are exposed through a DNS overview API and Angular DNS activity page, with a configurable Pi-hole ingestion pipeline for importing DNS history. | Validate the importer against a live Pi-hole instance and add retention plus newly contacted domain detection. | API / Worker / UI |
-| Network connection monitoring | Partially Implemented | Connection entities, dashboard traffic/protocol aggregation, normalized import, Zeek `conn.log` import, a paged connection overview API and an Angular connection activity page exist. | Extend Zeek ingestion with DNS/TLS enrichment and add connection detail views. | API / Worker / UI |
+| Network connection monitoring | Partially Implemented | Connection entities, dashboard traffic/protocol aggregation, normalized import, Zeek connection/TLS import, a paged connection overview API and an Angular connection activity page exist. | Add connection detail views and deeper traffic analytics. | API / Worker / UI |
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger and worker schedule exist, but live-appliance validation and operational diagnostics are still incomplete. | Validate response shapes against Pi-hole's local API docs and add import health reporting. | API / Worker |
-| Zeek integration | Partially Implemented | A configurable Zeek `conn.log` reader feeds the normalized connection contract through manual API and worker paths with line checkpointing. | Extend Zeek ingestion to `dns.log` and TLS metadata, then add import diagnostics and tests. | API / Worker |
+| Zeek integration | Implemented | Configurable Zeek `conn.log`, `dns.log` and `ssl.log` readers feed normalized ingestion services through manual API and worker paths with line checkpointing, import diagnostics and parser tests. | Validate against live Zeek output and surface import health in the UI. | API / Worker |
 | Suricata integration | Planned | No integration exists yet. | Add alert and event ingestion for IDS telemetry. | API / Worker |
 | SignalR real-time updates | Planned | No real-time transport is implemented. | Add live updates for dashboards and alerts. | API / UI |
 | Authentication and authorization | Not Started | No auth layer exists in the repository. | Introduce user identity and permission rules. | API |
@@ -241,7 +241,8 @@ Validate the Pi-hole ingestion pipeline against a live instance, then add import
 - Stored connection metadata is exposed through a dedicated connection overview API.
 - Connection history supports backend pagination, protocol filtering and search.
 - The backend accepts normalized connection imports with duplicate prevention and source-device matching by IP.
-- The backend includes a configurable Zeek `conn.log` importer with manual and scheduled ingestion paths.
+- The backend includes configurable Zeek `conn.log` and `ssl.log` importers with manual and scheduled ingestion paths.
+- TLS observations are stored and matched to devices by source IP and connections by Zeek UID or a time-window fallback.
 - The Angular UI includes a connection activity page with summary metrics, server-backed protocol filtering, search and paged recent connection history.
 - The Angular dashboard includes 24-hour connection traffic and protocol distribution widgets.
 
@@ -250,12 +251,18 @@ Validate the Pi-hole ingestion pipeline against a live instance, then add import
 - [GuardLAN.API/src/GuardLan.Api/Controllers/ConnectionsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/ConnectionsController.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ConnectionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ConnectionService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ConnectionIngestionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ConnectionIngestionService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/TlsObservationIngestionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/TlsObservationIngestionService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ZeekConnectionImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekConnectionImportService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/ZeekTlsImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekTlsImportService.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekConnLogSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekConnLogSource.cs)
+- [GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekSslLogSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekSslLogSource.cs)
 - [GuardLAN.API/src/GuardLan.Worker/Worker.cs](../GuardLAN.API/src/GuardLan.Worker/Worker.cs)
 - [GuardLAN.API/src/GuardLan.Application/Models/ConnectionOverviewDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/ConnectionOverviewDto.cs)
 - [GuardLAN.API/src/GuardLan.Application/Models/ConnectionIngestionDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/ConnectionIngestionDto.cs)
 - [GuardLAN.API/src/GuardLan.Application/Models/ZeekConnectionImportResultDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/ZeekConnectionImportResultDto.cs)
+- [GuardLAN.API/src/GuardLan.Application/Models/TlsObservationIngestionDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/TlsObservationIngestionDto.cs)
+- [GuardLAN.API/src/GuardLan.Application/Models/ZeekTlsImportResultDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/ZeekTlsImportResultDto.cs)
+- [GuardLAN.API/src/GuardLan.Domain/Entities/TlsObservation.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/TlsObservation.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Persistence/GuardLanDbContext.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Persistence/GuardLanDbContext.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/DashboardService.cs](../GuardLAN.API/src/GuardLan.Application/Services/DashboardService.cs)
 - [GuardLAN.UI/src/app/features/connections/ui/connections-page.component.ts](../GuardLAN.UI/src/app/features/connections/ui/connections-page.component.ts)
@@ -263,12 +270,11 @@ Validate the Pi-hole ingestion pipeline against a live instance, then add import
 - [GuardLAN.UI/src/app/features/dashboard/ui/dashboard-page.component.ts](../GuardLAN.UI/src/app/features/dashboard/ui/dashboard-page.component.ts)
 
 **Missing or Incomplete**
-- Zeek `dns.log` and TLS metadata enrichment
 - Alternative firewall log importers
 - Connection detail pages and deeper traffic analytics beyond dashboard rollups
 
 **Next Change**
-Extend Zeek ingestion with `dns.log` and TLS metadata, then add connection detail pages.
+Add connection detail pages and deeper traffic analytics beyond dashboard rollups.
 
 ### External Security Integrations
 
@@ -277,9 +283,10 @@ Extend Zeek ingestion with `dns.log` and TLS metadata, then add connection detai
 **Current State**
 - The repository documents integrations such as Pi-hole, Zeek and Suricata.
 - Pi-hole DNS ingestion has a first backend implementation.
+- Zeek DNS ingestion feeds the DNS history pipeline.
 - A normalized connection ingestion contract exists for Zeek and firewall importers.
-- Zeek `conn.log` ingestion now feeds connection metadata through manual API and worker paths.
-- Zeek DNS/TLS enrichment and Suricata ingestion flows are still planned.
+- Zeek `conn.log` and `ssl.log` ingestion now feed connection and TLS metadata through manual API and worker paths.
+- Suricata ingestion flows are still planned.
 
 **Implemented In**
 - [README.md](../README.md)
@@ -287,19 +294,24 @@ Extend Zeek ingestion with `dns.log` and TLS metadata, then add connection detai
 - [docs/CONNECTION_INGESTION.md](CONNECTION_INGESTION.md)
 - [docs/PIHOLE.md](PIHOLE.md)
 - [docs/ZEEK.md](ZEEK.md)
+- [GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ZeekConnectionImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekConnectionImportService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/ZeekDnsImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekDnsImportService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/ZeekTlsImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekTlsImportService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ConnectionIngestionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ConnectionIngestionService.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekConnLogSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekConnLogSource.cs)
+- [GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekDnsLogSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekDnsLogSource.cs)
+- [GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekSslLogSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekSslLogSource.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Dns/PiHoleDnsQuerySource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Dns/PiHoleDnsQuerySource.cs)
 
 **Missing or Incomplete**
 - Live validation for Pi-hole integration
-- Zeek `dns.log` reader and TLS metadata import
+- Live validation against Zeek output from a running sensor
 - Suricata connector implementation
 - Shared event normalization and alert mapping
 
 **Next Change**
-Extend the Zeek pattern to DNS/TLS metadata, then add Suricata alerts.
+Add Suricata Eve JSON alert ingestion.
 
 ### SignalR Real-Time Updates
 
@@ -382,9 +394,9 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 ## Current Development Focus
 
-Phase 3: Zeek Ingestion.
+Phase 4: Suricata Integration.
 
-Phase 2 now exposes stored connection metadata through a backend overview endpoint, Angular page, backend pagination, server-side filters, dashboard traffic/protocol widgets and a normalized import endpoint. Phase 3 has started with a configurable Zeek `conn.log` importer. The next implementation slice should extend Zeek ingestion to `dns.log` and TLS metadata, then add import diagnostics and tests.
+Phase 3 now imports Zeek `conn.log`, `dns.log` and `ssl.log` through checkpointed readers, normalized ingestion services, manual API endpoints, worker scheduling and parser tests. The next implementation slice should add Suricata Eve JSON alert ingestion.
 
 ## Known Technical Gaps
 
@@ -392,7 +404,7 @@ Phase 2 now exposes stored connection metadata through a backend overview endpoi
 - Real-time updates are not available.
 - External integrations are only partially normalized behind shared ingestion contracts.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation and operational diagnostics.
-- Connection telemetry has stored-data reporting, dashboard rollups, a normalized import contract and Zeek `conn.log` ingestion, but Zeek DNS/TLS enrichment is not implemented yet.
+- Suricata IDS alerts are not imported yet.
 - The local deployment story is containerized for first-run development, but production hardening remains incomplete.
 
 ## Update Rules

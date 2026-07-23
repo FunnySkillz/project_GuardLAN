@@ -8,6 +8,7 @@ public sealed class UnitOfWork(
     IDeviceRepository devices,
     IDnsQueryRepository dnsQueries,
     INetworkConnectionRepository networkConnections,
+    ITlsObservationRepository tlsObservations,
     INetworkScanRunRepository networkScanRuns,
     ISecurityAlertRepository securityAlerts) : IUnitOfWork
 {
@@ -18,6 +19,8 @@ public sealed class UnitOfWork(
     public IDnsQueryRepository DnsQueries { get; } = dnsQueries;
 
     public INetworkConnectionRepository NetworkConnections { get; } = networkConnections;
+
+    public ITlsObservationRepository TlsObservations { get; } = tlsObservations;
 
     public INetworkScanRunRepository NetworkScanRuns { get; } = networkScanRuns;
 

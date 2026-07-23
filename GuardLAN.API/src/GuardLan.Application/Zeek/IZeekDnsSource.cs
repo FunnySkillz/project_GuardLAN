@@ -1,14 +1,14 @@
-using GuardLan.Application.Models;
+using GuardLan.Application.Dns;
 
 namespace GuardLan.Application.Zeek;
 
-public interface IZeekConnectionSource
+public interface IZeekDnsSource
 {
     bool IsEnabled { get; }
 
     string SourceName { get; }
 
-    Task<ZeekConnectionReadResult> ReadNewConnectionsAsync(
+    Task<ZeekDnsReadResult> ReadNewQueriesAsync(
         CancellationToken cancellationToken = default);
 
     Task SaveCheckpointAsync(
@@ -16,11 +16,11 @@ public interface IZeekConnectionSource
         CancellationToken cancellationToken = default);
 }
 
-public sealed record ZeekConnectionReadResult(
+public sealed record ZeekDnsReadResult(
     bool SourceAvailable,
     int LinesRead,
     int RecordsParsed,
     int SkippedInvalid,
-    IReadOnlyList<ConnectionIngestionRecordDto> Records,
+    IReadOnlyList<DnsIngestionRecord> Records,
     ZeekLogCheckpoint? Checkpoint,
     string Message);

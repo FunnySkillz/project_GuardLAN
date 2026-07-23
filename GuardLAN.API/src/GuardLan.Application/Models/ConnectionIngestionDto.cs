@@ -10,6 +10,8 @@ public sealed class ConnectionIngestionBatchDto
 
 public sealed class ConnectionIngestionRecordDto
 {
+    public string? SourceRecordId { get; init; }
+
     public string SourceIp { get; init; } = string.Empty;
 
     public string DestinationIp { get; init; } = string.Empty;

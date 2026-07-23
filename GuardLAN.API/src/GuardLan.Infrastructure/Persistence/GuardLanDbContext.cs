@@ -9,6 +9,8 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
 
     public DbSet<NetworkConnection> Connections => Set<NetworkConnection>();
 
+    public DbSet<TlsObservation> TlsObservations => Set<TlsObservation>();
+
     public DbSet<DnsQuery> DnsQueries => Set<DnsQuery>();
 
     public DbSet<SecurityAlert> Alerts => Set<SecurityAlert>();
@@ -36,9 +38,12 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
             entity.ToTable("network_connections");
             entity.HasKey(connection => connection.Id);
             entity.HasIndex(connection => connection.DeviceId);
+            entity.HasIndex(connection => new { connection.Source, connection.SourceRecordId });
             entity.HasIndex(connection => connection.DestinationDomain);
             entity.HasIndex(connection => connection.LastSeenUtc);
 
+            entity.Property(connection => connection.Source).HasMaxLength(64);
+            entity.Property(connection => connection.SourceRecordId).HasMaxLength(96);
             entity.Property(connection => connection.DestinationIp).HasMaxLength(64);
             entity.Property(connection => connection.DestinationDomain).HasMaxLength(255);
             entity.Property(connection => connection.Protocol).HasMaxLength(32);
@@ -48,6 +53,40 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
                 .WithMany(device => device.Connections)
                 .HasForeignKey(connection => connection.DeviceId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TlsObservation>(entity =>
+        {
+            entity.ToTable("tls_observations");
+            entity.HasKey(observation => observation.Id);
+            entity.HasIndex(observation => observation.DeviceId);
+            entity.HasIndex(observation => observation.ConnectionId);
+            entity.HasIndex(observation => new { observation.Source, observation.SourceRecordId });
+            entity.HasIndex(observation => observation.ServerName);
+            entity.HasIndex(observation => observation.ObservedUtc);
+
+            entity.Property(observation => observation.Source).HasMaxLength(64);
+            entity.Property(observation => observation.SourceRecordId).HasMaxLength(96);
+            entity.Property(observation => observation.SourceIp).HasMaxLength(64);
+            entity.Property(observation => observation.DestinationIp).HasMaxLength(64);
+            entity.Property(observation => observation.ServerName).HasMaxLength(255);
+            entity.Property(observation => observation.Version).HasMaxLength(64);
+            entity.Property(observation => observation.Cipher).HasMaxLength(128);
+            entity.Property(observation => observation.Ja3).HasMaxLength(128);
+            entity.Property(observation => observation.Ja3s).HasMaxLength(128);
+            entity.Property(observation => observation.Alpn).HasMaxLength(128);
+
+            entity
+                .HasOne(observation => observation.Device)
+                .WithMany(device => device.TlsObservations)
+                .HasForeignKey(observation => observation.DeviceId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity
+                .HasOne(observation => observation.Connection)
+                .WithMany(connection => connection.TlsObservations)
+                .HasForeignKey(observation => observation.ConnectionId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<DnsQuery>(entity =>

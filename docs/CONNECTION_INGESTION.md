@@ -17,6 +17,7 @@ Example payload:
   "source": "Zeek",
   "records": [
     {
+      "sourceRecordId": "C8FeW14h5fT1iS1f7",
       "sourceIp": "192.168.1.22",
       "destinationIp": "140.82.112.4",
       "destinationDomain": "github.com",
@@ -34,6 +35,7 @@ Example payload:
 The ingestion service normalizes and validates records before storage:
 
 * `sourceIp` must match a known GuardLAN device IP.
+* `sourceRecordId` is optional and should contain a stable upstream record ID when available.
 * `destinationIp` must be a valid IP address.
 * `destinationDomain` is optional and normalized to lowercase without a trailing dot.
 * `protocol` is normalized to uppercase.
@@ -42,7 +44,7 @@ The ingestion service normalizes and validates records before storage:
 * timestamps are normalized to UTC seconds.
 * records with future timestamps, invalid time windows or unknown source devices are skipped.
 
-Duplicate prevention uses the normalized device, destination, protocol, port and start/end timestamps. A repeated import of the same normalized batch should not create duplicate connection rows.
+Duplicate prevention uses `source` and `sourceRecordId` when a source record ID is provided. Otherwise it falls back to the normalized device, destination, protocol, port and start/end timestamps. A repeated import of the same normalized batch should not create duplicate connection rows.
 
 Returned result fields include:
 
@@ -58,6 +60,7 @@ Returned result fields include:
 The first Zeek importer should map `conn.log` data into this contract:
 
 ```text
+uid            -> sourceRecordId
 id.orig_h      -> sourceIp
 id.resp_h      -> destinationIp
 id.resp_p      -> destinationPort

@@ -2,13 +2,13 @@ using GuardLan.Application.Models;
 
 namespace GuardLan.Application.Zeek;
 
-public interface IZeekConnectionSource
+public interface IZeekTlsSource
 {
     bool IsEnabled { get; }
 
     string SourceName { get; }
 
-    Task<ZeekConnectionReadResult> ReadNewConnectionsAsync(
+    Task<ZeekTlsReadResult> ReadNewObservationsAsync(
         CancellationToken cancellationToken = default);
 
     Task SaveCheckpointAsync(
@@ -16,11 +16,11 @@ public interface IZeekConnectionSource
         CancellationToken cancellationToken = default);
 }
 
-public sealed record ZeekConnectionReadResult(
+public sealed record ZeekTlsReadResult(
     bool SourceAvailable,
     int LinesRead,
     int RecordsParsed,
     int SkippedInvalid,
-    IReadOnlyList<ConnectionIngestionRecordDto> Records,
+    IReadOnlyList<TlsObservationIngestionRecordDto> Records,
     ZeekLogCheckpoint? Checkpoint,
     string Message);

@@ -30,6 +30,11 @@ Accept: application/json
 
 ###
 
+POST {{GuardLan.Api_HostAddress}}/api/integrations/zeek/import
+Accept: application/json
+
+###
+
 GET {{GuardLan.Api_HostAddress}}/api/scans
 Accept: application/json
 

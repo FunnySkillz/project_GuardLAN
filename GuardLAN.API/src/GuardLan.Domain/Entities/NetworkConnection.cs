@@ -8,6 +8,10 @@ public class NetworkConnection
 
     public NetworkDevice? Device { get; set; }
 
+    public string? Source { get; set; }
+
+    public string? SourceRecordId { get; set; }
+
     public string DestinationIp { get; set; } = null!;
 
     public string? DestinationDomain { get; set; }
@@ -23,4 +27,6 @@ public class NetworkConnection
     public DateTime FirstSeenUtc { get; set; }
 
     public DateTime LastSeenUtc { get; set; }
+
+    public ICollection<TlsObservation> TlsObservations { get; } = [];
 }

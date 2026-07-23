@@ -31,12 +31,16 @@ public static class DependencyInjection
         services.AddScoped<IDeviceRepository, DeviceRepository>();
         services.AddScoped<IDnsQueryRepository, DnsQueryRepository>();
         services.AddScoped<INetworkConnectionRepository, NetworkConnectionRepository>();
+        services.AddScoped<ITlsObservationRepository, TlsObservationRepository>();
         services.AddScoped<INetworkScanRunRepository, NetworkScanRunRepository>();
         services.AddScoped<ISecurityAlertRepository, SecurityAlertRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<INetworkScanner, NmapNetworkScanner>();
         services.AddScoped<IDnsQuerySource, PiHoleDnsQuerySource>();
+        services.AddScoped<ZeekLogFileReader>();
         services.AddScoped<IZeekConnectionSource, ZeekConnLogSource>();
+        services.AddScoped<IZeekDnsSource, ZeekDnsLogSource>();
+        services.AddScoped<IZeekTlsSource, ZeekSslLogSource>();
 
         return services;
     }

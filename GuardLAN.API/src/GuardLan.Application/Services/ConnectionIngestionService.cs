@@ -11,6 +11,7 @@ public sealed class ConnectionIngestionService(
     TimeProvider timeProvider) : IConnectionIngestionService
 {
     private const int MaxSourceLength = 64;
+    private const int MaxSourceRecordIdLength = 96;
     private const int MaxProtocolLength = 32;
     private const int MaxDomainLength = 255;
     private static readonly DateTime MinimumAcceptedTimestampUtc =
@@ -91,6 +92,8 @@ public sealed class ConnectionIngestionService(
             matchedDevices++;
 
             var key = BuildKey(
+                source,
+                record.SourceRecordId,
                 device.Id,
                 record.DestinationIp,
                 record.DestinationDomain,
@@ -110,6 +113,8 @@ public sealed class ConnectionIngestionService(
                 {
                     Id = Guid.NewGuid(),
                     DeviceId = device.Id,
+                    Source = source,
+                    SourceRecordId = record.SourceRecordId,
                     DestinationIp = record.DestinationIp,
                     DestinationDomain = record.DestinationDomain,
                     Protocol = record.Protocol,
@@ -146,6 +151,7 @@ public sealed class ConnectionIngestionService(
         DateTime importedAtUtc)
     {
         var sourceIp = NormalizeIpAddress(record.SourceIp);
+        var sourceRecordId = NormalizeSourceRecordId(record.SourceRecordId);
         var destinationIp = NormalizeIpAddress(record.DestinationIp);
         var destinationDomain = NormalizeDomain(record.DestinationDomain);
         var protocol = NormalizeProtocol(record.Protocol);
@@ -169,6 +175,7 @@ public sealed class ConnectionIngestionService(
 
         return new NormalizedConnectionRecord(
             sourceIp,
+            sourceRecordId,
             destinationIp,
             destinationDomain,
             protocol,
@@ -177,6 +184,20 @@ public sealed class ConnectionIngestionService(
             record.BytesReceived,
             firstSeenUtc,
             lastSeenUtc);
+    }
+
+    private static string? NormalizeSourceRecordId(string? sourceRecordId)
+    {
+        var normalized = sourceRecordId?.Trim();
+
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        return normalized.Length <= MaxSourceRecordIdLength
+            ? normalized
+            : normalized[..MaxSourceRecordIdLength];
     }
 
     private static string NormalizeSource(string? source)
@@ -244,6 +265,8 @@ public sealed class ConnectionIngestionService(
     private static string BuildKey(NetworkConnection connection)
     {
         return BuildKey(
+            NormalizeSource(connection.Source),
+            NormalizeSourceRecordId(connection.SourceRecordId),
             connection.DeviceId,
             NormalizeIpAddress(connection.DestinationIp),
             NormalizeDomain(connection.DestinationDomain),
@@ -254,6 +277,8 @@ public sealed class ConnectionIngestionService(
     }
 
     private static string BuildKey(
+        string source,
+        string? sourceRecordId,
         Guid deviceId,
         string destinationIp,
         string? destinationDomain,
@@ -262,6 +287,11 @@ public sealed class ConnectionIngestionService(
         DateTime firstSeenUtc,
         DateTime lastSeenUtc)
     {
+        if (!string.IsNullOrWhiteSpace(sourceRecordId))
+        {
+            return string.Join("|", "source-record", source, sourceRecordId);
+        }
+
         return string.Join(
             "|",
             deviceId,
@@ -275,6 +305,7 @@ public sealed class ConnectionIngestionService(
 
     private sealed record NormalizedConnectionRecord(
         string SourceIp,
+        string? SourceRecordId,
         string DestinationIp,
         string? DestinationDomain,
         string Protocol,

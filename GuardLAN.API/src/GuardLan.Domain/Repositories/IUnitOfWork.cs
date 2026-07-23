@@ -8,6 +8,8 @@ public interface IUnitOfWork
 
     INetworkConnectionRepository NetworkConnections { get; }
 
+    ITlsObservationRepository TlsObservations { get; }
+
     INetworkScanRunRepository NetworkScanRuns { get; }
 
     ISecurityAlertRepository SecurityAlerts { get; }

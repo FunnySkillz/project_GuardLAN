@@ -12,9 +12,14 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IConnectionIngestionService, ConnectionIngestionService>();
         services.AddScoped<IConnectionService, ConnectionService>();
+        services.AddScoped<ITlsObservationIngestionService, TlsObservationIngestionService>();
+        services.AddScoped<IZeekImportService, ZeekImportService>();
         services.AddScoped<IZeekConnectionImportService, ZeekConnectionImportService>();
+        services.AddScoped<IZeekDnsImportService, ZeekDnsImportService>();
+        services.AddScoped<IZeekTlsImportService, ZeekTlsImportService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IDeviceService, DeviceService>();
+        services.AddScoped<IDnsRecordIngestionService, DnsRecordIngestionService>();
         services.AddScoped<IDnsService, DnsService>();
         services.AddScoped<IDnsIngestionService, DnsIngestionService>();
         services.AddScoped<IAlertService, AlertService>();
