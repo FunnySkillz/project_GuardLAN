@@ -17,4 +17,16 @@ public sealed class DnsQueryRepository(GuardLanDbContext dbContext)
             .Where(query => query.TimestampUtc >= sinceUtc)
             .ToArrayAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<DnsQuery>> GetSinceWithDevicesAsync(
+        DateTime sinceUtc,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(query => query.Device)
+            .Where(query => query.TimestampUtc >= sinceUtc)
+            .OrderByDescending(query => query.TimestampUtc)
+            .ToArrayAsync(cancellationToken);
+    }
 }

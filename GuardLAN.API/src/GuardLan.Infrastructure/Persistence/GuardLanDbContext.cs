@@ -57,6 +57,7 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
             entity.HasIndex(query => query.ClientIp);
             entity.HasIndex(query => query.Domain);
             entity.HasIndex(query => query.TimestampUtc);
+            entity.HasIndex(query => new { query.ClientIp, query.Domain, query.TimestampUtc }).IsUnique();
 
             entity.Property(query => query.ClientIp).HasMaxLength(64);
             entity.Property(query => query.Domain).HasMaxLength(255);

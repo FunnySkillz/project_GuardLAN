@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IDeviceService, DeviceService>();
+        services.AddScoped<IDnsService, DnsService>();
         services.AddScoped<IAlertService, AlertService>();
         services.AddScoped<INetworkScanService, NetworkScanService>();
         services.AddScoped<IScanExecutionService, ScanExecutionService>();

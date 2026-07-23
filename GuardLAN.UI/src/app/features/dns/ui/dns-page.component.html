@@ -1,0 +1,181 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">DNS Visibility</p>
+    <h1>DNS Activity</h1>
+  </div>
+
+  <button class="secondary" type="button" (click)="retry()" [disabled]="facade.loading()">
+    {{ facade.loading() ? 'Refreshing...' : 'Refresh' }}
+  </button>
+</header>
+
+@if (facade.error(); as message) {
+  <section class="status-panel" role="status">
+    <span>{{ message }}</span>
+    <button class="secondary" type="button" (click)="retry()">Retry</button>
+  </section>
+}
+
+<section class="metrics" aria-label="DNS summary" [class.loading]="facade.loading()">
+  <article class="metric-card">
+    <span>Total</span>
+    <strong>{{ facade.summary().totalQueries }}</strong>
+    <small>queries in 24 hours</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Allowed</span>
+    <strong>{{ facade.summary().allowedQueries }}</strong>
+    <small>permitted lookups</small>
+  </article>
+
+  <article class="metric-card danger">
+    <span>Blocked</span>
+    <strong>{{ facade.summary().blockedQueries }}</strong>
+    <small>filtered lookups</small>
+  </article>
+
+  <article class="metric-card warning">
+    <span>Domains</span>
+    <strong>{{ facade.summary().uniqueDomains }}</strong>
+    <small>unique destinations</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Clients</span>
+    <strong>{{ facade.summary().activeClients }}</strong>
+    <small>talking devices</small>
+  </article>
+</section>
+
+<section class="toolbar" aria-label="DNS controls">
+  <div class="filter-group" role="group" aria-label="DNS filter">
+    @for (filter of filters; track filter.value) {
+      <button
+        class="filter-button"
+        type="button"
+        [class.active]="isFilterActive(filter.value)"
+        [attr.aria-pressed]="isFilterActive(filter.value)"
+        (click)="setFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  <label class="search-field">
+    <span>Search</span>
+    <input
+      type="search"
+      [value]="facade.search()"
+      (input)="updateSearch($event)"
+      placeholder="Domain, device, IP"
+    />
+  </label>
+</section>
+
+<section class="dns-grid">
+  <section class="panel history-panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">History</p>
+        <h2>{{ facade.filteredQueries().length }} queries</h2>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Domain</th>
+            <th scope="col">Client</th>
+            <th scope="col">Decision</th>
+            <th scope="col">Observed</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (facade.filteredQueries().length === 0) {
+            <tr>
+              <td class="empty-state table-empty" colspan="4">
+                {{ facade.loading() ? 'Loading DNS queries...' : 'No DNS queries match this view' }}
+              </td>
+            </tr>
+          } @else {
+            @for (query of facade.filteredQueries(); track query.id) {
+              <tr>
+                <td>
+                  <strong>{{ query.domain }}</strong>
+                  <small>{{ query.wasBlocked ? 'Blocked by DNS policy' : 'Allowed DNS lookup' }}</small>
+                </td>
+                <td>
+                  <strong>{{ queryDevice(query) }}</strong>
+                  <small>{{ query.clientIp }}</small>
+                </td>
+                <td>
+                  <span class="decision-pill" [class.blocked]="query.wasBlocked">
+                    {{ query.wasBlocked ? 'Blocked' : 'Allowed' }}
+                  </span>
+                </td>
+                <td>{{ formatRelativeTime(query.timestampUtc) }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Domains</p>
+        <h2>Top Domains</h2>
+      </div>
+    </div>
+
+    <div class="summary-list">
+      @if (facade.topDomains().length === 0) {
+        <p class="empty-state">{{ facade.loading() ? 'Loading domains...' : 'No domain activity yet' }}</p>
+      } @else {
+        @for (domain of facade.topDomains(); track domain.domain) {
+          <article class="summary-row">
+            <div>
+              <strong>{{ domain.domain }}</strong>
+              <small>{{ domain.requests }} requests</small>
+            </div>
+            <span [class.blocked]="domain.blockedRequests > 0">
+              {{ domain.blockedRequests }} blocked
+            </span>
+          </article>
+        }
+      }
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Clients</p>
+        <h2>Top Clients</h2>
+      </div>
+    </div>
+
+    <div class="summary-list">
+      @if (facade.topClients().length === 0) {
+        <p class="empty-state">{{ facade.loading() ? 'Loading clients...' : 'No client activity yet' }}</p>
+      } @else {
+        @for (client of facade.topClients(); track client.clientIp) {
+          <article class="summary-row">
+            <div>
+              <strong>{{ clientName(client) }}</strong>
+              <small>{{ client.clientIp }} | {{ client.requests }} requests</small>
+            </div>
+            <span [class.blocked]="client.blockedRequests > 0">
+              {{ blockRate(client.blockedRequests, client.requests) }} blocked
+            </span>
+          </article>
+        }
+      }
+    </div>
+  </section>
+</section>

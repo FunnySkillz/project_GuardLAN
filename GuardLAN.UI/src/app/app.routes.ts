@@ -16,6 +16,11 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'dns',
+    loadComponent: () =>
+      import('./features/dns/ui/dns-page.component').then((module) => module.DnsPageComponent)
+  },
+  {
     path: 'alerts',
     loadComponent: () =>
       import('./features/alerts/ui/alerts-page.component').then(

@@ -20,6 +20,7 @@ The current implementation includes:
 * Device, alert, dashboard, and scan API endpoints
 * A queued network scanner flow backed by a worker service
 * An Angular dashboard wired to the backend overview endpoint
+* DNS overview API and Angular DNS activity page for stored DNS query data
 * Local Docker Compose infrastructure for PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.
@@ -318,6 +319,7 @@ Useful API endpoints:
 GET   http://localhost:5232/api/health
 GET   http://localhost:5232/api/dashboard
 GET   http://localhost:5232/api/dashboard/overview
+GET   http://localhost:5232/api/dns/overview
 GET   http://localhost:5232/api/devices
 PATCH http://localhost:5232/api/devices/{id}
 GET   http://localhost:5232/api/alerts
@@ -409,6 +411,7 @@ Do not use GuardLAN to monitor networks, systems, or people without appropriate 
 
 Detailed project conventions are documented separately:
 
+* [Implementation phases](docs/IMPLEMENTATION_PHASES.md)
 * [MDAC mobile collector plan](docs/MDAC/README.md)
 * [Backend architecture](GuardLAN.API/docs/BACKEND_ARCHITECTURE.md)
 * [Frontend architecture](GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md)
