@@ -4,6 +4,7 @@ import { filter, Observable, Subject } from 'rxjs';
 
 export type LiveUpdateType =
   | 'alertResolved'
+  | 'alertUpdated'
   | 'deviceStatusChanged'
   | 'dnsIngestionCompleted'
   | 'newAlert'

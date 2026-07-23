@@ -40,6 +40,7 @@ export class DeviceEvidencePageComponent implements OnInit {
     this.liveUpdates
       .ofTypes(
         'alertResolved',
+        'alertUpdated',
         'deviceStatusChanged',
         'dnsIngestionCompleted',
         'newAlert',

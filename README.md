@@ -24,6 +24,7 @@ The current implementation includes:
 * DNS overview API and Angular DNS activity page for stored DNS query data
 * Connection overview API, normalized connection import endpoint, Zeek connection/DNS/TLS importers, dashboard traffic widgets and Angular connection activity page
 * Suricata Eve JSON alert importer with device and connection association
+* Alert review states for reviewed, resolved, false-positive, suppressed and reopened alerts
 * SignalR live updates for scan, device, alert and DNS ingestion changes
 * Local-user authentication with cookie sessions for the API, UI and SignalR hub
 * Explainable device risk signals based on alerts, DNS, connection and inventory evidence
@@ -387,6 +388,10 @@ GET   http://localhost:5232/api/devices
 PATCH http://localhost:5232/api/devices/{id}
 GET   http://localhost:5232/api/alerts
 PATCH http://localhost:5232/api/alerts/{id}/resolve
+PATCH http://localhost:5232/api/alerts/{id}/review
+PATCH http://localhost:5232/api/alerts/{id}/false-positive
+PATCH http://localhost:5232/api/alerts/{id}/suppress
+PATCH http://localhost:5232/api/alerts/{id}/reopen
 GET   http://localhost:5232/api/scans
 GET   http://localhost:5232/api/scans/{id}
 POST  http://localhost:5232/api/scans
@@ -480,6 +485,7 @@ Detailed project conventions are documented separately:
 * [Pi-hole integration](docs/PIHOLE.md)
 * [Zeek integration](docs/ZEEK.md)
 * [Suricata integration](docs/SURICATA.md)
+* [Alert lifecycle](docs/ALERT_LIFECYCLE.md)
 * [SignalR live updates](docs/LIVE_UPDATES.md)
 * [Security hardening](docs/SECURITY_HARDENING.md)
 * [Device risk signals](docs/DEVICE_RISK.md)

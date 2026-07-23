@@ -1,4 +1,5 @@
 using GuardLan.Domain.Entities;
+using GuardLan.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace GuardLan.Infrastructure.Persistence;
@@ -125,6 +126,8 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
             entity.HasIndex(alert => alert.ConnectionId);
             entity.HasIndex(alert => new { alert.Source, alert.SourceRecordId });
             entity.HasIndex(alert => alert.CreatedUtc);
+            entity.HasIndex(alert => alert.ReviewStatus);
+            entity.HasIndex(alert => alert.ReviewedUtc);
             entity.HasIndex(alert => alert.ResolvedUtc);
 
             entity.Property(alert => alert.Source).HasMaxLength(64);
@@ -133,8 +136,13 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
             entity.Property(alert => alert.DestinationIp).HasMaxLength(64);
             entity.Property(alert => alert.Protocol).HasMaxLength(32);
             entity.Property(alert => alert.Severity).HasConversion<string>().HasMaxLength(32);
+            entity.Property(alert => alert.ReviewStatus)
+                .HasConversion<string>()
+                .HasMaxLength(32)
+                .HasDefaultValue(AlertReviewStatus.Open);
             entity.Property(alert => alert.Type).HasMaxLength(96);
             entity.Property(alert => alert.Message).HasMaxLength(512);
+            entity.Property(alert => alert.ReviewNote).HasMaxLength(512);
             entity.Property(alert => alert.EvidenceSummary).HasMaxLength(1024);
 
             entity

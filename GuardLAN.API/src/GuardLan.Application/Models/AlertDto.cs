@@ -17,10 +17,13 @@ public sealed record AlertDto(
     int? DestinationPort,
     string? Protocol,
     AlertSeverity Severity,
+    AlertReviewStatus ReviewStatus,
     string Type,
     string Message,
     DateTime CreatedUtc,
+    DateTime? ReviewedUtc,
     DateTime? ResolvedUtc,
+    string? ReviewNote,
     string? EvidenceSummary,
     IReadOnlyList<AlertHistoryDto> History)
 {
@@ -40,10 +43,13 @@ public sealed record AlertDto(
             alert.DestinationPort,
             alert.Protocol,
             alert.Severity,
+            alert.ReviewStatus,
             alert.Type,
             alert.Message,
             alert.CreatedUtc,
+            alert.ReviewedUtc,
             alert.ResolvedUtc,
+            alert.ReviewNote,
             alert.EvidenceSummary,
             alert.History
                 .OrderByDescending(history => history.CreatedUtc)
@@ -51,6 +57,8 @@ public sealed record AlertDto(
                 .ToArray());
     }
 }
+
+public sealed record AlertReviewCommand(string? Note);
 
 public sealed record AlertHistoryDto(
     Guid Id,

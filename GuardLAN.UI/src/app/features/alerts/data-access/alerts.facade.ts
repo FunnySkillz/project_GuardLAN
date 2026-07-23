@@ -2,17 +2,31 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { finalize, take } from 'rxjs';
 
 import { AlertsApi } from './alerts.api';
-import { AlertDto, isOpenAlert, severityRank } from '../../../shared/models/security-alert';
+import {
+  AlertDto,
+  alertReviewStatusLabel,
+  isOpenAlert,
+  severityRank
+} from '../../../shared/models/security-alert';
 
-export type AlertFilter = 'open' | 'high' | 'resolved' | 'all';
+export type AlertFilter =
+  | 'open'
+  | 'high'
+  | 'reviewed'
+  | 'resolved'
+  | 'falsePositive'
+  | 'suppressed'
+  | 'all';
+export type AlertAction = 'review' | 'resolve' | 'falsePositive' | 'suppress' | 'reopen';
 
 interface AlertsState {
   readonly alerts: readonly AlertDto[];
   readonly error: string | null;
   readonly filter: AlertFilter;
   readonly loading: boolean;
-  readonly resolvingAlertId: string | null;
+  readonly noteDrafts: Readonly<Record<string, string>>;
   readonly search: string;
+  readonly updatingAlertId: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,16 +37,18 @@ export class AlertsFacade {
     error: null,
     filter: 'open',
     loading: false,
-    resolvingAlertId: null,
-    search: ''
+    noteDrafts: {},
+    search: '',
+    updatingAlertId: null
   });
 
   readonly alerts = computed(() => this.state().alerts);
   readonly error = computed(() => this.state().error);
   readonly filter = computed(() => this.state().filter);
   readonly loading = computed(() => this.state().loading);
-  readonly resolvingAlertId = computed(() => this.state().resolvingAlertId);
+  readonly noteDrafts = computed(() => this.state().noteDrafts);
   readonly search = computed(() => this.state().search);
+  readonly updatingAlertId = computed(() => this.state().updatingAlertId);
   readonly filteredAlerts = computed(() => {
     const state = this.state();
     const query = state.search.trim().toLowerCase();
@@ -50,6 +66,8 @@ export class AlertsFacade {
         alert.type,
         alert.message,
         alert.severity,
+        alertReviewStatusLabel(alert.reviewStatus),
+        alert.reviewNote,
         alert.deviceName,
         alert.deviceIpAddress,
         alert.deviceMacAddress,
@@ -69,7 +87,10 @@ export class AlertsFacade {
       total: alerts.length,
       open: alerts.filter(isOpenAlert).length,
       high: alerts.filter((alert) => isOpenAlert(alert) && severityRank(alert.severity) >= 3).length,
-      resolved: alerts.filter((alert) => !isOpenAlert(alert)).length
+      reviewed: alerts.filter((alert) => alert.reviewStatus === 'Reviewed').length,
+      falsePositive: alerts.filter((alert) => alert.reviewStatus === 'FalsePositive').length,
+      suppressed: alerts.filter((alert) => alert.reviewStatus === 'Suppressed').length,
+      closed: alerts.filter((alert) => !isOpenAlert(alert)).length
     };
   });
 
@@ -100,27 +121,53 @@ export class AlertsFacade {
     this.state.update((state) => ({ ...state, search }));
   }
 
-  resolve(alertId: string): void {
-    this.state.update((state) => ({ ...state, error: null, resolvingAlertId: alertId }));
+  setNote(alertId: string, note: string): void {
+    this.state.update((state) => ({
+      ...state,
+      noteDrafts: {
+        ...state.noteDrafts,
+        [alertId]: note
+      }
+    }));
+  }
 
-    this.api
-      .resolve(alertId)
+  submitAction(alertId: string, action: AlertAction): void {
+    const request = { note: normalizeNote(this.state().noteDrafts[alertId]) };
+    const actionRequest = (() => {
+      switch (action) {
+        case 'review':
+          return this.api.review(alertId, request);
+        case 'resolve':
+          return this.api.resolve(alertId, request);
+        case 'falsePositive':
+          return this.api.markFalsePositive(alertId, request);
+        case 'suppress':
+          return this.api.suppress(alertId, request);
+        case 'reopen':
+          return this.api.reopen(alertId, request);
+      }
+    })();
+
+    this.state.update((state) => ({ ...state, error: null, updatingAlertId: alertId }));
+
+    actionRequest
       .pipe(
         take(1),
-        finalize(() => this.state.update((state) => ({ ...state, resolvingAlertId: null })))
+        finalize(() => this.state.update((state) => ({ ...state, updatingAlertId: null })))
       )
       .subscribe({
-        next: (resolvedAlert) =>
+        next: (updatedAlert) =>
           this.state.update((state) => ({
             ...state,
+            noteDrafts: removeDraft(state.noteDrafts, alertId),
             alerts: state.alerts.map((alert) =>
-              alert.id === resolvedAlert.id ? resolvedAlert : alert
+              alert.id === updatedAlert.id ? updatedAlert : alert
             )
           })),
         error: () =>
           this.state.update((state) => ({
             ...state,
-            error: 'The alert could not be resolved. Check the API and try again.'
+            error: 'The alert could not be updated. Check the API and try again.'
           }))
       });
   }
@@ -132,9 +179,31 @@ function matchesFilter(alert: AlertDto, filter: AlertFilter): boolean {
       return isOpenAlert(alert);
     case 'high':
       return isOpenAlert(alert) && severityRank(alert.severity) >= 3;
+    case 'reviewed':
+      return alert.reviewStatus === 'Reviewed';
     case 'resolved':
-      return !isOpenAlert(alert);
+      return alert.reviewStatus === 'Resolved';
+    case 'falsePositive':
+      return alert.reviewStatus === 'FalsePositive';
+    case 'suppressed':
+      return alert.reviewStatus === 'Suppressed';
     case 'all':
       return true;
   }
+}
+
+function normalizeNote(note: string | undefined): string | null {
+  const value = note?.trim();
+
+  return value ? value : null;
+}
+
+function removeDraft(
+  drafts: Readonly<Record<string, string>>,
+  alertId: string
+): Readonly<Record<string, string>> {
+  const next = { ...drafts };
+  delete next[alertId];
+
+  return next;
 }

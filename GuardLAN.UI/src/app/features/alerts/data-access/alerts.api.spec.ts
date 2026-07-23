@@ -20,10 +20,13 @@ describe('AlertsApi', () => {
     destinationPort: null,
     protocol: null,
     severity: 'High',
+    reviewStatus: 'Open',
     type: 'UnknownDeviceConnected',
     message: 'New unknown device connected at 192.168.1.22.',
     createdUtc: '2026-07-23T10:00:00Z',
+    reviewedUtc: null,
     resolvedUtc: null,
+    reviewNote: null,
     evidenceSummary: null,
     history: []
   };
@@ -57,16 +60,38 @@ describe('AlertsApi', () => {
   it('should resolve an alert', () => {
     const resolvedAlert: AlertDto = {
       ...alert,
-      resolvedUtc: '2026-07-23T10:30:00Z'
+      reviewStatus: 'Resolved',
+      reviewedUtc: '2026-07-23T10:30:00Z',
+      resolvedUtc: '2026-07-23T10:30:00Z',
+      reviewNote: 'Fixed'
     };
 
-    api.resolve(alert.id).subscribe((response) => {
+    api.resolve(alert.id, { note: 'Fixed' }).subscribe((response) => {
       expect(response).toEqual(resolvedAlert);
     });
 
     const request = http.expectOne(`/api/alerts/${alert.id}/resolve`);
     expect(request.request.method).toBe('PATCH');
-    expect(request.request.body).toBeNull();
+    expect(request.request.body).toEqual({ note: 'Fixed' });
     request.flush(resolvedAlert);
+  });
+
+  it('should mark an alert false positive', () => {
+    const falsePositiveAlert: AlertDto = {
+      ...alert,
+      reviewStatus: 'FalsePositive',
+      reviewedUtc: '2026-07-23T10:30:00Z',
+      resolvedUtc: '2026-07-23T10:30:00Z',
+      reviewNote: 'Benign test'
+    };
+
+    api.markFalsePositive(alert.id, { note: 'Benign test' }).subscribe((response) => {
+      expect(response).toEqual(falsePositiveAlert);
+    });
+
+    const request = http.expectOne(`/api/alerts/${alert.id}/false-positive`);
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual({ note: 'Benign test' });
+    request.flush(falsePositiveAlert);
   });
 });

@@ -155,7 +155,7 @@ Remaining hardening:
 
 * Validate against a live Suricata sensor
 * Add richer alert detail and history views in the UI
-* Add explicit false-positive and reviewed alert states
+* Add duplicate suppression rules if real sensors produce noisy repeated signatures
 
 ## Phase 5: SignalR Live Updates
 
@@ -169,7 +169,7 @@ Started:
 * Backend live update abstraction
 * API publisher backed by `IHubContext`
 * Worker publisher that relays events through an internal API endpoint
-* Live events for scan queueing, scan completion, scan failure, new devices, device online/offline changes, new alerts, alert resolution and DNS ingestion completion
+* Live events for scan queueing, scan completion, scan failure, new devices, device online/offline changes, new alerts, alert lifecycle changes and DNS ingestion completion
 * Angular live update service with reconnect behavior
 * Dashboard, device, DNS and alert page refresh hooks
 * Docker Compose worker service and `/hubs` proxy support
@@ -361,3 +361,31 @@ Remaining hardening:
 
 * Decide the production migration runner/deployment policy before exposing GuardLAN beyond local development
 * Add backup and retention automation
+
+## Phase 12: Alert Review Lifecycle
+
+Goal: let operators triage alerts without deleting evidence or losing history.
+
+Status: complete.
+
+Started:
+
+* `AlertReviewStatus` values for open, reviewed, resolved, false-positive and suppressed alerts
+* Review timestamp and latest review note on each alert
+* Lifecycle history entries for review, resolve, false-positive, suppress and reopen actions
+* API endpoints for each lifecycle action
+* `alertUpdated` live update event for non-resolve lifecycle changes
+* Alerts page filters, summary metrics, note field and context-aware lifecycle buttons
+* Migration updates for MDAC tables already present in the model and alert review columns
+
+Deliverables:
+
+* Operator-visible false-positive handling
+* Suppression and reopen flow
+* Reviewed-but-still-open alert state
+* Dashboard and device evidence refresh after alert lifecycle changes
+
+Remaining hardening:
+
+* Add dedicated alert detail and full history views
+* Add duplicate/noisy signature suppression rules after live IDS validation

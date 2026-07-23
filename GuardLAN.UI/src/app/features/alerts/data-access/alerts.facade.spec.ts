@@ -20,10 +20,13 @@ describe('AlertsFacade', () => {
     destinationPort: null,
     protocol: null,
     severity: 'High',
+    reviewStatus: 'Open',
     type: 'UnknownDeviceConnected',
     message: 'New unknown device connected at 192.168.1.22.',
     createdUtc: '2026-07-23T10:00:00Z',
+    reviewedUtc: null,
     resolvedUtc: null,
+    reviewNote: null,
     evidenceSummary: null,
     history: []
   };
@@ -41,22 +44,26 @@ describe('AlertsFacade', () => {
     destinationPort: null,
     protocol: null,
     severity: 'Low',
+    reviewStatus: 'Resolved',
     type: 'DeviceDisappeared',
     message: 'Device disappeared from the network.',
     createdUtc: '2026-07-23T09:00:00Z',
+    reviewedUtc: '2026-07-23T09:30:00Z',
     resolvedUtc: '2026-07-23T09:30:00Z',
+    reviewNote: null,
     evidenceSummary: null,
     history: []
   };
 
-  let api: jasmine.SpyObj<Pick<AlertsApi, 'list' | 'resolve'>>;
+  let api: jasmine.SpyObj<
+    Pick<AlertsApi, 'list' | 'review' | 'resolve' | 'markFalsePositive' | 'suppress' | 'reopen'>
+  >;
   let facade: AlertsFacade;
 
   beforeEach(() => {
-    api = jasmine.createSpyObj<Pick<AlertsApi, 'list' | 'resolve'>>('AlertsApi', [
-      'list',
-      'resolve'
-    ]);
+    api = jasmine.createSpyObj<
+      Pick<AlertsApi, 'list' | 'review' | 'resolve' | 'markFalsePositive' | 'suppress' | 'reopen'>
+    >('AlertsApi', ['list', 'review', 'resolve', 'markFalsePositive', 'suppress', 'reopen']);
 
     TestBed.configureTestingModule({
       providers: [AlertsFacade, { provide: AlertsApi, useValue: api }]
@@ -75,7 +82,10 @@ describe('AlertsFacade', () => {
       total: 2,
       open: 1,
       high: 1,
-      resolved: 1
+      reviewed: 0,
+      falsePositive: 0,
+      suppressed: 0,
+      closed: 1
     });
   });
 
@@ -99,6 +109,8 @@ describe('AlertsFacade', () => {
   it('should replace an alert after resolving it', () => {
     const newlyResolvedAlert: AlertDto = {
       ...highAlert,
+      reviewStatus: 'Resolved',
+      reviewedUtc: '2026-07-23T10:30:00Z',
       resolvedUtc: '2026-07-23T10:30:00Z'
     };
 
@@ -106,10 +118,25 @@ describe('AlertsFacade', () => {
     api.resolve.and.returnValue(of(newlyResolvedAlert));
 
     facade.load();
-    facade.resolve(highAlert.id);
+    facade.setNote(highAlert.id, 'Fixed');
+    facade.submitAction(highAlert.id, 'resolve');
 
-    expect(api.resolve).toHaveBeenCalledWith(highAlert.id);
+    expect(api.resolve).toHaveBeenCalledWith(highAlert.id, { note: 'Fixed' });
     expect(facade.alerts()).toEqual([newlyResolvedAlert]);
     expect(facade.summary().open).toBe(0);
+  });
+
+  it('should filter false-positive alerts', () => {
+    const falsePositiveAlert: AlertDto = {
+      ...resolvedAlert,
+      id: 'alert-3',
+      reviewStatus: 'FalsePositive'
+    };
+    api.list.and.returnValue(of([highAlert, falsePositiveAlert]));
+
+    facade.load();
+    facade.setFilter('falsePositive');
+
+    expect(facade.filteredAlerts()).toEqual([falsePositiveAlert]);
   });
 });

@@ -30,15 +30,21 @@
   </article>
 
   <article class="metric-card">
-    <span>Resolved</span>
-    <strong>{{ facade.summary().resolved }}</strong>
-    <small>closed findings</small>
+    <span>Reviewed</span>
+    <strong>{{ facade.summary().reviewed }}</strong>
+    <small>triaged open</small>
+  </article>
+
+  <article class="metric-card quiet">
+    <span>False positive</span>
+    <strong>{{ facade.summary().falsePositive }}</strong>
+    <small>closed as benign</small>
   </article>
 
   <article class="metric-card">
-    <span>Total</span>
-    <strong>{{ facade.summary().total }}</strong>
-    <small>recent alerts</small>
+    <span>Closed</span>
+    <strong>{{ facade.summary().closed }}</strong>
+    <small>resolved or suppressed</small>
   </article>
 </section>
 
@@ -81,7 +87,12 @@
       <p class="empty-state">{{ facade.loading() ? 'Loading alerts...' : 'No alerts match this view' }}</p>
     } @else {
       @for (alert of facade.filteredAlerts(); track alert.id) {
-        <article class="alert-row" [class.resolved]="!isOpen(alert)">
+        <article
+          class="alert-row"
+          [class.resolved]="!isOpen(alert)"
+          [class.reviewed]="alert.reviewStatus === 'Reviewed'"
+          [class.false-positive]="alert.reviewStatus === 'FalsePositive'"
+        >
           <div class="alert-main">
             <span
               class="severity-pill"
@@ -95,10 +106,14 @@
               <div class="alert-title">
                 <strong>{{ alertType(alert) }}</strong>
                 <span>{{ priorityLabel(alert) }}</span>
+                <span>{{ reviewStatus(alert) }}</span>
               </div>
               <p>{{ alert.message }}</p>
               @if (alert.evidenceSummary) {
                 <small class="evidence-line">{{ alert.evidenceSummary }}</small>
+              }
+              @if (alert.reviewNote) {
+                <small class="review-line">Review: {{ alert.reviewNote }}</small>
               }
               <small>
                 {{ alertDevice(alert) }}
@@ -119,16 +134,72 @@
 
           <div class="alert-meta">
             <span>Created {{ formatRelativeTime(alert.createdUtc) }}</span>
-            <span>{{ isOpen(alert) ? 'Open' : 'Resolved ' + formatRelativeTime(alert.resolvedUtc) }}</span>
+            <span>{{ reviewStatus(alert) }}</span>
+            <span>{{ reviewTime(alert) }}</span>
           </div>
 
-          <button
-            type="button"
-            (click)="resolve(alert)"
-            [disabled]="!isOpen(alert) || isResolving(alert)"
-          >
-            {{ isResolving(alert) ? 'Resolving...' : isOpen(alert) ? 'Resolve' : 'Resolved' }}
-          </button>
+          <div class="alert-actions">
+            <label class="review-note-field">
+              <span>Note</span>
+              <input
+                type="text"
+                [value]="noteDraft(alert)"
+                (input)="updateNote(alert, $event)"
+                placeholder="Optional review note"
+                [disabled]="isUpdating(alert)"
+              />
+            </label>
+
+            <div class="action-buttons">
+              @if (isOpen(alert)) {
+                @if (alert.reviewStatus === 'Open') {
+                  <button
+                    class="secondary"
+                    type="button"
+                    (click)="submitAction(alert, 'review')"
+                    [disabled]="isUpdating(alert)"
+                  >
+                    Review
+                  </button>
+                }
+
+                <button
+                  type="button"
+                  (click)="submitAction(alert, 'resolve')"
+                  [disabled]="isUpdating(alert)"
+                >
+                  Resolve
+                </button>
+
+                <button
+                  class="secondary"
+                  type="button"
+                  (click)="submitAction(alert, 'falsePositive')"
+                  [disabled]="isUpdating(alert)"
+                >
+                  False positive
+                </button>
+
+                <button
+                  class="secondary"
+                  type="button"
+                  (click)="submitAction(alert, 'suppress')"
+                  [disabled]="isUpdating(alert)"
+                >
+                  Suppress
+                </button>
+              } @else {
+                <button
+                  class="secondary"
+                  type="button"
+                  (click)="submitAction(alert, 'reopen')"
+                  [disabled]="isUpdating(alert)"
+                >
+                  Reopen
+                </button>
+              }
+            </div>
+          </div>
         </article>
       }
     }

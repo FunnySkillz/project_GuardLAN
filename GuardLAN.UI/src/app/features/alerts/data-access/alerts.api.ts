@@ -4,6 +4,10 @@ import { Observable } from 'rxjs';
 
 import { AlertDto } from '../../../shared/models/security-alert';
 
+export interface AlertReviewRequest {
+  readonly note: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AlertsApi {
   private readonly http = inject(HttpClient);
@@ -13,7 +17,23 @@ export class AlertsApi {
     return this.http.get<readonly AlertDto[]>(this.apiBaseUrl);
   }
 
-  resolve(alertId: string): Observable<AlertDto> {
-    return this.http.patch<AlertDto>(`${this.apiBaseUrl}/${alertId}/resolve`, null);
+  review(alertId: string, request: AlertReviewRequest): Observable<AlertDto> {
+    return this.http.patch<AlertDto>(`${this.apiBaseUrl}/${alertId}/review`, request);
+  }
+
+  resolve(alertId: string, request: AlertReviewRequest): Observable<AlertDto> {
+    return this.http.patch<AlertDto>(`${this.apiBaseUrl}/${alertId}/resolve`, request);
+  }
+
+  markFalsePositive(alertId: string, request: AlertReviewRequest): Observable<AlertDto> {
+    return this.http.patch<AlertDto>(`${this.apiBaseUrl}/${alertId}/false-positive`, request);
+  }
+
+  suppress(alertId: string, request: AlertReviewRequest): Observable<AlertDto> {
+    return this.http.patch<AlertDto>(`${this.apiBaseUrl}/${alertId}/suppress`, request);
+  }
+
+  reopen(alertId: string, request: AlertReviewRequest): Observable<AlertDto> {
+    return this.http.patch<AlertDto>(`${this.apiBaseUrl}/${alertId}/reopen`, request);
   }
 }

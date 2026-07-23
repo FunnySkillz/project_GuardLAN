@@ -1,4 +1,5 @@
 export type AlertSeverity = 'Low' | 'Medium' | 'High' | 'Critical';
+export type AlertReviewStatus = 'Open' | 'Reviewed' | 'Resolved' | 'FalsePositive' | 'Suppressed';
 
 export interface AlertDto {
   readonly id: string;
@@ -14,10 +15,13 @@ export interface AlertDto {
   readonly destinationPort: number | null;
   readonly protocol: string | null;
   readonly severity: AlertSeverity;
+  readonly reviewStatus: AlertReviewStatus;
   readonly type: string;
   readonly message: string;
   readonly createdUtc: string;
+  readonly reviewedUtc: string | null;
   readonly resolvedUtc: string | null;
+  readonly reviewNote: string | null;
   readonly evidenceSummary: string | null;
   readonly history: readonly AlertHistoryDto[];
 }
@@ -54,6 +58,15 @@ export function severityRank(severity: AlertSeverity): number {
       return 2;
     case 'Low':
       return 1;
+  }
+}
+
+export function alertReviewStatusLabel(status: AlertReviewStatus): string {
+  switch (status) {
+    case 'FalsePositive':
+      return 'False positive';
+    default:
+      return status;
   }
 }
 

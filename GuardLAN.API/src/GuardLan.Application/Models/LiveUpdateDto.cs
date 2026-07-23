@@ -14,6 +14,7 @@ public sealed record LiveUpdateDto(
 public static class LiveUpdateTypes
 {
     public const string AlertResolved = "alertResolved";
+    public const string AlertUpdated = "alertUpdated";
     public const string DeviceStatusChanged = "deviceStatusChanged";
     public const string DnsIngestionCompleted = "dnsIngestionCompleted";
     public const string NewAlert = "newAlert";

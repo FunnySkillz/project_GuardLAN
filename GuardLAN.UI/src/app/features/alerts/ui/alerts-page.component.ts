@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { AlertFilter, AlertsFacade } from '../data-access/alerts.facade';
+import { AlertAction, AlertFilter, AlertsFacade } from '../data-access/alerts.facade';
 import {
   AlertDto,
+  alertReviewStatusLabel,
   alertTypeLabel,
   isOpenAlert,
   severityRank
@@ -28,13 +29,16 @@ export class AlertsPageComponent implements OnInit {
   protected readonly filters: readonly AlertFilterOption[] = [
     { value: 'open', label: 'Open' },
     { value: 'high', label: 'High priority' },
+    { value: 'reviewed', label: 'Reviewed' },
     { value: 'resolved', label: 'Resolved' },
+    { value: 'falsePositive', label: 'False positive' },
+    { value: 'suppressed', label: 'Suppressed' },
     { value: 'all', label: 'All' }
   ];
 
   ngOnInit(): void {
     this.liveUpdates
-      .ofTypes('alertResolved', 'newAlert')
+      .ofTypes('alertUpdated', 'alertResolved', 'newAlert')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.facade.load());
 
@@ -57,8 +61,16 @@ export class AlertsPageComponent implements OnInit {
     }
   }
 
-  protected resolve(alert: AlertDto): void {
-    this.facade.resolve(alert.id);
+  protected submitAction(alert: AlertDto, action: AlertAction): void {
+    this.facade.submitAction(alert.id, action);
+  }
+
+  protected updateNote(alert: AlertDto, event: Event): void {
+    const target = event.target;
+
+    if (target instanceof HTMLInputElement) {
+      this.facade.setNote(alert.id, target.value);
+    }
   }
 
   protected isFilterActive(filter: AlertFilter): boolean {
@@ -69,8 +81,8 @@ export class AlertsPageComponent implements OnInit {
     return isOpenAlert(alert);
   }
 
-  protected isResolving(alert: AlertDto): boolean {
-    return this.facade.resolvingAlertId() === alert.id;
+  protected isUpdating(alert: AlertDto): boolean {
+    return this.facade.updatingAlertId() === alert.id;
   }
 
   protected alertType(alert: AlertDto): string {
@@ -79,6 +91,18 @@ export class AlertsPageComponent implements OnInit {
 
   protected alertDevice(alert: AlertDto): string {
     return alert.deviceName ?? alert.deviceIpAddress ?? alert.deviceId ?? 'Network';
+  }
+
+  protected reviewStatus(alert: AlertDto): string {
+    return alertReviewStatusLabel(alert.reviewStatus);
+  }
+
+  protected reviewTime(alert: AlertDto): string {
+    return alert.reviewedUtc ? this.formatRelativeTime(alert.reviewedUtc) : 'Not reviewed';
+  }
+
+  protected noteDraft(alert: AlertDto): string {
+    return this.facade.noteDrafts()[alert.id] ?? '';
   }
 
   protected priorityLabel(alert: AlertDto): string {

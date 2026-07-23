@@ -39,6 +39,7 @@ Supported event types:
 | `deviceStatusChanged` | A known device changed online/offline state. |
 | `newAlert` | Scan execution or IDS ingestion created one or more alerts. |
 | `alertResolved` | A user resolved an alert. |
+| `alertUpdated` | A user reviewed, reopened, suppressed or marked an alert false positive. |
 | `dnsIngestionCompleted` | A DNS import ran and produced an ingestion result. |
 
 ## Publishing Paths
@@ -78,7 +79,7 @@ Feature pages keep their one-request-per-view data model:
 * The dashboard refreshes on scan, device, alert and DNS ingestion events.
 * The devices page refreshes on new device, device status and scan completion events.
 * The DNS page refreshes on DNS ingestion completion.
-* The alerts page refreshes on new alert and alert resolution events.
+* The alerts page refreshes on new alert and alert lifecycle events.
 
 The UI does not currently show a persistent notification feed. Live events are used to refresh the relevant view data.
 

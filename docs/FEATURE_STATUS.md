@@ -32,9 +32,9 @@ DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`
 | Scheduled or background scanning | Partially Implemented | A background worker processes queued scans on an interval. | Add a clear scheduling model and scan policy management. | Worker |
 | Device trust management | Implemented | Devices can be marked trusted or untrusted through the API and UI. | Add review workflows for suspicious or unknown devices. | API / UI |
 | Device classification | Partially Implemented | Device types are modeled and editable, but classification is still manual. | Introduce automatic or semi-automatic classification logic. | API / UI |
-| Device risk signals | Partially Implemented | Devices receive explainable risk summaries from open alerts, trust state, unknown type, first-seen time, blocked DNS and recent traffic, with detail pages showing supporting evidence. | Add known-benign review states and tune thresholds with real network data. | API / UI |
+| Device risk signals | Partially Implemented | Devices receive explainable risk summaries from open alerts, trust state, unknown type, first-seen time, blocked DNS and recent traffic, with closed false-positive and suppressed alerts excluded from open evidence. | Tune thresholds with real network data. | API / UI |
 | Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity, recent alerts, DNS domains, connection traffic/protocol widgets and device risk pills. | Add richer time-based analytics and deeper drill-down views. | API / UI |
-| Alert management | Partially Implemented | Alerts are created, listed, resolved, enriched from Suricata IDS imports, and given basic lifecycle history. | Add richer alert detail, review states and false-positive handling. | API / UI |
+| Alert management | Partially Implemented | Alerts are created, listed, enriched from Suricata IDS imports, reviewed, resolved, suppressed, reopened and marked false-positive with lifecycle history. | Add dedicated alert detail and full history views. | API / UI |
 | DNS monitoring | Partially Implemented | Stored DNS queries are exposed through a DNS overview API and Angular DNS activity page, with a configurable Pi-hole ingestion pipeline for importing DNS history. | Validate the importer against a live Pi-hole instance and add retention plus newly contacted domain detection. | API / Worker / UI |
 | Network connection monitoring | Partially Implemented | Connection entities, dashboard traffic/protocol aggregation, normalized import, Zeek connection/TLS import, a paged connection overview API and an Angular connection activity page exist. | Add connection detail views and deeper traffic analytics. | API / Worker / UI |
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger, worker schedule, latest health, stale detection and import history exist, but live-appliance validation is still incomplete. | Validate response shapes against Pi-hole's local API docs. | API / Worker |
@@ -217,27 +217,29 @@ Add richer analytics widgets and trend-oriented views without overloading the in
 **Status:** Partially Implemented
 
 **Current State**
-- Security alerts are stored, listed and resolved through API and UI.
+- Security alerts are stored, listed and managed through API and UI lifecycle actions.
 - Alert creation is already wired into scan execution for discovered-device and disappearance events.
 - Suricata IDS imports create alerts with source metadata, severity mapping, evidence summaries, optional connection association and lifecycle history entries.
+- Alerts can be reviewed, resolved, marked false-positive, suppressed and reopened with optional operator notes.
 
 **Implemented In**
 - [GuardLAN.API/src/GuardLan.Api/Controllers/AlertsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/AlertsController.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/AlertService.cs](../GuardLAN.API/src/GuardLan.Application/Services/AlertService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/IdsAlertIngestionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/IdsAlertIngestionService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ScanExecutionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ScanExecutionService.cs)
+- [GuardLAN.API/src/GuardLan.Domain/Enums/AlertReviewStatus.cs](../GuardLAN.API/src/GuardLan.Domain/Enums/AlertReviewStatus.cs)
 - [GuardLAN.API/src/GuardLan.Domain/Entities/SecurityAlertHistory.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/SecurityAlertHistory.cs)
 - [GuardLAN.UI/src/app/features/alerts/ui/alerts-page.component.ts](../GuardLAN.UI/src/app/features/alerts/ui/alerts-page.component.ts)
 - [GuardLAN.UI/src/app/features/alerts/data-access/alerts.facade.ts](../GuardLAN.UI/src/app/features/alerts/data-access/alerts.facade.ts)
+- [docs/ALERT_LIFECYCLE.md](ALERT_LIFECYCLE.md)
 
 **Missing or Incomplete**
 - Correlation rules beyond basic event creation
 - Dedicated alert detail and history views
-- False-positive, reviewed and suppressed alert states
 - Notification workflows
 
 **Next Change**
-Add richer alert review states and an alert-detail view that explains related device, connection and IDS evidence.
+Add an alert-detail view that explains related device, connection, IDS evidence and full lifecycle history.
 
 ### DNS Monitoring
 
@@ -394,11 +396,10 @@ Make integration freshness thresholds configurable per source type.
 
 **Missing or Incomplete**
 - Live validation against a real Suricata sensor
-- False-positive and reviewed alert states
 - Dedicated IDS alert detail and history UI
 
 **Next Change**
-Validate against live Suricata Eve output and add alert review states.
+Validate against live Suricata Eve output and add alert detail views.
 
 ### SignalR Real-Time Updates
 
@@ -409,7 +410,7 @@ Validate against live Suricata Eve output and add alert review states.
 - Application services publish through an `ILiveUpdatePublisher` abstraction.
 - API-hosted services broadcast directly through `IHubContext`.
 - The worker process publishes scan and ingestion events by calling an internal API relay endpoint protected by `X-GuardLAN-Internal-Key`.
-- Live events cover scan queueing, scan completion, scan failure, new devices, device online/offline changes, new alerts, alert resolution and DNS ingestion completion.
+- Live events cover scan queueing, scan completion, scan failure, new devices, device online/offline changes, new alerts, alert lifecycle changes and DNS ingestion completion.
 - The Angular app starts one authenticated live update connection and refreshes dashboard, devices, DNS and alert pages when relevant events arrive.
 
 **Implemented In**
@@ -509,19 +510,19 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 ## Current Development Focus
 
-Alert review states and false-positive handling.
+Alert detail and lifecycle history drilldown.
 
-Phase 11 added EF migrations and removed the last ad hoc table bootstrap. The next implementation slice should deepen alert handling with reviewed, suppressed or false-positive states.
+Phase 12 added reviewed, resolved, false-positive, suppressed and reopened alert lifecycle actions. The next implementation slice should add a dedicated alert detail page with full history and related evidence.
 
 ## Known Technical Gaps
 
 - Authentication is single-admin only; persistent users, roles and audit logging are future work.
 - Live updates have no cross-instance SignalR backplane yet.
 - External integrations are only partially normalized behind shared ingestion contracts.
-- Device risk does not yet include suppression states or tuned behavioral baselines.
+- Device risk still needs tuned behavioral baselines.
 - Integration freshness thresholds are fixed at 15 minutes and should become configurable per source type.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation.
-- Suricata IDS alert ingestion still needs live sensor validation and richer review workflows.
+- Suricata IDS alert ingestion still needs live sensor validation and richer alert detail workflows.
 - The local deployment story is containerized for first-run development, but production hardening remains incomplete.
 
 ## Update Rules
