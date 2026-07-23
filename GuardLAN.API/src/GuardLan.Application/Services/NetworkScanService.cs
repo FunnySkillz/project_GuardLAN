@@ -6,7 +6,10 @@ using GuardLan.Domain.Repositories;
 
 namespace GuardLan.Application.Services;
 
-public sealed class NetworkScanService(IUnitOfWork unitOfWork, TimeProvider timeProvider) : INetworkScanService
+public sealed class NetworkScanService(
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider,
+    ILiveUpdatePublisher liveUpdatePublisher) : INetworkScanService
 {
     private const string DefaultSubnet = "192.168.1.0/24";
 
@@ -39,6 +42,14 @@ public sealed class NetworkScanService(IUnitOfWork unitOfWork, TimeProvider time
 
         await unitOfWork.NetworkScanRuns.AddAsync(scanRun, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await liveUpdatePublisher.PublishAsync(
+            new LiveUpdateDto(
+                LiveUpdateTypes.ScanQueued,
+                $"Scan queued for {scanRun.Subnet}.",
+                scanRun.RequestedUtc,
+                ScanRunId: scanRun.Id,
+                Status: scanRun.Status.ToString()),
+            cancellationToken);
 
         return NetworkScanDto.FromEntity(scanRun);
     }

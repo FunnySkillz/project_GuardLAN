@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { DashboardFacade } from '../data-access/dashboard.facade';
 import { NetworkScanDto, ProtocolActivityDto } from '../models/dashboard-overview';
@@ -8,6 +9,7 @@ import {
   deviceTypeLabel
 } from '../../../shared/models/network-device';
 import { AlertDto, alertTypeLabel } from '../../../shared/models/security-alert';
+import { LiveUpdatesService } from '../../../shared/live-updates/live-updates.service';
 
 @Component({
   selector: 'app-dashboard-page',
@@ -17,6 +19,8 @@ import { AlertDto, alertTypeLabel } from '../../../shared/models/security-alert'
 })
 export class DashboardPageComponent implements OnInit {
   private readonly defaultSubnet = '192.168.1.0/24';
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly liveUpdates = inject(LiveUpdatesService);
   protected readonly dashboard = inject(DashboardFacade);
   protected readonly summary = computed(() => this.dashboard.data()?.summary ?? null);
   protected readonly devices = this.dashboard.devices;
@@ -31,6 +35,20 @@ export class DashboardPageComponent implements OnInit {
   protected readonly subnet = this.defaultSubnet;
 
   ngOnInit(): void {
+    this.liveUpdates
+      .ofTypes(
+        'alertResolved',
+        'deviceStatusChanged',
+        'dnsIngestionCompleted',
+        'newAlert',
+        'newDevice',
+        'scanCompleted',
+        'scanFailed',
+        'scanQueued'
+      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.dashboard.load());
+
     this.dashboard.load();
   }
 

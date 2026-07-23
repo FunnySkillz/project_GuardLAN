@@ -1,4 +1,7 @@
+using GuardLan.Api.Hubs;
+using GuardLan.Api.Realtime;
 using GuardLan.Application;
+using GuardLan.Application.Abstractions;
 using GuardLan.Infrastructure;
 using GuardLan.Infrastructure.Persistence;
 using System.Text.Json.Serialization;
@@ -20,12 +23,15 @@ if (allowedOrigins.Length == 0)
 
 builder.Services.AddGuardLanApplication();
 builder.Services.AddGuardLanInfrastructure(builder.Configuration);
+builder.Services.AddSignalR();
+builder.Services.AddScoped<ILiveUpdatePublisher, SignalRLiveUpdatePublisher>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("GuardLanWeb", policy =>
         policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -67,6 +73,7 @@ app.MapGet("/health", () => Results.Ok(CreateHealthResponse()));
 app.MapGet("/api/health", () => Results.Ok(CreateHealthResponse()));
 
 app.MapControllers();
+app.MapHub<GuardLanHub>("/hubs/guardlan");
 
 app.Run();
 

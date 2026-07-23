@@ -9,4 +9,5 @@ This folder contains project-level documentation that does not belong exclusivel
 * [Pi-hole integration](PIHOLE.md)
 * [Zeek integration](ZEEK.md)
 * [Suricata integration](SURICATA.md)
+* [SignalR live updates](LIVE_UPDATES.md)
 * [MDAC - Mobile Device Activity Collector](MDAC/README.md)

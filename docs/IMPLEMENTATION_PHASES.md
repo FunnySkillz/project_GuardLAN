@@ -161,7 +161,18 @@ Remaining hardening:
 
 Goal: make operational changes visible without manual refresh.
 
-Status: active.
+Status: complete enough for authentication and deployment hardening work.
+
+Started:
+
+* SignalR hub at `/hubs/guardlan`
+* Backend live update abstraction
+* API publisher backed by `IHubContext`
+* Worker publisher that relays events to the API hub as a SignalR client
+* Live events for scan queueing, scan completion, scan failure, new devices, device online/offline changes, new alerts, alert resolution and DNS ingestion completion
+* Angular live update service with reconnect behavior
+* Dashboard, device, DNS and alert page refresh hooks
+* Docker Compose worker service and `/hubs` proxy support
 
 Deliverables:
 
@@ -172,9 +183,17 @@ Deliverables:
 * DNS ingestion status updates
 * Angular live update service
 
+Remaining hardening:
+
+* Add authentication before exposing live update publishing beyond trusted local deployment
+* Add a cross-instance backplane if the API is scaled horizontally
+* Add user-facing notification history or toast UI if needed
+
 ## Phase 6: Authentication and Deployment Hardening
 
 Goal: protect the dashboard once it contains genuinely sensitive telemetry.
+
+Status: next.
 
 Deliverables:
 

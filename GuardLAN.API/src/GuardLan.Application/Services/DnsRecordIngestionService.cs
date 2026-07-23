@@ -9,7 +9,8 @@ namespace GuardLan.Application.Services;
 
 public sealed class DnsRecordIngestionService(
     IUnitOfWork unitOfWork,
-    TimeProvider timeProvider) : IDnsRecordIngestionService
+    TimeProvider timeProvider,
+    ILiveUpdatePublisher liveUpdatePublisher) : IDnsRecordIngestionService
 {
     private static readonly DateTime MinimumAcceptedTimestampUtc =
         DateTime.SpecifyKind(DateTime.UnixEpoch, DateTimeKind.Utc);
@@ -38,16 +39,18 @@ public sealed class DnsRecordIngestionService(
 
         if (sourceRecords.Count == 0)
         {
-            return new DnsIngestionResultDto(
-                sourceName,
-                SourceEnabled: true,
-                RecordsRead: 0,
-                Imported: 0,
-                SkippedDuplicates: 0,
-                SkippedInvalid: 0,
-                MatchedDevices: 0,
-                importedAtUtc,
-                $"No DNS records were returned by {sourceName}.");
+            return await PublishIngestionResultAsync(
+                new DnsIngestionResultDto(
+                    sourceName,
+                    SourceEnabled: true,
+                    RecordsRead: 0,
+                    Imported: 0,
+                    SkippedDuplicates: 0,
+                    SkippedInvalid: 0,
+                    MatchedDevices: 0,
+                    importedAtUtc,
+                    $"No DNS records were returned by {sourceName}."),
+                cancellationToken);
         }
 
         var normalizedRecords = sourceRecords
@@ -61,16 +64,18 @@ public sealed class DnsRecordIngestionService(
         var skippedInvalid = sourceRecords.Count - validRecords.Length;
         if (validRecords.Length == 0)
         {
-            return new DnsIngestionResultDto(
-                sourceName,
-                SourceEnabled: true,
-                sourceRecords.Count,
-                Imported: 0,
-                SkippedDuplicates: 0,
-                skippedInvalid,
-                MatchedDevices: 0,
-                importedAtUtc,
-                $"No valid DNS records were returned by {sourceName}.");
+            return await PublishIngestionResultAsync(
+                new DnsIngestionResultDto(
+                    sourceName,
+                    SourceEnabled: true,
+                    sourceRecords.Count,
+                    Imported: 0,
+                    SkippedDuplicates: 0,
+                    skippedInvalid,
+                    MatchedDevices: 0,
+                    importedAtUtc,
+                    $"No valid DNS records were returned by {sourceName}."),
+                cancellationToken);
         }
 
         var sinceUtc = validRecords.Min(record => record.TimestampUtc).AddSeconds(-1);
@@ -123,16 +128,35 @@ public sealed class DnsRecordIngestionService(
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        return new DnsIngestionResultDto(
-            sourceName,
-            SourceEnabled: true,
-            sourceRecords.Count,
-            imported,
-            skippedDuplicates,
-            skippedInvalid,
-            matchedDevices,
-            importedAtUtc,
-            $"Imported {imported} DNS records from {sourceName}.");
+        return await PublishIngestionResultAsync(
+            new DnsIngestionResultDto(
+                sourceName,
+                SourceEnabled: true,
+                sourceRecords.Count,
+                imported,
+                skippedDuplicates,
+                skippedInvalid,
+                matchedDevices,
+                importedAtUtc,
+                $"Imported {imported} DNS records from {sourceName}."),
+            cancellationToken);
+    }
+
+    private async Task<DnsIngestionResultDto> PublishIngestionResultAsync(
+        DnsIngestionResultDto result,
+        CancellationToken cancellationToken)
+    {
+        await liveUpdatePublisher.PublishAsync(
+            new LiveUpdateDto(
+                LiveUpdateTypes.DnsIngestionCompleted,
+                result.Message,
+                result.ImportedAtUtc,
+                Source: result.Source,
+                Status: "Completed",
+                Count: result.Imported),
+            cancellationToken);
+
+        return result;
     }
 
     private static NormalizedDnsRecord? NormalizeRecord(DnsIngestionRecord record, DateTime importedAtUtc)

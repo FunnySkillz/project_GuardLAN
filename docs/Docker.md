@@ -1,8 +1,8 @@
 # GuardLAN Docker Setup
 
-This document describes the repository-root Docker workflow for running GuardLAN locally with the Angular UI, ASP.NET Core API and PostgreSQL.
+This document describes the repository-root Docker workflow for running GuardLAN locally with the Angular UI, ASP.NET Core API, scanner worker and PostgreSQL.
 
-The stack is defined from the repository root so one Compose file controls all three services.
+The stack is defined from the repository root so one Compose file controls all four services.
 
 ## Repository Layout
 
@@ -12,6 +12,7 @@ Project_GuardLAN/
 |-- .env.example
 |-- GuardLAN.API/
 |   |-- Dockerfile
+|   |-- Dockerfile.worker
 |   |-- .dockerignore
 |   `-- src/
 |-- GuardLAN.UI/
@@ -41,6 +42,7 @@ This starts:
 
 - UI: http://localhost:4200
 - API: http://localhost:5232
+- Worker: background scanner and ingestion service
 - PostgreSQL: localhost:5432
 
 ## Environment
@@ -69,6 +71,8 @@ POSTGRES_HOST_PORT=5432
 API_HOST_PORT=5232
 UI_HOST_PORT=4200
 ASPNETCORE_ENVIRONMENT=Development
+LiveUpdates__SignalR__Enabled=true
+LiveUpdates__SignalR__HubUrl=http://api:8080/hubs/guardlan
 ```
 
 ## Services
@@ -100,11 +104,23 @@ http://localhost:5232/api/health
 
 In the current development startup path, the API uses EF Core `EnsureCreated` and seeds development data when the database is reachable. Formal migration tooling is still a future hardening task.
 
+### Worker
+
+The `worker` service builds from [GuardLAN.API/Dockerfile.worker](../GuardLAN.API/Dockerfile.worker).
+
+It processes queued scans, scheduled DNS ingestion, scheduled Zeek imports and scheduled Suricata imports. The worker image includes `nmap` for active discovery.
+
+The worker publishes live updates by connecting to the API SignalR hub:
+
+```text
+http://api:8080/hubs/guardlan
+```
+
 ### UI
 
 The `ui` service builds from [GuardLAN.UI/Dockerfile](../GuardLAN.UI/Dockerfile) and serves the production Angular build through Nginx.
 
-The browser calls relative `/api` paths. Nginx proxies those requests to the internal `api` service, so browser code never needs to resolve Docker-only hostnames.
+The browser calls relative `/api` and `/hubs` paths. Nginx proxies those requests to the internal `api` service, so browser code never needs to resolve Docker-only hostnames.
 
 ## Useful Commands
 
@@ -131,6 +147,7 @@ View logs:
 ```bash
 docker compose logs -f
 docker compose logs -f api
+docker compose logs -f worker
 docker compose logs -f ui
 docker compose logs -f database
 ```
@@ -197,6 +214,7 @@ If the API cannot connect to PostgreSQL, check:
 docker compose ps
 docker compose logs database
 docker compose logs api
+docker compose logs worker
 ```
 
 If the UI cannot reach the API, check that:
@@ -204,6 +222,12 @@ If the UI cannot reach the API, check that:
 - the API service is healthy
 - Nginx is proxying `/api` requests
 - the browser network tab shows requests to `localhost`, not the Docker hostname `api`
+
+If live updates do not connect, check that:
+
+- Nginx is proxying `/hubs` requests
+- the API service is healthy
+- the worker has `LiveUpdates__SignalR__HubUrl=http://api:8080/hubs/guardlan`
 
 ## Production Notes
 

@@ -9,7 +9,8 @@ namespace GuardLan.Application.Services;
 
 public sealed class IdsAlertIngestionService(
     IUnitOfWork unitOfWork,
-    TimeProvider timeProvider) : IIdsAlertIngestionService
+    TimeProvider timeProvider,
+    ILiveUpdatePublisher liveUpdatePublisher) : IIdsAlertIngestionService
 {
     private const int MaxSourceLength = 64;
     private const int MaxSourceRecordIdLength = 128;
@@ -86,6 +87,8 @@ public sealed class IdsAlertIngestionService(
         var skippedUnmatchedDevices = 0;
         var matchedDevices = 0;
         var matchedConnections = 0;
+        Guid? firstAlertId = null;
+        string? firstAlertMessage = null;
 
         foreach (var record in validRecords.OrderBy(record => record.TimestampUtc))
         {
@@ -141,12 +144,25 @@ public sealed class IdsAlertIngestionService(
                 });
 
             await unitOfWork.SecurityAlerts.AddAsync(alert, cancellationToken);
+            firstAlertId ??= alert.Id;
+            firstAlertMessage ??= alert.Message;
             imported++;
         }
 
         if (imported > 0)
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
+            await liveUpdatePublisher.PublishAsync(
+                new LiveUpdateDto(
+                    LiveUpdateTypes.NewAlert,
+                    imported == 1
+                        ? firstAlertMessage ?? $"Imported 1 IDS alert from {source}."
+                        : $"Imported {imported} IDS alerts from {source}.",
+                    importedAtUtc,
+                    AlertId: firstAlertId,
+                    Source: source,
+                    Count: imported),
+                cancellationToken);
         }
 
         return new IdsAlertIngestionResultDto(

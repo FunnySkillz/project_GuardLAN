@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { DnsFilter, DnsFacade } from '../data-access/dns.facade';
 import { DnsClientSummaryDto, DnsQueryDto } from '../models/dns-overview';
+import { LiveUpdatesService } from '../../../shared/live-updates/live-updates.service';
 
 interface DnsFilterOption {
   readonly value: DnsFilter;
@@ -15,6 +17,8 @@ interface DnsFilterOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DnsPageComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly liveUpdates = inject(LiveUpdatesService);
   protected readonly facade = inject(DnsFacade);
   protected readonly filters: readonly DnsFilterOption[] = [
     { value: 'all', label: 'All' },
@@ -23,6 +27,11 @@ export class DnsPageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.liveUpdates
+      .ofTypes('dnsIngestionCompleted')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.facade.load());
+
     this.facade.load();
   }
 

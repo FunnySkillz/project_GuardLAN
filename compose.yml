@@ -24,6 +24,23 @@ services:
       retries: 10
       start_period: 20s
 
+  worker:
+    build:
+      context: ./GuardLAN.API
+      dockerfile: Dockerfile.worker
+    container_name: guardlan-worker
+    restart: unless-stopped
+    environment:
+      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__GuardLanDb: Host=database;Port=5432;Database=${POSTGRES_DB:-guardlan};Username=${POSTGRES_USER:-guardlan};Password=${POSTGRES_PASSWORD:-guardlan}
+      LiveUpdates__SignalR__Enabled: ${LiveUpdates__SignalR__Enabled:-true}
+      LiveUpdates__SignalR__HubUrl: ${LiveUpdates__SignalR__HubUrl:-http://api:8080/hubs/guardlan}
+    depends_on:
+      api:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+
   ui:
     build:
       context: ./GuardLAN.UI

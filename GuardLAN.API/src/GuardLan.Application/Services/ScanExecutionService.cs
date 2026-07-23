@@ -1,3 +1,5 @@
+using GuardLan.Application.Abstractions;
+using GuardLan.Application.Models;
 using GuardLan.Application.Scanning;
 using GuardLan.Domain.Entities;
 using GuardLan.Domain.Enums;
@@ -8,7 +10,8 @@ namespace GuardLan.Application.Services;
 public sealed class ScanExecutionService(
     IUnitOfWork unitOfWork,
     INetworkScanner networkScanner,
-    TimeProvider timeProvider) : IScanExecutionService
+    TimeProvider timeProvider,
+    ILiveUpdatePublisher liveUpdatePublisher) : IScanExecutionService
 {
     public async Task<ScanExecutionResult> ExecuteNextQueuedScanAsync(CancellationToken cancellationToken = default)
     {
@@ -40,6 +43,14 @@ public sealed class ScanExecutionService(
             scanRun.Notes = exception.Message;
             unitOfWork.NetworkScanRuns.Update(scanRun);
             await unitOfWork.SaveChangesAsync(cancellationToken);
+            await liveUpdatePublisher.PublishAsync(
+                new LiveUpdateDto(
+                    LiveUpdateTypes.ScanFailed,
+                    $"Scan failed for {scanRun.Subnet}.",
+                    scanRun.FinishedUtc.Value,
+                    ScanRunId: scanRun.Id,
+                    Status: scanRun.Status.ToString()),
+                cancellationToken);
 
             return new ScanExecutionResult(
                 true,
@@ -69,17 +80,32 @@ public sealed class ScanExecutionService(
 
         var newDevices = 0;
         var devicesMarkedOffline = 0;
+        var deviceStatusUpdates = new List<LiveUpdateDto>();
+        var alertUpdates = new List<LiveUpdateDto>();
 
         foreach (var discoveredDevice in discoveredByMacAddress.Values)
         {
             if (trackedByMacAddress.TryGetValue(discoveredDevice.MacAddress!, out var existingDevice))
             {
+                var wasOnline = existingDevice.IsOnline;
                 existingDevice.IpAddress = discoveredDevice.IpAddress;
                 existingDevice.Hostname = NormalizeNullable(discoveredDevice.Hostname) ?? existingDevice.Hostname;
                 existingDevice.Vendor = NormalizeNullable(discoveredDevice.Vendor) ?? existingDevice.Vendor;
                 existingDevice.LastSeenUtc = nowUtc;
                 existingDevice.IsOnline = true;
                 unitOfWork.Devices.Update(existingDevice);
+
+                if (!wasOnline)
+                {
+                    deviceStatusUpdates.Add(
+                        new LiveUpdateDto(
+                            LiveUpdateTypes.DeviceStatusChanged,
+                            $"{DeviceName(existingDevice)} is online.",
+                            nowUtc,
+                            DeviceId: existingDevice.Id,
+                            Status: "Online"));
+                }
+
                 continue;
             }
 
@@ -98,10 +124,19 @@ public sealed class ScanExecutionService(
             };
 
             await unitOfWork.Devices.AddAsync(networkDevice, cancellationToken);
+            var alert = CreateNewDeviceAlert(networkDevice, nowUtc);
             await unitOfWork.SecurityAlerts.AddAsync(
-                CreateNewDeviceAlert(networkDevice, nowUtc),
+                alert,
                 cancellationToken);
 
+            deviceStatusUpdates.Add(
+                new LiveUpdateDto(
+                    LiveUpdateTypes.NewDevice,
+                    $"New device discovered at {networkDevice.IpAddress}.",
+                    nowUtc,
+                    DeviceId: networkDevice.Id,
+                    Status: "Online"));
+            alertUpdates.Add(CreateAlertUpdate(alert, nowUtc));
             newDevices++;
         }
 
@@ -117,10 +152,19 @@ public sealed class ScanExecutionService(
             trackedDevice.IsOnline = false;
             trackedDevice.LastSeenUtc = nowUtc;
             unitOfWork.Devices.Update(trackedDevice);
+            var alert = CreateDeviceOfflineAlert(trackedDevice, nowUtc);
             await unitOfWork.SecurityAlerts.AddAsync(
-                CreateDeviceOfflineAlert(trackedDevice, nowUtc),
+                alert,
                 cancellationToken);
 
+            deviceStatusUpdates.Add(
+                new LiveUpdateDto(
+                    LiveUpdateTypes.DeviceStatusChanged,
+                    $"{DeviceName(trackedDevice)} is offline.",
+                    nowUtc,
+                    DeviceId: trackedDevice.Id,
+                    Status: "Offline"));
+            alertUpdates.Add(CreateAlertUpdate(alert, nowUtc));
             devicesMarkedOffline++;
         }
 
@@ -131,6 +175,17 @@ public sealed class ScanExecutionService(
         unitOfWork.NetworkScanRuns.Update(scanRun);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await PublishUpdatesAsync(deviceStatusUpdates, cancellationToken);
+        await PublishUpdatesAsync(alertUpdates, cancellationToken);
+        await liveUpdatePublisher.PublishAsync(
+            new LiveUpdateDto(
+                LiveUpdateTypes.ScanCompleted,
+                scanRun.Notes,
+                nowUtc,
+                ScanRunId: scanRun.Id,
+                Status: scanRun.Status.ToString(),
+                Count: discoveredDevices.Count),
+            cancellationToken);
 
         return new ScanExecutionResult(
             true,
@@ -139,6 +194,17 @@ public sealed class ScanExecutionService(
             newDevices,
             devicesMarkedOffline,
             scanRun.Notes);
+    }
+
+    private static LiveUpdateDto CreateAlertUpdate(SecurityAlert alert, DateTime nowUtc)
+    {
+        return new LiveUpdateDto(
+            LiveUpdateTypes.NewAlert,
+            alert.Message,
+            nowUtc,
+            DeviceId: alert.DeviceId,
+            AlertId: alert.Id,
+            Status: alert.Severity.ToString());
     }
 
     private static SecurityAlert CreateNewDeviceAlert(NetworkDevice device, DateTime nowUtc)
@@ -170,6 +236,21 @@ public sealed class ScanExecutionService(
     private DateTime GetUtcNow()
     {
         return timeProvider.GetUtcNow().UtcDateTime;
+    }
+
+    private async Task PublishUpdatesAsync(
+        IEnumerable<LiveUpdateDto> updates,
+        CancellationToken cancellationToken)
+    {
+        foreach (var update in updates)
+        {
+            await liveUpdatePublisher.PublishAsync(update, cancellationToken);
+        }
+    }
+
+    private static string DeviceName(NetworkDevice device)
+    {
+        return device.Hostname ?? device.IpAddress;
     }
 
     private static string NormalizeMacAddress(string macAddress)

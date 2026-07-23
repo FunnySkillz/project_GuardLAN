@@ -18,9 +18,9 @@ This document is the primary project-level tracker for GuardLAN features and tec
 
 ## Current Project Summary
 
-GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, accept normalized connection metadata, import Zeek connection/DNS/TLS logs, import Suricata Eve JSON IDS alerts, and present device, alert, DNS and connection views in the Angular UI.
+GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, accept normalized connection metadata, import Zeek connection/DNS/TLS logs, import Suricata Eve JSON IDS alerts, publish SignalR live updates, and present device, alert, DNS and connection views in the Angular UI.
 
-DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. Authentication, real-time updates and deployment hardening remain incomplete.
+DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. SignalR live updates refresh the dashboard, devices, DNS and alerts views after operational changes. Authentication and deployment hardening remain incomplete.
 
 ## Feature Overview
 
@@ -39,9 +39,9 @@ DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger and worker schedule exist, but live-appliance validation and operational diagnostics are still incomplete. | Validate response shapes against Pi-hole's local API docs and add import health reporting. | API / Worker |
 | Zeek integration | Implemented | Configurable Zeek `conn.log`, `dns.log` and `ssl.log` readers feed normalized ingestion services through manual API and worker paths with line checkpointing, import diagnostics and parser tests. | Validate against live Zeek output and surface import health in the UI. | API / Worker |
 | Suricata integration | Partially Implemented | A configurable Eve JSON alert importer feeds IDS alerts into GuardLAN through manual API and worker paths with checkpointing, duplicate prevention, severity mapping, evidence summaries and device or connection association. | Validate against a live Suricata sensor and add richer alert review workflows. | API / Worker |
-| SignalR real-time updates | Planned | No real-time transport is implemented. | Add live updates for dashboards and alerts. | API / UI |
+| SignalR real-time updates | Implemented | A SignalR hub, backend live-update abstraction, worker relay publisher and Angular live update service refresh dashboard, device, DNS and alert views after relevant events. | Protect live updates with authentication and add a backplane if the API is scaled horizontally. | API / Worker / UI |
 | Authentication and authorization | Not Started | No auth layer exists in the repository. | Introduce user identity and permission rules. | API |
-| Docker local development | Partially Implemented | A repository-root Compose setup builds and runs the UI, API and PostgreSQL with health checks for local development. | Add migration tooling, secret handling and production deployment guidance. | Infrastructure |
+| Docker local development | Partially Implemented | A repository-root Compose setup builds and runs the UI, API, worker and PostgreSQL with health checks and `/api` plus `/hubs` proxying for local development. | Add migration tooling, secret handling and production deployment guidance. | Infrastructure |
 | PostgreSQL persistence | Implemented | EF Core persistence, repositories and seeded development data are in place. | Add migration tooling and operational backup/retention practices. | Database |
 | Mobile Device Activity Collector | Planned | The MDAC design exists in documentation, but no implementation is present. | Create the mobile app and backend ingestion contract. | Mobile |
 
@@ -355,21 +355,34 @@ Validate against live Suricata Eve output and add alert review states.
 
 ### SignalR Real-Time Updates
 
-**Status:** Planned
+**Status:** Implemented
 
 **Current State**
-- The architecture documentation mentions SignalR for future real-time updates, but no hub or live update flow exists.
+- The API exposes a SignalR hub at `/hubs/guardlan`.
+- Application services publish through an `ILiveUpdatePublisher` abstraction.
+- API-hosted services broadcast directly through `IHubContext`.
+- The worker process publishes scan and ingestion events by connecting back to the API hub as a SignalR client.
+- Live events cover scan queueing, scan completion, scan failure, new devices, device online/offline changes, new alerts, alert resolution and DNS ingestion completion.
+- The Angular app starts one live update connection and refreshes dashboard, devices, DNS and alert pages when relevant events arrive.
 
 **Implemented In**
 - [README.md](../README.md)
+- [docs/LIVE_UPDATES.md](LIVE_UPDATES.md)
 - [GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md](../GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md)
+- [GuardLAN.API/src/GuardLan.Api/Hubs/GuardLanHub.cs](../GuardLAN.API/src/GuardLan.Api/Hubs/GuardLanHub.cs)
+- [GuardLAN.API/src/GuardLan.Api/Realtime/SignalRLiveUpdatePublisher.cs](../GuardLAN.API/src/GuardLan.Api/Realtime/SignalRLiveUpdatePublisher.cs)
+- [GuardLAN.API/src/GuardLan.Application/Abstractions/ILiveUpdatePublisher.cs](../GuardLAN.API/src/GuardLan.Application/Abstractions/ILiveUpdatePublisher.cs)
+- [GuardLAN.API/src/GuardLan.Application/Models/LiveUpdateDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/LiveUpdateDto.cs)
+- [GuardLAN.API/src/GuardLan.Worker/Realtime/SignalRWorkerLiveUpdatePublisher.cs](../GuardLAN.API/src/GuardLan.Worker/Realtime/SignalRWorkerLiveUpdatePublisher.cs)
+- [GuardLAN.UI/src/app/shared/live-updates/live-updates.service.ts](../GuardLAN.UI/src/app/shared/live-updates/live-updates.service.ts)
 
 **Missing or Incomplete**
-- Event streaming
-- Live refresh for dashboard and alerts
+- Hub publishing is not authenticated yet.
+- No SignalR backplane is configured for multiple API instances.
+- No persistent notification feed exists in the UI.
 
 **Next Change**
-Add a minimal real-time update path for the dashboard or alerts before expanding it further.
+Protect the hub with the same authentication model as the REST API during the authentication phase.
 
 ### Authentication and Authorization
 
@@ -394,13 +407,14 @@ Introduce a basic authentication model and secure the main API endpoints.
 **Status:** Partially Implemented
 
 **Current State**
-- A repository-root Compose setup builds and runs the UI, API and PostgreSQL.
-- Service health checks and the UI Nginx `/api` proxy are configured for local development.
+- A repository-root Compose setup builds and runs the UI, API, worker and PostgreSQL.
+- Service health checks and the UI Nginx `/api` plus `/hubs` proxy are configured for local development.
 - A PostgreSQL-only compose file still exists under [GuardLAN.API/docker-compose.yml](../GuardLAN.API/docker-compose.yml) for backend-focused workflows.
 
 **Implemented In**
 - [compose.yml](../compose.yml)
 - [GuardLAN.API/Dockerfile](../GuardLAN.API/Dockerfile)
+- [GuardLAN.API/Dockerfile.worker](../GuardLAN.API/Dockerfile.worker)
 - [GuardLAN.UI/Dockerfile](../GuardLAN.UI/Dockerfile)
 - [GuardLAN.UI/nginx.conf](../GuardLAN.UI/nginx.conf)
 - [docs/Docker.md](Docker.md)
@@ -434,14 +448,14 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 ## Current Development Focus
 
-Phase 5: SignalR Live Updates.
+Phase 6: Authentication and Deployment Hardening.
 
-Phase 4 now imports Suricata Eve JSON alerts through checkpointed readers, normalized ingestion services, a manual API endpoint, worker scheduling and parser tests. The next implementation slice should add live update events for new devices, scan completion, new alerts and status changes.
+Phase 5 now publishes SignalR live updates from API-hosted services and the worker, and the Angular UI refreshes relevant views when scan, device, alert and DNS ingestion events arrive. The next implementation slice should protect the API and live update hub before the dashboard contains more sensitive telemetry.
 
 ## Known Technical Gaps
 
 - Authentication and authorization are not implemented.
-- Real-time updates are not available.
+- Live update publishing is unauthenticated and has no cross-instance backplane yet.
 - External integrations are only partially normalized behind shared ingestion contracts.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation and operational diagnostics.
 - Suricata IDS alert ingestion still needs live sensor validation and richer review workflows.

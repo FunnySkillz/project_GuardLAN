@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { DeviceFilter, DevicesFacade } from '../data-access/devices.facade';
 import {
@@ -10,6 +11,7 @@ import {
   isDeviceType,
   needsDeviceReview
 } from '../../../shared/models/network-device';
+import { LiveUpdatesService } from '../../../shared/live-updates/live-updates.service';
 
 interface DeviceDraft {
   readonly hostname: string;
@@ -29,6 +31,8 @@ interface DeviceFilterOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DevicesPageComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly liveUpdates = inject(LiveUpdatesService);
   protected readonly facade = inject(DevicesFacade);
   protected readonly deviceTypes = DEVICE_TYPE_OPTIONS;
   protected readonly filters: readonly DeviceFilterOption[] = [
@@ -40,6 +44,11 @@ export class DevicesPageComponent implements OnInit {
   private readonly drafts = signal<Record<string, DeviceDraft>>({});
 
   ngOnInit(): void {
+    this.liveUpdates
+      .ofTypes('deviceStatusChanged', 'newDevice', 'scanCompleted')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.facade.load());
+
     this.facade.load();
   }
 

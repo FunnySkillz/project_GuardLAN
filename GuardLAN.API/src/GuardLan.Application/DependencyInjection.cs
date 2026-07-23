@@ -2,6 +2,7 @@ using GuardLan.Application.Abstractions;
 using GuardLan.Application.Scanning;
 using GuardLan.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace GuardLan.Application;
 
@@ -10,6 +11,7 @@ public static class DependencyInjection
     public static IServiceCollection AddGuardLanApplication(this IServiceCollection services)
     {
         services.AddSingleton(TimeProvider.System);
+        services.TryAddScoped<ILiveUpdatePublisher, NoOpLiveUpdatePublisher>();
         services.AddScoped<IConnectionIngestionService, ConnectionIngestionService>();
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IIdsAlertIngestionService, IdsAlertIngestionService>();

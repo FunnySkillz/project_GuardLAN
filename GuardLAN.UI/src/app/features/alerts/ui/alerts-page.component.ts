@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AlertFilter, AlertsFacade } from '../data-access/alerts.facade';
 import {
@@ -7,6 +8,7 @@ import {
   isOpenAlert,
   severityRank
 } from '../../../shared/models/security-alert';
+import { LiveUpdatesService } from '../../../shared/live-updates/live-updates.service';
 
 interface AlertFilterOption {
   readonly value: AlertFilter;
@@ -20,6 +22,8 @@ interface AlertFilterOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AlertsPageComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly liveUpdates = inject(LiveUpdatesService);
   protected readonly facade = inject(AlertsFacade);
   protected readonly filters: readonly AlertFilterOption[] = [
     { value: 'open', label: 'Open' },
@@ -29,6 +33,11 @@ export class AlertsPageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.liveUpdates
+      .ofTypes('alertResolved', 'newAlert')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.facade.load());
+
     this.facade.load();
   }
 

@@ -5,7 +5,10 @@ using GuardLan.Domain.Repositories;
 
 namespace GuardLan.Application.Services;
 
-public sealed class AlertService(IUnitOfWork unitOfWork, TimeProvider timeProvider) : IAlertService
+public sealed class AlertService(
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider,
+    ILiveUpdatePublisher liveUpdatePublisher) : IAlertService
 {
     public async Task<IReadOnlyList<AlertDto>> ListAsync(CancellationToken cancellationToken)
     {
@@ -33,9 +36,18 @@ public sealed class AlertService(IUnitOfWork unitOfWork, TimeProvider timeProvid
                 EventType = "Resolved",
                 Description = "Alert was marked resolved.",
                 CreatedUtc = resolvedUtc
-            });
+        });
         unitOfWork.SecurityAlerts.Update(alert);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await liveUpdatePublisher.PublishAsync(
+            new LiveUpdateDto(
+                LiveUpdateTypes.AlertResolved,
+                alert.Message,
+                resolvedUtc,
+                DeviceId: alert.DeviceId,
+                AlertId: alert.Id,
+                Status: "Resolved"),
+            cancellationToken);
 
         return AlertDto.FromEntity(alert);
     }
