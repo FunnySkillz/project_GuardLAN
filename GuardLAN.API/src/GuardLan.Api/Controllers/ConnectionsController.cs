@@ -6,7 +6,9 @@ namespace GuardLan.Api.Controllers;
 
 [ApiController]
 [Route("api/connections")]
-public sealed class ConnectionsController(IConnectionService connectionService) : ControllerBase
+public sealed class ConnectionsController(
+    IConnectionService connectionService,
+    IConnectionIngestionService connectionIngestionService) : ControllerBase
 {
     [HttpGet("overview")]
     public Task<ConnectionOverviewDto> GetOverview(
@@ -14,5 +16,13 @@ public sealed class ConnectionsController(IConnectionService connectionService) 
         CancellationToken cancellationToken = default)
     {
         return connectionService.GetOverviewAsync(query, cancellationToken);
+    }
+
+    [HttpPost("import")]
+    public Task<ConnectionIngestionResultDto> Import(
+        [FromBody] ConnectionIngestionBatchDto batch,
+        CancellationToken cancellationToken)
+    {
+        return connectionIngestionService.ImportAsync(batch, cancellationToken);
     }
 }

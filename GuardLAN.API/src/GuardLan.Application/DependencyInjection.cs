@@ -10,6 +10,7 @@ public static class DependencyInjection
     public static IServiceCollection AddGuardLanApplication(this IServiceCollection services)
     {
         services.AddSingleton(TimeProvider.System);
+        services.AddScoped<IConnectionIngestionService, ConnectionIngestionService>();
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IDeviceService, DeviceService>();

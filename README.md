@@ -21,7 +21,7 @@ The current implementation includes:
 * A queued network scanner flow backed by a worker service
 * An Angular dashboard wired to the backend overview endpoint
 * DNS overview API and Angular DNS activity page for stored DNS query data
-* Connection overview API and Angular connection activity page for stored connection metadata
+* Connection overview API, normalized connection import endpoint and Angular connection activity page
 * Local Docker Compose infrastructure for the UI, API and PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.
@@ -351,6 +351,7 @@ GET   http://localhost:5232/api/health
 GET   http://localhost:5232/api/dashboard
 GET   http://localhost:5232/api/dashboard/overview
 GET   http://localhost:5232/api/connections/overview?page=1&pageSize=25&protocol=tcp&search=443
+POST  http://localhost:5232/api/connections/import
 GET   http://localhost:5232/api/dns/overview
 POST  http://localhost:5232/api/dns/import/pihole
 GET   http://localhost:5232/api/devices
