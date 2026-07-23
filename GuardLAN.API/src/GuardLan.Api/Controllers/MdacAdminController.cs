@@ -16,4 +16,11 @@ public sealed class MdacAdminController(IMdacService mdacService) : ControllerBa
         var registrations = await mdacService.ListRegistrationsAsync(cancellationToken);
         return Ok(registrations);
     }
+
+    [HttpGet("sync-records")]
+    public async Task<ActionResult<IReadOnlyList<MdacSyncRecordSummary>>> ListSyncRecords(CancellationToken cancellationToken)
+    {
+        var syncRecords = await mdacService.ListSyncRecordsAsync(cancellationToken);
+        return Ok(syncRecords);
+    }
 }

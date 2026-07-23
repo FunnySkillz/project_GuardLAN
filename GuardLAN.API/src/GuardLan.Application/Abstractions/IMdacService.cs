@@ -9,4 +9,6 @@ public interface IMdacService
     Task<SubmitSyncResponse> SubmitSyncAsync(SubmitSyncRequest request, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<MdacRegistrationSummary>> ListRegistrationsAsync(CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<MdacSyncRecordSummary>> ListSyncRecordsAsync(CancellationToken cancellationToken);
 }

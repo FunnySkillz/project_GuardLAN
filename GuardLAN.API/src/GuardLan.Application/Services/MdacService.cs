@@ -61,4 +61,18 @@ public sealed class MdacService(
                 registration.RegisteredUtc))
             .ToArray();
     }
+
+    public async Task<IReadOnlyList<MdacSyncRecordSummary>> ListSyncRecordsAsync(CancellationToken cancellationToken)
+    {
+        var syncRecords = await unitOfWork.MdacSyncRecords.GetAllAsync(cancellationToken);
+
+        return syncRecords
+            .OrderByDescending(syncRecord => syncRecord.SyncedUtc)
+            .Select(syncRecord => new MdacSyncRecordSummary(
+                syncRecord.DeviceId,
+                syncRecord.AppName,
+                syncRecord.ForegroundSeconds,
+                syncRecord.SyncedUtc))
+            .ToArray();
+    }
 }
