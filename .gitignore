@@ -1,0 +1,29 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# User/editor state
+.vs/
+.vscode/.ropeproject/
+*.user
+*.suo
+
+# .NET local data
+*.db
+*.db-shm
+*.db-wal
+
+# Angular
+src/GuardLan.Web/node_modules/
+src/GuardLan.Web/dist/
+src/GuardLan.Web/.angular/
+src/GuardLan.Web/coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS files
+Thumbs.db
+Desktop.ini

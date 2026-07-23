@@ -1,0 +1,28 @@
+@GuardLan.Api_HostAddress = http://localhost:5232
+
+GET {{GuardLan.Api_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+GET {{GuardLan.Api_HostAddress}}/api/dashboard
+Accept: application/json
+
+###
+
+GET {{GuardLan.Api_HostAddress}}/api/devices
+Accept: application/json
+
+###
+
+GET {{GuardLan.Api_HostAddress}}/api/alerts
+Accept: application/json
+
+###
+
+POST {{GuardLan.Api_HostAddress}}/api/scans
+Content-Type: application/json
+
+{
+  "subnet": "192.168.1.0/24"
+}

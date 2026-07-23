@@ -1,0 +1,175 @@
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Primary">
+    <div class="brand">
+      <span class="brand-mark">GL</span>
+      <span class="brand-name">GuardLAN</span>
+    </div>
+
+    <nav class="nav-list">
+      <a class="nav-link active" href="/">Dashboard</a>
+      <a class="nav-link" href="/">Devices</a>
+      <a class="nav-link" href="/">Connections</a>
+      <a class="nav-link" href="/">DNS</a>
+      <a class="nav-link" href="/">Alerts</a>
+      <a class="nav-link" href="/">Settings</a>
+    </nav>
+  </aside>
+
+  <main class="workspace">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Local subnet</p>
+        <h1>Network Overview</h1>
+      </div>
+
+      <div class="scan-control">
+        <span class="scan-state">192.168.1.0/24</span>
+        <button type="button">Start scan</button>
+      </div>
+    </header>
+
+    <section class="metrics" aria-label="Network summary">
+      <article class="metric-card">
+        <span>Online</span>
+        <strong>{{ onlineDevices }}</strong>
+        <small>devices responding</small>
+      </article>
+
+      <article class="metric-card warning">
+        <span>Unknown</span>
+        <strong>{{ unknownDevices }}</strong>
+        <small>needs review</small>
+      </article>
+
+      <article class="metric-card">
+        <span>Trusted</span>
+        <strong>{{ trustedDevices }}</strong>
+        <small>known inventory</small>
+      </article>
+
+      <article class="metric-card danger">
+        <span>Alerts</span>
+        <strong>{{ alerts.length }}</strong>
+        <small>open findings</small>
+      </article>
+
+      <article class="metric-card">
+        <span>DNS blocks</span>
+        <strong>{{ blockedDomains }}</strong>
+        <small>last 24 hours</small>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <section class="panel device-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Inventory</p>
+            <h2>Devices</h2>
+          </div>
+          <span>{{ devices.length }} tracked</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Device</th>
+                <th scope="col">Address</th>
+                <th scope="col">Type</th>
+                <th scope="col">Trust</th>
+                <th scope="col">Traffic</th>
+                <th scope="col">Seen</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (device of devices; track device.macAddress) {
+                <tr>
+                  <td>
+                    <strong>{{ device.name }}</strong>
+                    <small>{{ device.vendor }}</small>
+                  </td>
+                  <td>
+                    <code>{{ device.ipAddress }}</code>
+                    <small>{{ device.macAddress }}</small>
+                  </td>
+                  <td>{{ device.type }}</td>
+                  <td>
+                    <span class="trust-pill" [class.untrusted]="!device.trusted">
+                      {{ device.trusted ? 'Trusted' : 'Review' }}
+                    </span>
+                  </td>
+                  <td>{{ formatTraffic(device.trafficMb) }}</td>
+                  <td>{{ device.lastSeen }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Security</p>
+            <h2>Alerts</h2>
+          </div>
+        </div>
+
+        <div class="alert-list">
+          @for (alert of alerts; track alert.type + alert.created) {
+            <article class="alert-row" [class.high]="alert.severity === 'High'">
+              <span class="severity">{{ alert.severity }}</span>
+              <div>
+                <strong>{{ alert.type }}</strong>
+                <small>{{ alert.device }} | {{ alert.created }}</small>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">DNS</p>
+            <h2>Top Domains</h2>
+          </div>
+        </div>
+
+        <div class="domain-list">
+          @for (domain of domains; track domain.domain) {
+            <article class="domain-row">
+              <div>
+                <strong>{{ domain.domain }}</strong>
+                <small>{{ domain.requests }} requests</small>
+              </div>
+              <span [class.blocked]="domain.blocked > 0">{{ domain.blocked }} blocked</span>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Scanner</p>
+            <h2>Scan History</h2>
+          </div>
+        </div>
+
+        <div class="scan-list">
+          @for (scan of scans; track scan.requested) {
+            <article class="scan-row">
+              <div>
+                <strong>{{ scan.subnet }}</strong>
+                <small>{{ scan.requested }}</small>
+              </div>
+              <span>{{ scan.discovered }} devices</span>
+            </article>
+          }
+        </div>
+      </section>
+    </section>
+  </main>
+</div>

@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: guardlan-postgres
+    environment:
+      POSTGRES_USER: guardlan
+      POSTGRES_PASSWORD: guardlan
+      POSTGRES_DB: guardlan
+    ports:
+      - "5432:5432"
+    volumes:
+      - guardlan-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guardlan -d guardlan"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  guardlan-postgres-data:

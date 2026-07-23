@@ -1,0 +1,427 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 280px),
+    #f3f5f1;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  border-right: 1px solid #dfe4dc;
+  background: #fbfcf8;
+  padding: 24px 18px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  margin-bottom: 28px;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #1f6d5f;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.brand-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.nav-list {
+  display: grid;
+  gap: 4px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  border-radius: 6px;
+  color: #4b5853;
+  padding: 0 12px;
+  text-decoration: none;
+}
+
+.nav-link.active,
+.nav-link:hover {
+  background: #e8f1ed;
+  color: #154f45;
+}
+
+.workspace {
+  min-width: 0;
+  padding: 28px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #63716b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  line-height: 1.08;
+}
+
+h2 {
+  font-size: 1rem;
+}
+
+.scan-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+}
+
+.scan-state {
+  color: #52625d;
+  font-size: 0.9rem;
+}
+
+button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  background: #1f6d5f;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0 16px;
+}
+
+button:hover {
+  background: #18584d;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.metric-card {
+  min-height: 118px;
+  border: 1px solid #dfe4dc;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.metric-card span,
+.metric-card small {
+  color: #64746e;
+  font-size: 0.82rem;
+}
+
+.metric-card strong {
+  display: block;
+  margin: 8px 0 6px;
+  color: #18211e;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.metric-card.warning {
+  border-color: #dbc37f;
+}
+
+.metric-card.warning strong {
+  color: #7a5d0b;
+}
+
+.metric-card.danger {
+  border-color: #e2aaa1;
+}
+
+.metric-card.danger strong {
+  color: #a83f30;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.8fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.panel {
+  border: 1px solid #dfe4dc;
+  border-radius: 8px;
+  background: #ffffff;
+  min-width: 0;
+}
+
+.device-panel {
+  grid-row: span 3;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 72px;
+  border-bottom: 1px solid #e8ece5;
+  padding: 16px;
+}
+
+.panel-header > span {
+  color: #60706a;
+  font-size: 0.84rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #edf0ea;
+  padding: 14px 16px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: #60706a;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+td {
+  color: #1a2420;
+  font-size: 0.92rem;
+}
+
+td strong,
+td small {
+  display: block;
+}
+
+td small {
+  margin-top: 4px;
+  color: #66756f;
+  font-size: 0.78rem;
+}
+
+code {
+  border-radius: 4px;
+  background: #eef4f1;
+  color: #194f46;
+  padding: 3px 6px;
+}
+
+.trust-pill,
+.severity {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  min-height: 28px;
+  border-radius: 999px;
+  background: #e7f4ef;
+  color: #176151;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.trust-pill.untrusted,
+.severity {
+  background: #fff3da;
+  color: #735208;
+}
+
+.alert-list,
+.domain-list,
+.scan-list {
+  display: grid;
+}
+
+.alert-row,
+.domain-row,
+.scan-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 68px;
+  border-bottom: 1px solid #edf0ea;
+  padding: 14px 16px;
+}
+
+.alert-row:last-child,
+.domain-row:last-child,
+.scan-row:last-child {
+  border-bottom: 0;
+}
+
+.alert-row > div,
+.domain-row > div,
+.scan-row > div {
+  min-width: 0;
+}
+
+.alert-row strong,
+.domain-row strong,
+.scan-row strong,
+.alert-row small,
+.domain-row small,
+.scan-row small {
+  display: block;
+}
+
+.alert-row strong,
+.domain-row strong,
+.scan-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alert-row small,
+.domain-row small,
+.scan-row small {
+  margin-top: 4px;
+  color: #66756f;
+  font-size: 0.78rem;
+}
+
+.alert-row.high .severity {
+  background: #fbe7e3;
+  color: #a33f30;
+}
+
+.domain-row > span,
+.scan-row > span {
+  flex: 0 0 auto;
+  color: #60706a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.domain-row > span.blocked {
+  color: #a33f30;
+}
+
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid #dfe4dc;
+    padding: 12px 18px;
+  }
+
+  .brand {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .nav-list {
+    display: flex;
+    flex: 1 0 auto;
+  }
+
+  .nav-link {
+    flex: 0 0 auto;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .device-panel {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .workspace {
+    padding: 18px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .scan-control {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 460px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-name {
+    display: none;
+  }
+}
