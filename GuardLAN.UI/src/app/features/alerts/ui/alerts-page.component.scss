@@ -267,6 +267,17 @@ input:focus {
   margin-bottom: 5px;
 }
 
+.alert-main small {
+  display: block;
+  margin-top: 4px;
+}
+
+.evidence-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .severity-pill {
   display: inline-flex;
   align-items: center;

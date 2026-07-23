@@ -9,11 +9,20 @@ public sealed record AlertDto(
     string? DeviceName,
     string? DeviceIpAddress,
     string? DeviceMacAddress,
+    Guid? ConnectionId,
+    string? Source,
+    string? SourceRecordId,
+    string? SourceIp,
+    string? DestinationIp,
+    int? DestinationPort,
+    string? Protocol,
     AlertSeverity Severity,
     string Type,
     string Message,
     DateTime CreatedUtc,
-    DateTime? ResolvedUtc)
+    DateTime? ResolvedUtc,
+    string? EvidenceSummary,
+    IReadOnlyList<AlertHistoryDto> History)
 {
     public static AlertDto FromEntity(SecurityAlert alert)
     {
@@ -23,10 +32,38 @@ public sealed record AlertDto(
             alert.Device?.Hostname ?? alert.Device?.IpAddress,
             alert.Device?.IpAddress,
             alert.Device?.MacAddress,
+            alert.ConnectionId,
+            alert.Source,
+            alert.SourceRecordId,
+            alert.SourceIp,
+            alert.DestinationIp,
+            alert.DestinationPort,
+            alert.Protocol,
             alert.Severity,
             alert.Type,
             alert.Message,
             alert.CreatedUtc,
-            alert.ResolvedUtc);
+            alert.ResolvedUtc,
+            alert.EvidenceSummary,
+            alert.History
+                .OrderByDescending(history => history.CreatedUtc)
+                .Select(AlertHistoryDto.FromEntity)
+                .ToArray());
+    }
+}
+
+public sealed record AlertHistoryDto(
+    Guid Id,
+    string EventType,
+    string Description,
+    DateTime CreatedUtc)
+{
+    public static AlertHistoryDto FromEntity(SecurityAlertHistory history)
+    {
+        return new AlertHistoryDto(
+            history.Id,
+            history.EventType,
+            history.Description,
+            history.CreatedUtc);
     }
 }

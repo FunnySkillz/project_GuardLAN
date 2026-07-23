@@ -127,7 +127,19 @@ GuardLAN should ingest structured Zeek output rather than capturing and parsing 
 
 Goal: import real IDS alerts and connect them to GuardLAN devices and network evidence.
 
-Status: active.
+Status: complete enough for SignalR live update work.
+
+Started:
+
+* Configurable Suricata Eve JSON alert reader
+* Manual Suricata import endpoint
+* Scheduled worker path for Suricata imports
+* Line-number checkpointing for incremental `eve.json` reads
+* IDS alert normalization and duplicate prevention
+* Device matching by source or destination IP
+* Connection matching by endpoints and time window
+* Severity mapping, evidence summaries and alert lifecycle history
+* Parser tests for alert, non-alert and invalid Eve rows
 
 Deliverables:
 
@@ -139,9 +151,17 @@ Deliverables:
 * Alert lifecycle history
 * False-positive review workflow
 
+Remaining hardening:
+
+* Validate against a live Suricata sensor
+* Add richer alert detail and history views in the UI
+* Add explicit false-positive and reviewed alert states
+
 ## Phase 5: SignalR Live Updates
 
 Goal: make operational changes visible without manual refresh.
+
+Status: active.
 
 Deliverables:
 

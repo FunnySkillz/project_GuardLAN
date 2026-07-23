@@ -52,7 +52,13 @@ export class AlertsFacade {
         alert.severity,
         alert.deviceName,
         alert.deviceIpAddress,
-        alert.deviceMacAddress
+        alert.deviceMacAddress,
+        alert.source,
+        alert.sourceRecordId,
+        alert.sourceIp,
+        alert.destinationIp,
+        alert.protocol,
+        alert.evidenceSummary
       ].some((value) => value?.toLowerCase().includes(query));
     });
   });

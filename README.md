@@ -22,6 +22,7 @@ The current implementation includes:
 * An Angular dashboard wired to the backend overview endpoint
 * DNS overview API and Angular DNS activity page for stored DNS query data
 * Connection overview API, normalized connection import endpoint, Zeek connection/DNS/TLS importers, dashboard traffic widgets and Angular connection activity page
+* Suricata Eve JSON alert importer with device and connection association
 * Local Docker Compose infrastructure for the UI, API and PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.
@@ -354,6 +355,7 @@ GET   http://localhost:5232/api/connections/overview?page=1&pageSize=25&protocol
 POST  http://localhost:5232/api/connections/import
 POST  http://localhost:5232/api/connections/import/zeek
 POST  http://localhost:5232/api/integrations/zeek/import
+POST  http://localhost:5232/api/integrations/suricata/import
 GET   http://localhost:5232/api/dns/overview
 POST  http://localhost:5232/api/dns/import/pihole
 GET   http://localhost:5232/api/devices
@@ -449,6 +451,10 @@ Detailed project conventions are documented separately:
 
 * [Implementation phases](docs/IMPLEMENTATION_PHASES.md)
 * [Docker local setup](docs/Docker.md)
+* [Connection ingestion](docs/CONNECTION_INGESTION.md)
+* [Pi-hole integration](docs/PIHOLE.md)
+* [Zeek integration](docs/ZEEK.md)
+* [Suricata integration](docs/SURICATA.md)
 * [MDAC mobile collector plan](docs/MDAC/README.md)
 * [Backend architecture](GuardLAN.API/docs/BACKEND_ARCHITECTURE.md)
 * [Frontend architecture](GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md)

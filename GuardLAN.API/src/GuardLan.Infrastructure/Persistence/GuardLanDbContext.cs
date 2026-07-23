@@ -15,6 +15,8 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
 
     public DbSet<SecurityAlert> Alerts => Set<SecurityAlert>();
 
+    public DbSet<SecurityAlertHistory> AlertHistory => Set<SecurityAlertHistory>();
+
     public DbSet<NetworkScanRun> NetworkScanRuns => Set<NetworkScanRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -112,18 +114,49 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
         {
             entity.ToTable("security_alerts");
             entity.HasKey(alert => alert.Id);
+            entity.HasIndex(alert => alert.ConnectionId);
+            entity.HasIndex(alert => new { alert.Source, alert.SourceRecordId });
             entity.HasIndex(alert => alert.CreatedUtc);
             entity.HasIndex(alert => alert.ResolvedUtc);
 
+            entity.Property(alert => alert.Source).HasMaxLength(64);
+            entity.Property(alert => alert.SourceRecordId).HasMaxLength(128);
+            entity.Property(alert => alert.SourceIp).HasMaxLength(64);
+            entity.Property(alert => alert.DestinationIp).HasMaxLength(64);
+            entity.Property(alert => alert.Protocol).HasMaxLength(32);
             entity.Property(alert => alert.Severity).HasConversion<string>().HasMaxLength(32);
             entity.Property(alert => alert.Type).HasMaxLength(96);
             entity.Property(alert => alert.Message).HasMaxLength(512);
+            entity.Property(alert => alert.EvidenceSummary).HasMaxLength(1024);
 
             entity
                 .HasOne(alert => alert.Device)
                 .WithMany(device => device.Alerts)
                 .HasForeignKey(alert => alert.DeviceId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            entity
+                .HasOne(alert => alert.Connection)
+                .WithMany(connection => connection.Alerts)
+                .HasForeignKey(alert => alert.ConnectionId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<SecurityAlertHistory>(entity =>
+        {
+            entity.ToTable("security_alert_history");
+            entity.HasKey(history => history.Id);
+            entity.HasIndex(history => history.SecurityAlertId);
+            entity.HasIndex(history => history.CreatedUtc);
+
+            entity.Property(history => history.EventType).HasMaxLength(64);
+            entity.Property(history => history.Description).HasMaxLength(512);
+
+            entity
+                .HasOne(history => history.SecurityAlert)
+                .WithMany(alert => alert.History)
+                .HasForeignKey(history => history.SecurityAlertId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<NetworkScanRun>(entity =>

@@ -97,12 +97,23 @@
                 <span>{{ priorityLabel(alert) }}</span>
               </div>
               <p>{{ alert.message }}</p>
+              @if (alert.evidenceSummary) {
+                <small class="evidence-line">{{ alert.evidenceSummary }}</small>
+              }
               <small>
                 {{ alertDevice(alert) }}
                 @if (alert.deviceMacAddress) {
                   <span>| {{ alert.deviceMacAddress }}</span>
                 }
               </small>
+              @if (alert.source) {
+                <small>
+                  {{ alert.source }}
+                  @if (alert.sourceRecordId) {
+                    <span>| {{ alert.sourceRecordId }}</span>
+                  }
+                </small>
+              }
             </div>
           </div>
 

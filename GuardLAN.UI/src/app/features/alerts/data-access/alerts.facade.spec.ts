@@ -12,11 +12,20 @@ describe('AlertsFacade', () => {
     deviceName: 'desktop',
     deviceIpAddress: '192.168.1.22',
     deviceMacAddress: '02:00:00:00:00:22',
+    connectionId: null,
+    source: null,
+    sourceRecordId: null,
+    sourceIp: null,
+    destinationIp: null,
+    destinationPort: null,
+    protocol: null,
     severity: 'High',
     type: 'UnknownDeviceConnected',
     message: 'New unknown device connected at 192.168.1.22.',
     createdUtc: '2026-07-23T10:00:00Z',
-    resolvedUtc: null
+    resolvedUtc: null,
+    evidenceSummary: null,
+    history: []
   };
   const resolvedAlert: AlertDto = {
     id: 'alert-2',
@@ -24,11 +33,20 @@ describe('AlertsFacade', () => {
     deviceName: null,
     deviceIpAddress: null,
     deviceMacAddress: null,
+    connectionId: null,
+    source: null,
+    sourceRecordId: null,
+    sourceIp: null,
+    destinationIp: null,
+    destinationPort: null,
+    protocol: null,
     severity: 'Low',
     type: 'DeviceDisappeared',
     message: 'Device disappeared from the network.',
     createdUtc: '2026-07-23T09:00:00Z',
-    resolvedUtc: '2026-07-23T09:30:00Z'
+    resolvedUtc: '2026-07-23T09:30:00Z',
+    evidenceSummary: null,
+    history: []
   };
 
   let api: jasmine.SpyObj<Pick<AlertsApi, 'list' | 'resolve'>>;

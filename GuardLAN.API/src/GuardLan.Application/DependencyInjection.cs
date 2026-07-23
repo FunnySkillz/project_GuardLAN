@@ -12,6 +12,8 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IConnectionIngestionService, ConnectionIngestionService>();
         services.AddScoped<IConnectionService, ConnectionService>();
+        services.AddScoped<IIdsAlertIngestionService, IdsAlertIngestionService>();
+        services.AddScoped<ISuricataAlertImportService, SuricataAlertImportService>();
         services.AddScoped<ITlsObservationIngestionService, TlsObservationIngestionService>();
         services.AddScoped<IZeekImportService, ZeekImportService>();
         services.AddScoped<IZeekConnectionImportService, ZeekConnectionImportService>();

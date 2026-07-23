@@ -3,7 +3,9 @@ using GuardLan.Application.Services;
 using GuardLan.Domain.Entities;
 using GuardLan.Domain.Enums;
 using GuardLan.Domain.Repositories;
+using GuardLan.Infrastructure.Suricata;
 using GuardLan.Infrastructure.Zeek;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Globalization;
 
@@ -161,6 +163,66 @@ public sealed class ZeekIngestionTests
         Assert.Single(connectionRepository.Connections);
         Assert.Equal("Zeek conn.log", connectionRepository.Connections[0].Source);
         Assert.Equal("C1", connectionRepository.Connections[0].SourceRecordId);
+    }
+
+    [Fact]
+    public async Task SuricataSourceParsesOnlyAlertEventsAndCheckpoints()
+    {
+        using var tempDirectory = new TemporaryDirectory();
+        var logPath = Path.Combine(tempDirectory.Path, "eve.json");
+        var checkpointPath = Path.Combine(tempDirectory.Path, "eve.checkpoint.json");
+
+        await File.WriteAllLinesAsync(
+            logPath,
+            [
+                """
+                {"timestamp":"2026-07-23T12:00:00.000000+0000","event_type":"alert","src_ip":"192.168.1.22","src_port":51515,"dest_ip":"140.82.112.4","dest_port":443,"proto":"TCP","app_proto":"tls","flow_id":12345,"alert":{"signature_id":2024218,"signature":"ET POLICY External IP Lookup","category":"Potential Corporate Privacy Violation","severity":2,"action":"allowed"}}
+                """,
+                """
+                {"timestamp":"2026-07-23T12:00:01.000000+0000","event_type":"flow","src_ip":"192.168.1.22","dest_ip":"140.82.112.4"}
+                """,
+                "not-json"
+            ]);
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["Suricata:EveLog:Enabled"] = "true",
+                    ["Suricata:EveLog:Path"] = logPath,
+                    ["Suricata:EveLog:CheckpointPath"] = checkpointPath,
+                    ["Suricata:EveLog:MaxRecords"] = "100",
+                    ["Suricata:EveLog:ReadFromBeginning"] = "true"
+                })
+            .Build();
+        var source = new SuricataEveJsonSource(
+            configuration,
+            TimeProvider.System,
+            NullLogger<SuricataEveJsonSource>.Instance);
+
+        var result = await source.ReadNewAlertsAsync();
+
+        Assert.True(result.SourceAvailable);
+        Assert.Equal(3, result.LinesRead);
+        Assert.Equal(1, result.RecordsParsed);
+        Assert.Equal(2, result.SkippedInvalid);
+        Assert.Equal("ET POLICY External IP Lookup", result.Records[0].Signature);
+        Assert.Equal(2, result.Records[0].Severity);
+        Assert.Contains("signature_id=2024218", result.Records[0].EvidenceSummary);
+
+        await source.SaveCheckpointAsync(result.Checkpoint!);
+        await File.AppendAllLinesAsync(
+            logPath,
+            [
+                """
+                {"timestamp":"2026-07-23T12:01:00.000000+0000","event_type":"alert","src_ip":"192.168.1.22","src_port":51516,"dest_ip":"1.1.1.1","dest_port":853,"proto":"TCP","flow_id":12346,"alert":{"signature_id":900001,"signature":"TLS test alert","category":"Test","severity":1}}
+                """
+            ]);
+
+        var nextResult = await source.ReadNewAlertsAsync();
+
+        Assert.Single(nextResult.Records);
+        Assert.Equal("TLS test alert", nextResult.Records[0].Signature);
     }
 
     private static ZeekLogFileReader CreateReader()
@@ -425,6 +487,13 @@ public sealed class ZeekIngestionTests
         : ThrowingRepository<SecurityAlert>,
           ISecurityAlertRepository
     {
+        public Task<IReadOnlyList<SecurityAlert>> GetSinceAsync(
+            DateTime sinceUtc,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
         public Task<IReadOnlyList<SecurityAlert>> GetRecentAsync(CancellationToken cancellationToken = default)
         {
             throw new NotSupportedException();

@@ -17,8 +17,11 @@ public class Worker(
             Math.Max(30, configuration.GetValue("DnsIngestion:IntervalSeconds", 300)));
         var zeekIngestionInterval = TimeSpan.FromSeconds(
             Math.Max(30, configuration.GetValue("Zeek:ImportIntervalSeconds", 300)));
+        var suricataIngestionInterval = TimeSpan.FromSeconds(
+            Math.Max(30, configuration.GetValue("Suricata:ImportIntervalSeconds", 300)));
         var lastDnsIngestionUtc = DateTimeOffset.MinValue;
         var lastZeekIngestionUtc = DateTimeOffset.MinValue;
+        var lastSuricataIngestionUtc = DateTimeOffset.MinValue;
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -51,6 +54,12 @@ public class Worker(
                 {
                     lastZeekIngestionUtc = now;
                     await RunZeekIngestionAsync(scope, stoppingToken);
+                }
+
+                if (now - lastSuricataIngestionUtc >= suricataIngestionInterval)
+                {
+                    lastSuricataIngestionUtc = now;
+                    await RunSuricataIngestionAsync(scope, stoppingToken);
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -142,6 +151,47 @@ public class Worker(
                 result.SkippedDuplicates,
                 result.SkippedInvalidSourceRecords +
                 result.SkippedInvalidConnectionRecords);
+        }
+    }
+
+    private async Task RunSuricataIngestionAsync(IServiceScope scope, CancellationToken stoppingToken)
+    {
+        try
+        {
+            var suricataAlertImportService =
+                scope.ServiceProvider.GetRequiredService<ISuricataAlertImportService>();
+            var result = await suricataAlertImportService.ImportRecentAsync(stoppingToken);
+
+            if (!result.SourceEnabled)
+            {
+                logger.LogDebug("Suricata ingestion source {Source} is disabled.", result.Source);
+            }
+            else if (!result.SourceAvailable)
+            {
+                logger.LogWarning(
+                    "Suricata ingestion source {Source} is unavailable: {Message}",
+                    result.Source,
+                    result.Message);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "Suricata ingestion from {Source}: imported {Imported}, matched {MatchedConnections} connections, skipped {SkippedDuplicates} duplicates, skipped {SkippedInvalid} invalid records.",
+                    result.Source,
+                    result.Imported,
+                    result.MatchedConnections,
+                    result.SkippedDuplicates,
+                    result.SkippedInvalidSourceRecords +
+                    result.SkippedInvalidAlertRecords);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "GuardLAN Suricata ingestion failed.");
         }
     }
 

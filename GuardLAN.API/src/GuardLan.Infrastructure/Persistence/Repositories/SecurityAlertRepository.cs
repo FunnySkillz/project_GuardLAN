@@ -8,11 +8,27 @@ public sealed class SecurityAlertRepository(GuardLanDbContext dbContext)
     : GenericRepository<SecurityAlert>(dbContext),
       ISecurityAlertRepository
 {
+    public async Task<IReadOnlyList<SecurityAlert>> GetSinceAsync(
+        DateTime sinceUtc,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(alert => alert.Device)
+            .Include(alert => alert.Connection)
+            .Include(alert => alert.History)
+            .Where(alert => alert.CreatedUtc >= sinceUtc)
+            .OrderByDescending(alert => alert.CreatedUtc)
+            .ToArrayAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<SecurityAlert>> GetRecentAsync(CancellationToken cancellationToken = default)
     {
         return await DbSet
             .AsNoTracking()
             .Include(alert => alert.Device)
+            .Include(alert => alert.Connection)
+            .Include(alert => alert.History)
             .OrderByDescending(alert => alert.CreatedUtc)
             .ToArrayAsync(cancellationToken);
     }
@@ -22,6 +38,8 @@ public sealed class SecurityAlertRepository(GuardLanDbContext dbContext)
         return await DbSet
             .AsNoTracking()
             .Include(alert => alert.Device)
+            .Include(alert => alert.Connection)
+            .Include(alert => alert.History)
             .Where(alert => alert.ResolvedUtc == null)
             .OrderByDescending(alert => alert.CreatedUtc)
             .ToArrayAsync(cancellationToken);
@@ -31,6 +49,8 @@ public sealed class SecurityAlertRepository(GuardLanDbContext dbContext)
     {
         return DbSet
             .Include(alert => alert.Device)
+            .Include(alert => alert.Connection)
+            .Include(alert => alert.History)
             .FirstOrDefaultAsync(alert => alert.Id == id, cancellationToken);
     }
 }

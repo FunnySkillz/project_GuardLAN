@@ -18,9 +18,9 @@ This document is the primary project-level tracker for GuardLAN features and tec
 
 ## Current Project Summary
 
-GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, accept normalized connection metadata, and present device, alert, DNS and connection views in the Angular UI.
+GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, accept normalized connection metadata, import Zeek connection/DNS/TLS logs, import Suricata Eve JSON IDS alerts, and present device, alert, DNS and connection views in the Angular UI.
 
-DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Authentication, real-time updates, Suricata ingestion and deployment hardening remain incomplete.
+DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. Authentication, real-time updates and deployment hardening remain incomplete.
 
 ## Feature Overview
 
@@ -33,12 +33,12 @@ DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`
 | Device trust management | Implemented | Devices can be marked trusted or untrusted through the API and UI. | Add review workflows for suspicious or unknown devices. | API / UI |
 | Device classification | Partially Implemented | Device types are modeled and editable, but classification is still manual. | Introduce automatic or semi-automatic classification logic. | API / UI |
 | Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity, recent alerts, DNS domains, and connection traffic/protocol widgets. | Add richer time-based analytics and deeper drill-down views. | API / UI |
-| Alert management | Implemented | Alerts are created, listed, and resolved through API and UI. | Add richer correlation, severity handling and alert history. | API / UI |
+| Alert management | Partially Implemented | Alerts are created, listed, resolved, enriched from Suricata IDS imports, and given basic lifecycle history. | Add richer alert detail, review states and false-positive handling. | API / UI |
 | DNS monitoring | Partially Implemented | Stored DNS queries are exposed through a DNS overview API and Angular DNS activity page, with a configurable Pi-hole ingestion pipeline for importing DNS history. | Validate the importer against a live Pi-hole instance and add retention plus newly contacted domain detection. | API / Worker / UI |
 | Network connection monitoring | Partially Implemented | Connection entities, dashboard traffic/protocol aggregation, normalized import, Zeek connection/TLS import, a paged connection overview API and an Angular connection activity page exist. | Add connection detail views and deeper traffic analytics. | API / Worker / UI |
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger and worker schedule exist, but live-appliance validation and operational diagnostics are still incomplete. | Validate response shapes against Pi-hole's local API docs and add import health reporting. | API / Worker |
 | Zeek integration | Implemented | Configurable Zeek `conn.log`, `dns.log` and `ssl.log` readers feed normalized ingestion services through manual API and worker paths with line checkpointing, import diagnostics and parser tests. | Validate against live Zeek output and surface import health in the UI. | API / Worker |
-| Suricata integration | Planned | No integration exists yet. | Add alert and event ingestion for IDS telemetry. | API / Worker |
+| Suricata integration | Partially Implemented | A configurable Eve JSON alert importer feeds IDS alerts into GuardLAN through manual API and worker paths with checkpointing, duplicate prevention, severity mapping, evidence summaries and device or connection association. | Validate against a live Suricata sensor and add richer alert review workflows. | API / Worker |
 | SignalR real-time updates | Planned | No real-time transport is implemented. | Add live updates for dashboards and alerts. | API / UI |
 | Authentication and authorization | Not Started | No auth layer exists in the repository. | Introduce user identity and permission rules. | API |
 | Docker local development | Partially Implemented | A repository-root Compose setup builds and runs the UI, API and PostgreSQL with health checks for local development. | Add migration tooling, secret handling and production deployment guidance. | Infrastructure |
@@ -175,25 +175,30 @@ Add richer analytics widgets and trend-oriented views without overloading the in
 
 ### Alert Management
 
-**Status:** Implemented
+**Status:** Partially Implemented
 
 **Current State**
 - Security alerts are stored, listed and resolved through API and UI.
 - Alert creation is already wired into scan execution for discovered-device and disappearance events.
+- Suricata IDS imports create alerts with source metadata, severity mapping, evidence summaries, optional connection association and lifecycle history entries.
 
 **Implemented In**
 - [GuardLAN.API/src/GuardLan.Api/Controllers/AlertsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/AlertsController.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/AlertService.cs](../GuardLAN.API/src/GuardLan.Application/Services/AlertService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/IdsAlertIngestionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/IdsAlertIngestionService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ScanExecutionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ScanExecutionService.cs)
+- [GuardLAN.API/src/GuardLan.Domain/Entities/SecurityAlertHistory.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/SecurityAlertHistory.cs)
 - [GuardLAN.UI/src/app/features/alerts/ui/alerts-page.component.ts](../GuardLAN.UI/src/app/features/alerts/ui/alerts-page.component.ts)
 - [GuardLAN.UI/src/app/features/alerts/data-access/alerts.facade.ts](../GuardLAN.UI/src/app/features/alerts/data-access/alerts.facade.ts)
 
 **Missing or Incomplete**
 - Correlation rules beyond basic event creation
-- Alert enrichment, status history and notification workflows
+- Dedicated alert detail and history views
+- False-positive, reviewed and suppressed alert states
+- Notification workflows
 
 **Next Change**
-Add richer alert correlation and severity logic so alerts can be understood as part of a broader network story.
+Add richer alert review states and an alert-detail view that explains related device, connection and IDS evidence.
 
 ### DNS Monitoring
 
@@ -286,7 +291,7 @@ Add connection detail pages and deeper traffic analytics beyond dashboard rollup
 - Zeek DNS ingestion feeds the DNS history pipeline.
 - A normalized connection ingestion contract exists for Zeek and firewall importers.
 - Zeek `conn.log` and `ssl.log` ingestion now feed connection and TLS metadata through manual API and worker paths.
-- Suricata ingestion flows are still planned.
+- Suricata Eve JSON alert ingestion feeds IDS alerts through manual API and worker paths.
 
 **Implemented In**
 - [README.md](../README.md)
@@ -294,24 +299,59 @@ Add connection detail pages and deeper traffic analytics beyond dashboard rollup
 - [docs/CONNECTION_INGESTION.md](CONNECTION_INGESTION.md)
 - [docs/PIHOLE.md](PIHOLE.md)
 - [docs/ZEEK.md](ZEEK.md)
+- [docs/SURICATA.md](SURICATA.md)
 - [GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ZeekConnectionImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekConnectionImportService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ZeekDnsImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekDnsImportService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ZeekTlsImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekTlsImportService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/IdsAlertIngestionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/IdsAlertIngestionService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/SuricataAlertImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/SuricataAlertImportService.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ConnectionIngestionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ConnectionIngestionService.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekConnLogSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekConnLogSource.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekDnsLogSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekDnsLogSource.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekSslLogSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Zeek/ZeekSslLogSource.cs)
+- [GuardLAN.API/src/GuardLan.Infrastructure/Suricata/SuricataEveJsonSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Suricata/SuricataEveJsonSource.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Dns/PiHoleDnsQuerySource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Dns/PiHoleDnsQuerySource.cs)
 
 **Missing or Incomplete**
 - Live validation for Pi-hole integration
 - Live validation against Zeek output from a running sensor
-- Suricata connector implementation
-- Shared event normalization and alert mapping
+- Live validation against Suricata output from a running sensor
+- Shared operational health reporting for integrations
 
 **Next Change**
-Add Suricata Eve JSON alert ingestion.
+Add import health reporting across Pi-hole, Zeek and Suricata.
+
+### Suricata Integration
+
+**Status:** Partially Implemented
+
+**Current State**
+- The backend can read Suricata `eve.json` alert rows from a configured file.
+- The importer skips non-alert Eve rows and malformed records.
+- Imported IDS alerts are normalized into GuardLAN security alerts with source metadata, severity mapping and evidence summaries.
+- Device matching uses source IP first and destination IP second.
+- Connection matching uses known endpoints, destination ports and a five-minute time window.
+- The API exposes a manual Suricata import endpoint and the worker can run scheduled imports with line-number checkpointing.
+
+**Implemented In**
+- [docs/SURICATA.md](SURICATA.md)
+- [GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/IdsAlertIngestionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/IdsAlertIngestionService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/SuricataAlertImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/SuricataAlertImportService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Suricata/ISuricataAlertSource.cs](../GuardLAN.API/src/GuardLan.Application/Suricata/ISuricataAlertSource.cs)
+- [GuardLAN.API/src/GuardLan.Infrastructure/Suricata/SuricataEveJsonSource.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Suricata/SuricataEveJsonSource.cs)
+- [GuardLAN.API/src/GuardLan.Worker/Worker.cs](../GuardLAN.API/src/GuardLan.Worker/Worker.cs)
+- [GuardLAN.API/tests/GuardLan.Tests/ZeekIngestionTests.cs](../GuardLAN.API/tests/GuardLan.Tests/ZeekIngestionTests.cs)
+
+**Missing or Incomplete**
+- Live validation against a real Suricata sensor
+- False-positive and reviewed alert states
+- Dedicated IDS alert detail and history UI
+- Import health reporting in the dashboard
+
+**Next Change**
+Validate against live Suricata Eve output and add alert review states.
 
 ### SignalR Real-Time Updates
 
@@ -394,9 +434,9 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 ## Current Development Focus
 
-Phase 4: Suricata Integration.
+Phase 5: SignalR Live Updates.
 
-Phase 3 now imports Zeek `conn.log`, `dns.log` and `ssl.log` through checkpointed readers, normalized ingestion services, manual API endpoints, worker scheduling and parser tests. The next implementation slice should add Suricata Eve JSON alert ingestion.
+Phase 4 now imports Suricata Eve JSON alerts through checkpointed readers, normalized ingestion services, a manual API endpoint, worker scheduling and parser tests. The next implementation slice should add live update events for new devices, scan completion, new alerts and status changes.
 
 ## Known Technical Gaps
 
@@ -404,7 +444,7 @@ Phase 3 now imports Zeek `conn.log`, `dns.log` and `ssl.log` through checkpointe
 - Real-time updates are not available.
 - External integrations are only partially normalized behind shared ingestion contracts.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation and operational diagnostics.
-- Suricata IDS alerts are not imported yet.
+- Suricata IDS alert ingestion still needs live sensor validation and richer review workflows.
 - The local deployment story is containerized for first-run development, but production hardening remains incomplete.
 
 ## Update Rules

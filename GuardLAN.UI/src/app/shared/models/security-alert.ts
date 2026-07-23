@@ -6,15 +6,33 @@ export interface AlertDto {
   readonly deviceName: string | null;
   readonly deviceIpAddress: string | null;
   readonly deviceMacAddress: string | null;
+  readonly connectionId: string | null;
+  readonly source: string | null;
+  readonly sourceRecordId: string | null;
+  readonly sourceIp: string | null;
+  readonly destinationIp: string | null;
+  readonly destinationPort: number | null;
+  readonly protocol: string | null;
   readonly severity: AlertSeverity;
   readonly type: string;
   readonly message: string;
   readonly createdUtc: string;
   readonly resolvedUtc: string | null;
+  readonly evidenceSummary: string | null;
+  readonly history: readonly AlertHistoryDto[];
+}
+
+export interface AlertHistoryDto {
+  readonly id: string;
+  readonly eventType: string;
+  readonly description: string;
+  readonly createdUtc: string;
 }
 
 export function alertTypeLabel(type: string): string {
   switch (type) {
+    case 'IdsAlert':
+      return 'IDS alert';
     case 'UnknownDeviceConnected':
       return 'Unknown device connected';
     case 'DeviceDisappeared':

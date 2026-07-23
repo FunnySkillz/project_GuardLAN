@@ -29,4 +29,6 @@ public class NetworkConnection
     public DateTime LastSeenUtc { get; set; }
 
     public ICollection<TlsObservation> TlsObservations { get; } = [];
+
+    public ICollection<SecurityAlert> Alerts { get; } = [];
 }

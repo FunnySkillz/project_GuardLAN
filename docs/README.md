@@ -8,4 +8,5 @@ This folder contains project-level documentation that does not belong exclusivel
 * [Connection ingestion](CONNECTION_INGESTION.md)
 * [Pi-hole integration](PIHOLE.md)
 * [Zeek integration](ZEEK.md)
+* [Suricata integration](SURICATA.md)
 * [MDAC - Mobile Device Activity Collector](MDAC/README.md)

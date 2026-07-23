@@ -1,10 +1,12 @@
 using GuardLan.Application.Dns;
 using GuardLan.Application.Zeek;
+using GuardLan.Application.Suricata;
 using GuardLan.Infrastructure.Dns;
 using GuardLan.Application.Scanning;
 using GuardLan.Infrastructure.Persistence;
 using GuardLan.Infrastructure.Persistence.Repositories;
 using GuardLan.Infrastructure.Scanning;
+using GuardLan.Infrastructure.Suricata;
 using GuardLan.Infrastructure.Zeek;
 using GuardLan.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<INetworkScanner, NmapNetworkScanner>();
         services.AddScoped<IDnsQuerySource, PiHoleDnsQuerySource>();
+        services.AddScoped<ISuricataAlertSource, SuricataEveJsonSource>();
         services.AddScoped<ZeekLogFileReader>();
         services.AddScoped<IZeekConnectionSource, ZeekConnLogSource>();
         services.AddScoped<IZeekDnsSource, ZeekDnsLogSource>();
