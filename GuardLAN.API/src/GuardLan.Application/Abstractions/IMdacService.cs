@@ -7,4 +7,6 @@ public interface IMdacService
     Task<RegisterDeviceResponse> RegisterAsync(RegisterDeviceRequest request, CancellationToken cancellationToken);
 
     Task<SubmitSyncResponse> SubmitSyncAsync(SubmitSyncRequest request, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<MdacRegistrationSummary>> ListRegistrationsAsync(CancellationToken cancellationToken);
 }

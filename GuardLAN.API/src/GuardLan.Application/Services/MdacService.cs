@@ -48,4 +48,17 @@ public sealed class MdacService(
 
         return new SubmitSyncResponse("accepted");
     }
+
+    public async Task<IReadOnlyList<MdacRegistrationSummary>> ListRegistrationsAsync(CancellationToken cancellationToken)
+    {
+        var registrations = await unitOfWork.MdacRegistrations.GetAllAsync(cancellationToken);
+
+        return registrations
+            .OrderByDescending(registration => registration.RegisteredUtc)
+            .Select(registration => new MdacRegistrationSummary(
+                registration.DeviceId,
+                registration.DeviceName,
+                registration.RegisteredUtc))
+            .ToArray();
+    }
 }

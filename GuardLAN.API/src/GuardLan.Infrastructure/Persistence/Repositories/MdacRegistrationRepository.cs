@@ -15,6 +15,14 @@ public sealed class MdacRegistrationRepository(GuardLanDbContext dbContext) : IM
             .FirstOrDefaultAsync(registration => registration.DeviceId == deviceId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<MdacRegistration>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Set<MdacRegistration>()
+            .AsNoTracking()
+            .OrderByDescending(registration => registration.RegisteredUtc)
+            .ToArrayAsync(cancellationToken);
+    }
+
     public async Task AddAsync(MdacRegistration registration, CancellationToken cancellationToken = default)
     {
         await _dbContext.Set<MdacRegistration>().AddAsync(registration, cancellationToken);

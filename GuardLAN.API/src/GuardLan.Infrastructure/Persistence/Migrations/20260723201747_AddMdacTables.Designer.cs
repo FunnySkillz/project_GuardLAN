@@ -3,6 +3,7 @@ using System;
 using GuardLan.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GuardLan.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(GuardLanDbContext))]
-    partial class GuardLanDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260723201747_AddMdacTables")]
+    partial class AddMdacTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -430,20 +433,6 @@ namespace GuardLan.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ResolvedUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ReviewNote")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.Property<string>("ReviewStatus")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasDefaultValue("Open");
-
-                    b.Property<DateTime?>("ReviewedUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Severity")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -475,10 +464,6 @@ namespace GuardLan.Infrastructure.Persistence.Migrations
                     b.HasIndex("DeviceId");
 
                     b.HasIndex("ResolvedUtc");
-
-                    b.HasIndex("ReviewStatus");
-
-                    b.HasIndex("ReviewedUtc");
 
                     b.HasIndex("Source", "SourceRecordId");
 

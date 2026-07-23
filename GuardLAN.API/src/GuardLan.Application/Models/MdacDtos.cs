@@ -9,3 +9,5 @@ public sealed record SubmitSyncRequest(Guid DeviceId, SyncUsage Usage);
 public sealed record SyncUsage(string AppName, int ForegroundSeconds);
 
 public sealed record SubmitSyncResponse(string Status);
+
+public sealed record MdacRegistrationSummary(Guid DeviceId, string DeviceName, DateTime RegisteredUtc);
