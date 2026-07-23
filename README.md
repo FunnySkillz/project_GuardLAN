@@ -409,6 +409,7 @@ Do not use GuardLAN to monitor networks, systems, or people without appropriate 
 
 Detailed project conventions are documented separately:
 
+* [MDAC mobile collector plan](docs/MDAC/README.md)
 * [Backend architecture](GuardLAN.API/docs/BACKEND_ARCHITECTURE.md)
 * [Frontend architecture](GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md)
 * [Backend agent instructions](GuardLAN.API/AGENTS.md)
