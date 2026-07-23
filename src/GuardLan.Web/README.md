@@ -2,6 +2,10 @@
 
 Angular 20 dashboard client for GuardLAN.
 
+## Architecture
+
+Frontend work in this folder must follow [docs/FRONTEND_ARCHITECTURE.md](docs/FRONTEND_ARCHITECTURE.md). The local [AGENTS.md](AGENTS.md) points future coding-agent work at the same rules.
+
 ## Development
 
 ```bash

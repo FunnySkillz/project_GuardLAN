@@ -2,6 +2,8 @@
 
 When creating or modifying backend API functionality, follow [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md).
 
+When creating or modifying Angular frontend functionality under `src/GuardLan.Web`, follow [src/GuardLan.Web/AGENTS.md](src/GuardLan.Web/AGENTS.md).
+
 Key defaults:
 
 - Keep controllers thin and route business logic through application services.
