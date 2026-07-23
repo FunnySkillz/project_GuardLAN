@@ -8,6 +8,7 @@ import {
   DeviceType,
   deviceDisplayName,
   deviceTypeLabel,
+  riskReason,
   isDeviceType,
   needsDeviceReview
 } from '../../../shared/models/network-device';
@@ -38,6 +39,7 @@ export class DevicesPageComponent implements OnInit {
   protected readonly filters: readonly DeviceFilterOption[] = [
     { value: 'all', label: 'All' },
     { value: 'review', label: 'Review' },
+    { value: 'risk', label: 'Risk' },
     { value: 'offline', label: 'Offline' },
     { value: 'trusted', label: 'Trusted' }
   ];
@@ -153,6 +155,10 @@ export class DevicesPageComponent implements OnInit {
 
   protected needsReview(device: DeviceDto): boolean {
     return needsDeviceReview(device);
+  }
+
+  protected riskReason(device: DeviceDto): string {
+    return riskReason(device);
   }
 
   protected formatRelativeTime(value: string): string {

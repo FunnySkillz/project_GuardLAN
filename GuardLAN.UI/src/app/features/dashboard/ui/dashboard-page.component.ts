@@ -6,7 +6,8 @@ import { NetworkScanDto, ProtocolActivityDto } from '../models/dashboard-overvie
 import {
   DeviceDto,
   deviceDisplayName,
-  deviceTypeLabel
+  deviceTypeLabel,
+  riskReason
 } from '../../../shared/models/network-device';
 import { AlertDto, alertTypeLabel } from '../../../shared/models/security-alert';
 import { LiveUpdatesService } from '../../../shared/live-updates/live-updates.service';
@@ -70,6 +71,10 @@ export class DashboardPageComponent implements OnInit {
 
   protected deviceTypeLabel(device: DeviceDto): string {
     return deviceTypeLabel(device.deviceType);
+  }
+
+  protected riskReason(device: DeviceDto): string {
+    return riskReason(device);
   }
 
   protected deviceTraffic(deviceId: string): string {

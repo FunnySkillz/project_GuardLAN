@@ -16,7 +16,12 @@ describe('DevicesApi', () => {
     isTrusted: true,
     firstSeenUtc: '2026-07-23T10:00:00Z',
     lastSeenUtc: '2026-07-23T11:00:00Z',
-    isOnline: true
+    isOnline: true,
+    risk: {
+      level: 'Normal',
+      score: 0,
+      reasons: ['No recent risk evidence.']
+    }
   };
 
   let api: DevicesApi;

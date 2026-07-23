@@ -75,6 +75,7 @@
             <th scope="col">Address</th>
             <th scope="col">Type</th>
             <th scope="col">Trust</th>
+            <th scope="col">Risk</th>
             <th scope="col">Traffic</th>
             <th scope="col">Seen</th>
           </tr>
@@ -82,7 +83,7 @@
         <tbody>
           @if (devices().length === 0) {
             <tr>
-              <td class="empty-state table-empty" colspan="6">
+              <td class="empty-state table-empty" colspan="7">
                 {{ loading() ? 'Loading devices...' : 'No devices tracked yet' }}
               </td>
             </tr>
@@ -102,6 +103,12 @@
                   <span class="trust-pill" [class.untrusted]="!device.isTrusted">
                     {{ device.isTrusted ? 'Trusted' : 'Review' }}
                   </span>
+                </td>
+                <td>
+                  <span class="risk-pill" [class]="device.risk.level.toLowerCase()">
+                    {{ device.risk.level }}
+                  </span>
+                  <small>{{ riskReason(device) }}</small>
                 </td>
                 <td>{{ deviceTraffic(device.id) }}</td>
                 <td>{{ formatRelativeTime(device.lastSeenUtc) }}</td>

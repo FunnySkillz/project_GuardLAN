@@ -221,8 +221,34 @@ Remaining hardening:
 * Add role-based authorization once distinct operator roles exist
 * Add structured audit logging for login and administrative actions
 
-## Deferred: Device Risk Classification
+## Phase 7: Evidence-Based Device Risk Signals
 
-Heavy automated risk classification should wait until DNS, connection, and IDS ingestion exist.
+Goal: prioritize device review using explainable evidence that GuardLAN already collects.
 
-Those signals now exist in first form, so the next safe slice should stay explainable and evidence-based rather than attempting opaque automated classification.
+Status: complete enough for device-detail evidence work.
+
+Started:
+
+* Device risk DTO with level, score and human-readable reasons
+* `IDeviceRiskEvaluator` application service
+* Risk scoring from open IDS alerts, trust state, unknown device type, first-seen time, blocked DNS queries and recent traffic volume
+* Device inventory API responses include risk summaries
+* Dashboard overview device rows include risk summaries
+* Angular dashboard and devices pages show risk pills and first reason
+* Devices page includes a risk summary count and risk filter
+* Unit tests cover normal, combined-evidence and resolved-alert behavior
+
+Deliverables:
+
+* Explainable device risk summary
+* Evidence-based scoring from DNS, connection, IDS and inventory data
+* Device list and dashboard risk display
+* Elevated-risk filter
+* Tests for scoring behavior
+
+Remaining hardening:
+
+* Add device detail pages that show the supporting alerts, DNS queries and connections
+* Add known-benign review or suppression state for noisy devices
+* Tune thresholds against real home-network data
+* Add behavior trends such as newly contacted destinations or unusual traffic volume

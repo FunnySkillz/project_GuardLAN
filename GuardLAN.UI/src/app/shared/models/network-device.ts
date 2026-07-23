@@ -10,6 +10,14 @@ export type DeviceType =
   | 'Printer'
   | 'Server';
 
+export type DeviceRiskLevel = 'Normal' | 'Low' | 'Medium' | 'High' | 'Critical';
+
+export interface DeviceRiskDto {
+  readonly level: DeviceRiskLevel;
+  readonly score: number;
+  readonly reasons: readonly string[];
+}
+
 export interface DeviceDto {
   readonly id: string;
   readonly ipAddress: string;
@@ -21,6 +29,7 @@ export interface DeviceDto {
   readonly firstSeenUtc: string;
   readonly lastSeenUtc: string;
   readonly isOnline: boolean;
+  readonly risk: DeviceRiskDto;
 }
 
 export interface UpdateDeviceRequest {
@@ -57,6 +66,14 @@ export function deviceTypeLabel(deviceType: DeviceType): string {
 
 export function needsDeviceReview(device: DeviceDto): boolean {
   return !device.isTrusted || device.deviceType === 'Unknown';
+}
+
+export function hasElevatedRisk(device: DeviceDto): boolean {
+  return device.risk.score >= 30;
+}
+
+export function riskReason(device: DeviceDto): string {
+  return device.risk.reasons[0] ?? 'No recent risk evidence.';
 }
 
 export function isDeviceType(value: string): value is DeviceType {

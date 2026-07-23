@@ -11,4 +11,5 @@ This folder contains project-level documentation that does not belong exclusivel
 * [Suricata integration](SURICATA.md)
 * [SignalR live updates](LIVE_UPDATES.md)
 * [Security hardening](SECURITY_HARDENING.md)
+* [Device risk signals](DEVICE_RISK.md)
 * [MDAC - Mobile Device Activity Collector](MDAC/README.md)

@@ -35,6 +35,12 @@
     <small>unknown or untrusted</small>
   </article>
 
+  <article class="metric-card risk">
+    <span>Risk</span>
+    <strong>{{ facade.summary().risk }}</strong>
+    <small>evidence-based</small>
+  </article>
+
   <article class="metric-card danger">
     <span>Offline</span>
     <strong>{{ facade.summary().offline }}</strong>
@@ -84,6 +90,7 @@
           <th scope="col">Type</th>
           <th scope="col">Trust</th>
           <th scope="col">State</th>
+          <th scope="col">Risk</th>
           <th scope="col">Seen</th>
           <th scope="col">Actions</th>
         </tr>
@@ -91,7 +98,7 @@
       <tbody>
         @if (facade.filteredDevices().length === 0) {
           <tr>
-            <td class="empty-state table-empty" colspan="7">
+            <td class="empty-state table-empty" colspan="8">
               {{ facade.loading() ? 'Loading devices...' : 'No devices match this view' }}
             </td>
           </tr>
@@ -146,6 +153,12 @@
                 @if (needsReview(device)) {
                   <span class="status-pill warning">Review</span>
                 }
+              </td>
+              <td>
+                <span class="risk-pill" [class]="device.risk.level.toLowerCase()">
+                  {{ device.risk.level }}
+                </span>
+                <small>{{ riskReason(device) }}</small>
               </td>
               <td>
                 <strong>{{ formatRelativeTime(device.lastSeenUtc) }}</strong>

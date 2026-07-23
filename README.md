@@ -25,6 +25,7 @@ The current implementation includes:
 * Suricata Eve JSON alert importer with device and connection association
 * SignalR live updates for scan, device, alert and DNS ingestion changes
 * Local-user authentication with cookie sessions for the API, UI and SignalR hub
+* Explainable device risk signals based on alerts, DNS, connection and inventory evidence
 * Local Docker Compose infrastructure for the UI, API, worker and PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.
@@ -473,6 +474,7 @@ Detailed project conventions are documented separately:
 * [Suricata integration](docs/SURICATA.md)
 * [SignalR live updates](docs/LIVE_UPDATES.md)
 * [Security hardening](docs/SECURITY_HARDENING.md)
+* [Device risk signals](docs/DEVICE_RISK.md)
 * [MDAC mobile collector plan](docs/MDAC/README.md)
 * [Backend architecture](GuardLAN.API/docs/BACKEND_ARCHITECTURE.md)
 * [Frontend architecture](GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md)

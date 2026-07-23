@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.TryAddScoped<ILiveUpdatePublisher, NoOpLiveUpdatePublisher>();
         services.AddScoped<IConnectionIngestionService, ConnectionIngestionService>();
         services.AddScoped<IConnectionService, ConnectionService>();
+        services.AddScoped<IDeviceRiskEvaluator, DeviceRiskEvaluator>();
         services.AddScoped<IIdsAlertIngestionService, IdsAlertIngestionService>();
         services.AddScoped<ISuricataAlertImportService, SuricataAlertImportService>();
         services.AddScoped<ITlsObservationIngestionService, TlsObservationIngestionService>();

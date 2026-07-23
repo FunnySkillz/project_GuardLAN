@@ -91,7 +91,7 @@ button.secondary:hover {
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -136,6 +136,14 @@ button.secondary:hover {
 
 .metric-card.danger strong {
   color: #a83f30;
+}
+
+.metric-card.risk {
+  border-color: #c8a6d8;
+}
+
+.metric-card.risk strong {
+  color: #72458a;
 }
 
 .toolbar {
@@ -218,7 +226,7 @@ select:focus {
 
 table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1240px;
   border-collapse: collapse;
 }
 
@@ -304,6 +312,35 @@ code {
   background: #fff3da;
   color: #735208;
   margin-left: 6px;
+}
+
+.risk-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  min-height: 28px;
+  border-radius: 999px;
+  background: #eef4f1;
+  color: #44615b;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.risk-pill.low {
+  background: #e7f4ef;
+  color: #176151;
+}
+
+.risk-pill.medium {
+  background: #fff3da;
+  color: #735208;
+}
+
+.risk-pill.high,
+.risk-pill.critical {
+  background: #fbe7e3;
+  color: #a33f30;
 }
 
 .review-row {

@@ -2,9 +2,14 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { finalize, take } from 'rxjs';
 
 import { DevicesApi } from './devices.api';
-import { DeviceDto, needsDeviceReview, UpdateDeviceRequest } from '../../../shared/models/network-device';
+import {
+  DeviceDto,
+  hasElevatedRisk,
+  needsDeviceReview,
+  UpdateDeviceRequest
+} from '../../../shared/models/network-device';
 
-export type DeviceFilter = 'all' | 'review' | 'offline' | 'trusted';
+export type DeviceFilter = 'all' | 'review' | 'risk' | 'offline' | 'trusted';
 
 interface DevicesState {
   readonly devices: readonly DeviceDto[];
@@ -51,7 +56,9 @@ export class DevicesFacade {
         device.ipAddress,
         device.macAddress,
         device.vendor,
-        device.deviceType
+        device.deviceType,
+        device.risk.level,
+        ...device.risk.reasons
       ].some((value) => value?.toLowerCase().includes(query));
     });
   });
@@ -62,6 +69,7 @@ export class DevicesFacade {
       total: devices.length,
       online: devices.filter((device) => device.isOnline).length,
       review: devices.filter(needsDeviceReview).length,
+      risk: devices.filter(hasElevatedRisk).length,
       offline: devices.filter((device) => !device.isOnline).length,
       trusted: devices.filter((device) => device.isTrusted).length
     };
@@ -124,6 +132,8 @@ function matchesFilter(device: DeviceDto, filter: DeviceFilter): boolean {
   switch (filter) {
     case 'review':
       return needsDeviceReview(device);
+    case 'risk':
+      return hasElevatedRisk(device);
     case 'offline':
       return !device.isOnline;
     case 'trusted':

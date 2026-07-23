@@ -16,7 +16,12 @@ describe('DevicesFacade', () => {
     isTrusted: true,
     firstSeenUtc: '2026-07-23T10:00:00Z',
     lastSeenUtc: '2026-07-23T11:00:00Z',
-    isOnline: true
+    isOnline: true,
+    risk: {
+      level: 'Normal',
+      score: 0,
+      reasons: ['No recent risk evidence.']
+    }
   };
   const reviewDevice: DeviceDto = {
     id: 'device-2',
@@ -28,7 +33,12 @@ describe('DevicesFacade', () => {
     isTrusted: false,
     firstSeenUtc: '2026-07-23T10:30:00Z',
     lastSeenUtc: '2026-07-23T10:45:00Z',
-    isOnline: false
+    isOnline: false,
+    risk: {
+      level: 'Medium',
+      score: 35,
+      reasons: ['1 open medium-severity alert.']
+    }
   };
 
   let api: jasmine.SpyObj<Pick<DevicesApi, 'list' | 'update'>>;
@@ -57,6 +67,7 @@ describe('DevicesFacade', () => {
       total: 2,
       online: 1,
       review: 1,
+      risk: 1,
       offline: 1,
       trusted: 1
     });
@@ -67,6 +78,15 @@ describe('DevicesFacade', () => {
 
     facade.load();
     facade.setFilter('review');
+
+    expect(facade.filteredDevices()).toEqual([reviewDevice]);
+  });
+
+  it('should filter devices with elevated risk evidence', () => {
+    api.list.and.returnValue(of([trustedDevice, reviewDevice]));
+
+    facade.load();
+    facade.setFilter('risk');
 
     expect(facade.filteredDevices()).toEqual([reviewDevice]);
   });

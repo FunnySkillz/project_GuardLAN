@@ -13,9 +13,10 @@ public sealed record DeviceDto(
     bool IsTrusted,
     DateTime FirstSeenUtc,
     DateTime LastSeenUtc,
-    bool IsOnline)
+    bool IsOnline,
+    DeviceRiskDto Risk)
 {
-    public static DeviceDto FromEntity(NetworkDevice device)
+    public static DeviceDto FromEntity(NetworkDevice device, DeviceRiskDto? risk = null)
     {
         return new DeviceDto(
             device.Id,
@@ -27,7 +28,8 @@ public sealed record DeviceDto(
             device.IsTrusted,
             device.FirstSeenUtc,
             device.LastSeenUtc,
-            device.IsOnline);
+            device.IsOnline,
+            risk ?? DeviceRiskDto.Normal);
     }
 }
 

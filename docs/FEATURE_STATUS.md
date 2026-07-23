@@ -20,7 +20,7 @@ This document is the primary project-level tracker for GuardLAN features and tec
 
 GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, protect the dashboard with local-user authentication, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, accept normalized connection metadata, import Zeek connection/DNS/TLS logs, import Suricata Eve JSON IDS alerts, publish SignalR live updates, and present device, alert, DNS and connection views in the Angular UI.
 
-DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. SignalR live updates refresh the dashboard, devices, DNS and alerts views after operational changes. The first authentication and hardening slice is implemented; deeper multi-user identity, roles and audit logging remain future work.
+DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`. Network connection telemetry has a stored-data overview flow, dashboard traffic and protocol widgets, a normalized import endpoint, Zeek `conn.log` ingestion and stored TLS observations from Zeek `ssl.log`. Suricata alert ingestion now imports IDS evidence into alert history and associates alerts with devices and connections where possible. SignalR live updates refresh the dashboard, devices, DNS and alerts views after operational changes. The first authentication and hardening slice is implemented, and device inventory responses now include explainable risk summaries based on current evidence. Deeper multi-user identity, roles and audit logging remain future work.
 
 ## Feature Overview
 
@@ -32,7 +32,8 @@ DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`
 | Scheduled or background scanning | Partially Implemented | A background worker processes queued scans on an interval. | Add a clear scheduling model and scan policy management. | Worker |
 | Device trust management | Implemented | Devices can be marked trusted or untrusted through the API and UI. | Add review workflows for suspicious or unknown devices. | API / UI |
 | Device classification | Partially Implemented | Device types are modeled and editable, but classification is still manual. | Introduce automatic or semi-automatic classification logic. | API / UI |
-| Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity, recent alerts, DNS domains, and connection traffic/protocol widgets. | Add richer time-based analytics and deeper drill-down views. | API / UI |
+| Device risk signals | Partially Implemented | Devices receive explainable risk summaries from open alerts, trust state, unknown type, first-seen time, blocked DNS and recent traffic. | Add device-detail evidence drill-downs and tune thresholds with real network data. | API / UI |
+| Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity, recent alerts, DNS domains, connection traffic/protocol widgets and device risk pills. | Add richer time-based analytics and deeper drill-down views. | API / UI |
 | Alert management | Partially Implemented | Alerts are created, listed, resolved, enriched from Suricata IDS imports, and given basic lifecycle history. | Add richer alert detail, review states and false-positive handling. | API / UI |
 | DNS monitoring | Partially Implemented | Stored DNS queries are exposed through a DNS overview API and Angular DNS activity page, with a configurable Pi-hole ingestion pipeline for importing DNS history. | Validate the importer against a live Pi-hole instance and add retention plus newly contacted domain detection. | API / Worker / UI |
 | Network connection monitoring | Partially Implemented | Connection entities, dashboard traffic/protocol aggregation, normalized import, Zeek connection/TLS import, a paged connection overview API and an Angular connection activity page exist. | Add connection detail views and deeper traffic analytics. | API / Worker / UI |
@@ -150,6 +151,38 @@ Add explicit review and trust policies that combine device metadata with risk co
 
 **Next Change**
 Introduce a classification engine that infers device categories from scan metadata and observed behavior.
+
+### Device Risk Signals
+
+**Status:** Partially Implemented
+
+**Current State**
+- Device DTOs include a risk level, score and up to four human-readable reasons.
+- Risk is calculated from open alerts, device trust state, unknown device type, first-seen time, blocked DNS requests and recent connection traffic.
+- The dashboard and device inventory table show risk pills and the first evidence reason.
+- The devices page includes a risk summary metric and elevated-risk filter.
+- Backend tests cover normal, combined-evidence and resolved-alert behavior.
+
+**Implemented In**
+- [docs/DEVICE_RISK.md](DEVICE_RISK.md)
+- [GuardLAN.API/src/GuardLan.Application/Services/DeviceRiskEvaluator.cs](../GuardLAN.API/src/GuardLan.Application/Services/DeviceRiskEvaluator.cs)
+- [GuardLAN.API/src/GuardLan.Application/Models/DeviceRiskDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/DeviceRiskDto.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/DeviceService.cs](../GuardLAN.API/src/GuardLan.Application/Services/DeviceService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/DashboardService.cs](../GuardLAN.API/src/GuardLan.Application/Services/DashboardService.cs)
+- [GuardLAN.API/tests/GuardLan.Tests/DeviceRiskEvaluatorTests.cs](../GuardLAN.API/tests/GuardLan.Tests/DeviceRiskEvaluatorTests.cs)
+- [GuardLAN.UI/src/app/shared/models/network-device.ts](../GuardLAN.UI/src/app/shared/models/network-device.ts)
+- [GuardLAN.UI/src/app/features/devices/data-access/devices.facade.ts](../GuardLAN.UI/src/app/features/devices/data-access/devices.facade.ts)
+- [GuardLAN.UI/src/app/features/devices/ui/devices-page.component.ts](../GuardLAN.UI/src/app/features/devices/ui/devices-page.component.ts)
+- [GuardLAN.UI/src/app/features/dashboard/ui/dashboard-page.component.ts](../GuardLAN.UI/src/app/features/dashboard/ui/dashboard-page.component.ts)
+
+**Missing or Incomplete**
+- No device-detail view yet shows the supporting alerts, DNS queries and connections behind the score.
+- Thresholds have not been tuned against real home-network data.
+- Known-benign review or suppression states do not exist yet.
+- Trend signals such as newly contacted destinations are not implemented yet.
+
+**Next Change**
+Add a device-detail evidence view that explains the recent alerts, DNS queries and connections behind each risk summary.
 
 ### Dashboard
 
@@ -465,13 +498,14 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 Evidence-based device risk classification.
 
-Phase 6 now protects the API, UI routes and SignalR hub with local-user authentication, and documents deployment secrets, HTTPS posture and backup/restore operations. The next implementation slice should introduce explainable device risk signals based on existing DNS, connection and IDS evidence.
+Phase 7 now introduces explainable device risk summaries based on existing DNS, connection, IDS and inventory evidence. The next implementation slice should add device-detail evidence drill-downs so operators can inspect the supporting data behind each risk score.
 
 ## Known Technical Gaps
 
 - Authentication is single-admin only; persistent users, roles and audit logging are future work.
 - Live updates have no cross-instance SignalR backplane yet.
 - External integrations are only partially normalized behind shared ingestion contracts.
+- Device risk is a first evidence summary only; it does not yet include drill-down detail pages, suppression states or tuned behavioral baselines.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation and operational diagnostics.
 - Suricata IDS alert ingestion still needs live sensor validation and richer review workflows.
 - The local deployment story is containerized for first-run development, but production hardening remains incomplete.

@@ -6,7 +6,10 @@ using GuardLan.Domain.Repositories;
 
 namespace GuardLan.Application.Services;
 
-public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timeProvider) : IDashboardService
+public sealed class DashboardService(
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider,
+    IDeviceRiskEvaluator deviceRiskEvaluator) : IDashboardService
 {
     public async Task<DashboardSnapshotDto> GetSnapshotAsync(CancellationToken cancellationToken)
     {
@@ -19,10 +22,16 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
     {
         var data = await LoadDashboardDataAsync(cancellationToken);
         var scanRuns = await unitOfWork.NetworkScanRuns.GetRecentAsync(cancellationToken);
+        var risks = deviceRiskEvaluator.Evaluate(
+            data.Devices,
+            data.Alerts,
+            data.RiskDnsQueries,
+            data.Connections,
+            data.NowUtc);
 
         return new DashboardOverviewDto(
             BuildSnapshot(data),
-            data.Devices.Select(DeviceDto.FromEntity).ToArray(),
+            data.Devices.Select(device => DeviceDto.FromEntity(device, risks[device.Id])).ToArray(),
             scanRuns.Select(NetworkScanDto.FromEntity).ToArray());
     }
 
@@ -35,9 +44,12 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
         var devices = await unitOfWork.Devices.GetInventoryAsync(cancellationToken);
         var alerts = await unitOfWork.SecurityAlerts.GetRecentAsync(cancellationToken);
         var dnsQueries = await unitOfWork.DnsQueries.GetSinceAsync(todayUtc, cancellationToken);
+        var riskDnsQueries = todayUtc == sinceUtc
+            ? dnsQueries
+            : await unitOfWork.DnsQueries.GetSinceAsync(sinceUtc, cancellationToken);
         var connections = await unitOfWork.NetworkConnections.GetSinceAsync(sinceUtc, cancellationToken);
 
-        return new DashboardData(devices, alerts, dnsQueries, connections, todayUtc);
+        return new DashboardData(devices, alerts, dnsQueries, riskDnsQueries, connections, nowUtc, todayUtc);
     }
 
     private static DashboardSnapshotDto BuildSnapshot(DashboardData data)
@@ -133,6 +145,8 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
         IReadOnlyList<NetworkDevice> Devices,
         IReadOnlyList<SecurityAlert> Alerts,
         IReadOnlyList<DnsQuery> DnsQueries,
+        IReadOnlyList<DnsQuery> RiskDnsQueries,
         IReadOnlyList<NetworkConnection> Connections,
+        DateTime NowUtc,
         DateTime TodayUtc);
 }
