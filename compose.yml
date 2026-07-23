@@ -1,0 +1,65 @@
+name: guardlan
+
+services:
+  api:
+    build:
+      context: ./GuardLAN.API
+      dockerfile: Dockerfile
+    container_name: guardlan-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS:-http://+:8080}
+      HttpsRedirection__Enabled: ${HttpsRedirection__Enabled:-false}
+      ConnectionStrings__GuardLanDb: Host=database;Port=5432;Database=${POSTGRES_DB:-guardlan};Username=${POSTGRES_USER:-guardlan};Password=${POSTGRES_PASSWORD:-guardlan}
+    ports:
+      - "${API_HOST_PORT:-5232}:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8080/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  ui:
+    build:
+      context: ./GuardLAN.UI
+      dockerfile: Dockerfile
+    container_name: guardlan-ui
+    restart: unless-stopped
+    ports:
+      - "${UI_HOST_PORT:-4200}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  database:
+    image: postgres:17-alpine
+    container_name: guardlan-database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-guardlan}
+      POSTGRES_USER: ${POSTGRES_USER:-guardlan}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-guardlan}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - guardlan-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guardlan -d guardlan"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  guardlan-postgres-data:

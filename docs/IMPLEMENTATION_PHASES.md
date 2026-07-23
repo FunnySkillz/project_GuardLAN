@@ -22,7 +22,7 @@ Continue improving this phase only when needed by later ingestion work.
 
 Goal: make DNS activity visible quickly, using Pi-hole as the first practical data source.
 
-Status: active.
+Status: partially implemented.
 
 Started:
 
@@ -61,6 +61,14 @@ Work order:
 
 Goal: represent connection metadata without packet-content capture.
 
+Status: active.
+
+Started:
+
+* Stored connection overview API
+* Connection activity page in the Angular app
+* Protocol, destination and device traffic summaries from stored connection data
+
 Deliverables:
 
 * Source device
@@ -72,6 +80,14 @@ Deliverables:
 * Connection history API
 * Connection view in the Angular app
 * Dashboard protocol and traffic summaries
+
+Work order:
+
+1. Expose stored connection data through purpose-built backend DTOs.
+2. Add a connection page that uses one initial overview request.
+3. Add backend pagination and server-side filtering for growing history.
+4. Define the normalized ingestion contract for Zeek connection records.
+5. Add dashboard protocol and traffic summary widgets.
 
 ## Phase 3: Zeek Ingestion
 

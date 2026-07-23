@@ -1,0 +1,208 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Network Activity</p>
+    <h1>Connections</h1>
+  </div>
+
+  <button class="secondary" type="button" (click)="retry()" [disabled]="facade.loading()">
+    {{ facade.loading() ? 'Refreshing...' : 'Refresh' }}
+  </button>
+</header>
+
+@if (facade.error(); as message) {
+  <section class="status-panel" role="status">
+    <span>{{ message }}</span>
+    <button class="secondary" type="button" (click)="retry()">Retry</button>
+  </section>
+}
+
+<section class="metrics" aria-label="Connection summary" [class.loading]="facade.loading()">
+  <article class="metric-card">
+    <span>Total</span>
+    <strong>{{ facade.summary().totalConnections }}</strong>
+    <small>connections in 24 hours</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Devices</span>
+    <strong>{{ facade.summary().activeDevices }}</strong>
+    <small>with activity</small>
+  </article>
+
+  <article class="metric-card warning">
+    <span>Destinations</span>
+    <strong>{{ facade.summary().uniqueDestinations }}</strong>
+    <small>unique endpoints</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Sent</span>
+    <strong>{{ formatBytes(totalBytesSent()) }}</strong>
+    <small>outbound volume</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Received</span>
+    <strong>{{ formatBytes(totalBytesReceived()) }}</strong>
+    <small>inbound volume</small>
+  </article>
+</section>
+
+<section class="toolbar" aria-label="Connection controls">
+  <div class="filter-group" role="group" aria-label="Protocol filter">
+    @for (filter of filters; track filter.value) {
+      <button
+        class="filter-button"
+        type="button"
+        [class.active]="isFilterActive(filter.value)"
+        [attr.aria-pressed]="isFilterActive(filter.value)"
+        (click)="setFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  <label class="search-field">
+    <span>Search</span>
+    <input
+      type="search"
+      [value]="facade.search()"
+      (input)="updateSearch($event)"
+      placeholder="Device, destination, protocol, port"
+    />
+  </label>
+</section>
+
+<section class="connection-grid">
+  <section class="panel history-panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">History</p>
+        <h2>{{ facade.filteredConnections().length }} connections</h2>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Source</th>
+            <th scope="col">Destination</th>
+            <th scope="col">Protocol</th>
+            <th scope="col">Traffic</th>
+            <th scope="col">Last seen</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (facade.filteredConnections().length === 0) {
+            <tr>
+              <td class="empty-state table-empty" colspan="5">
+                {{ facade.loading() ? 'Loading connections...' : 'No connections match this view' }}
+              </td>
+            </tr>
+          } @else {
+            @for (connection of facade.filteredConnections(); track connection.id) {
+              <tr>
+                <td>
+                  <strong>{{ connection.deviceName }}</strong>
+                  <small>{{ connection.deviceIp }}</small>
+                </td>
+                <td>
+                  <strong>{{ destination(connection) }}</strong>
+                  <small>{{ connection.destinationIp }}</small>
+                </td>
+                <td>
+                  <span class="protocol-pill">{{ endpoint(connection) }}</span>
+                </td>
+                <td>
+                  <strong>{{ connectionTraffic(connection) }}</strong>
+                  <small>
+                    {{ formatBytes(connection.bytesSent) }} sent |
+                    {{ formatBytes(connection.bytesReceived) }} received
+                  </small>
+                </td>
+                <td>{{ formatRelativeTime(connection.lastSeenUtc) }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Protocols</p>
+        <h2>Top Protocols</h2>
+      </div>
+    </div>
+
+    <div class="summary-list">
+      @if (facade.topProtocols().length === 0) {
+        <p class="empty-state">{{ facade.loading() ? 'Loading protocols...' : 'No protocol activity yet' }}</p>
+      } @else {
+        @for (protocol of facade.topProtocols(); track protocol.protocol) {
+          <article class="summary-row">
+            <div>
+              <strong>{{ protocol.protocol }}</strong>
+              <small>{{ protocol.connections }} connections</small>
+            </div>
+            <span>{{ protocolTraffic(protocol) }}</span>
+          </article>
+        }
+      }
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Destinations</p>
+        <h2>Top Destinations</h2>
+      </div>
+    </div>
+
+    <div class="summary-list">
+      @if (facade.topDestinations().length === 0) {
+        <p class="empty-state">{{ facade.loading() ? 'Loading destinations...' : 'No destination activity yet' }}</p>
+      } @else {
+        @for (destination of facade.topDestinations(); track destination.destination) {
+          <article class="summary-row">
+            <div>
+              <strong>{{ destination.destination }}</strong>
+              <small>{{ destination.destinationIp }} | {{ destination.connections }} connections</small>
+            </div>
+            <span>{{ destinationTraffic(destination) }}</span>
+          </article>
+        }
+      }
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Devices</p>
+        <h2>Top Devices</h2>
+      </div>
+    </div>
+
+    <div class="summary-list">
+      @if (facade.topDevices().length === 0) {
+        <p class="empty-state">{{ facade.loading() ? 'Loading devices...' : 'No device activity yet' }}</p>
+      } @else {
+        @for (device of facade.topDevices(); track device.deviceId) {
+          <article class="summary-row">
+            <div>
+              <strong>{{ device.deviceName }}</strong>
+              <small>{{ device.deviceIp }} | {{ device.connections }} connections</small>
+            </div>
+            <span>{{ formatBytes(device.bytesSent + device.bytesReceived) }}</span>
+          </article>
+        }
+      }
+    </div>
+  </section>
+</section>

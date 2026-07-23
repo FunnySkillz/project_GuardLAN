@@ -17,4 +17,16 @@ public sealed class NetworkConnectionRepository(GuardLanDbContext dbContext)
             .Where(connection => connection.LastSeenUtc >= sinceUtc)
             .ToArrayAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<NetworkConnection>> GetSinceWithDevicesAsync(
+        DateTime sinceUtc,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Include(connection => connection.Device)
+            .Where(connection => connection.LastSeenUtc >= sinceUtc)
+            .OrderByDescending(connection => connection.LastSeenUtc)
+            .ToArrayAsync(cancellationToken);
+    }
 }

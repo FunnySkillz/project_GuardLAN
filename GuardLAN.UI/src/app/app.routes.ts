@@ -16,6 +16,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'connections',
+    loadComponent: () =>
+      import('./features/connections/ui/connections-page.component').then(
+        (module) => module.ConnectionsPageComponent
+      )
+  },
+  {
     path: 'dns',
     loadComponent: () =>
       import('./features/dns/ui/dns-page.component').then((module) => module.DnsPageComponent)

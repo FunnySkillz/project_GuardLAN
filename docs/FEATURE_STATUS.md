@@ -18,9 +18,9 @@ This document is the primary project-level tracker for GuardLAN features and tec
 
 ## Current Project Summary
 
-GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, and present device, alert and DNS views in the Angular UI.
+GuardLAN currently provides the first version of a device-visibility workflow. The application can scan a configured subnet, persist discovered devices and scan history, expose dashboard and alert endpoints, ingest DNS records from a configurable Pi-hole source, expose stored connection metadata, and present device, alert, DNS and connection views in the Angular UI.
 
-DNS visibility now has a first ingestion path through Pi-hole, while network connection telemetry is still modeled without a complete ingestion and reporting flow. Authentication, real-time updates, and most external monitoring integrations remain incomplete.
+DNS visibility now has a first ingestion path through Pi-hole. Network connection telemetry has a stored-data overview flow, but it still needs production ingestion and scalable history paging. Authentication, real-time updates, and most external monitoring integrations remain incomplete.
 
 ## Feature Overview
 
@@ -35,7 +35,7 @@ DNS visibility now has a first ingestion path through Pi-hole, while network con
 | Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity and recent alerts. | Add richer time-based analytics and deeper drill-down views. | API / UI |
 | Alert management | Implemented | Alerts are created, listed, and resolved through API and UI. | Add richer correlation, severity handling and alert history. | API / UI |
 | DNS monitoring | Partially Implemented | Stored DNS queries are exposed through a DNS overview API and Angular DNS activity page, with a configurable Pi-hole ingestion pipeline for importing DNS history. | Validate the importer against a live Pi-hole instance and add retention plus newly contacted domain detection. | API / Worker / UI |
-| Network connection monitoring | Partially Implemented | Connection entities and aggregate dashboard usage exist, but no full telemetry ingestion path is implemented. | Add ingestion and detail views for connection metadata. | API / Worker / UI |
+| Network connection monitoring | Partially Implemented | Connection entities, dashboard aggregation, a connection overview API and an Angular connection activity page exist, but no full telemetry ingestion path is implemented. | Add backend pagination and a normalized Zeek connection ingestion path. | API / Worker / UI |
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger and worker schedule exist, but live-appliance validation and operational diagnostics are still incomplete. | Validate response shapes against Pi-hole's local API docs and add import health reporting. | API / Worker |
 | Zeek integration | Planned | No ingestion flow exists yet. | Add a normalized ingestion contract for Zeek metadata. | API / Worker |
 | Suricata integration | Planned | No integration exists yet. | Add alert and event ingestion for IDS telemetry. | API / Worker |
@@ -238,18 +238,26 @@ Validate the Pi-hole ingestion pipeline against a live instance, then add import
 **Current State**
 - Network connection entities, repositories and persistence models exist.
 - The dashboard uses connection data to calculate active-device traffic summaries.
+- Stored connection metadata is exposed through a dedicated connection overview API.
+- The Angular UI includes a connection activity page with summary metrics, protocol filtering, search and recent connection history.
 
 **Implemented In**
 - [GuardLAN.API/src/GuardLan.Domain/Entities/NetworkConnection.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/NetworkConnection.cs)
+- [GuardLAN.API/src/GuardLan.Api/Controllers/ConnectionsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/ConnectionsController.cs)
+- [GuardLAN.API/src/GuardLan.Application/Services/ConnectionService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ConnectionService.cs)
+- [GuardLAN.API/src/GuardLan.Application/Models/ConnectionOverviewDto.cs](../GuardLAN.API/src/GuardLan.Application/Models/ConnectionOverviewDto.cs)
 - [GuardLAN.API/src/GuardLan.Infrastructure/Persistence/GuardLanDbContext.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Persistence/GuardLanDbContext.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/DashboardService.cs](../GuardLAN.API/src/GuardLan.Application/Services/DashboardService.cs)
+- [GuardLAN.UI/src/app/features/connections/ui/connections-page.component.ts](../GuardLAN.UI/src/app/features/connections/ui/connections-page.component.ts)
+- [GuardLAN.UI/src/app/features/connections/data-access/connections.facade.ts](../GuardLAN.UI/src/app/features/connections/data-access/connections.facade.ts)
 
 **Missing or Incomplete**
 - Production ingestion of connection metadata
+- Backend pagination and server-side filtering for large history sets
 - Connection detail pages and richer traffic analytics
 
 **Next Change**
-Introduce a normalized ingestion contract for connection telemetry and surface it in the UI.
+Add backend pagination for connection history, then introduce a normalized ingestion contract for Zeek connection telemetry.
 
 ### External Security Integrations
 
@@ -348,9 +356,9 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 ## Current Development Focus
 
-Phase 1: DNS Visibility.
+Phase 2: Network Connection Model.
 
-The current phase now has stored DNS views and a first Pi-hole ingestion pipeline. The next implementation slice should validate the Pi-hole connector against a live instance, add import health reporting, and introduce retention plus newly contacted domain detection.
+The current phase now exposes stored connection metadata through a backend overview endpoint and Angular page. The next implementation slice should add backend pagination and define the normalized ingestion contract that Zeek will populate.
 
 ## Known Technical Gaps
 
@@ -358,7 +366,7 @@ The current phase now has stored DNS views and a first Pi-hole ingestion pipelin
 - Real-time updates are not available.
 - External integrations are only partially normalized behind shared ingestion contracts.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation and operational diagnostics.
-- Connection telemetry is modeled, but it is not yet backed by a complete ingestion pipeline.
+- Connection telemetry has stored-data reporting, but it is not yet backed by a complete ingestion pipeline.
 - The local deployment story is only partially containerized.
 
 ## Update Rules

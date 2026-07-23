@@ -5,4 +5,8 @@ namespace GuardLan.Domain.Repositories;
 public interface INetworkConnectionRepository : IGenericRepository<NetworkConnection>
 {
     Task<IReadOnlyList<NetworkConnection>> GetSinceAsync(DateTime sinceUtc, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<NetworkConnection>> GetSinceWithDevicesAsync(
+        DateTime sinceUtc,
+        CancellationToken cancellationToken = default);
 }

@@ -4,6 +4,7 @@ using GuardLan.Infrastructure.Persistence;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+var enableHttpsRedirection = builder.Configuration.GetValue("HttpsRedirection:Enabled", false);
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .GetChildren()
@@ -54,17 +55,27 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-app.UseHttpsRedirection();
+if (enableHttpsRedirection)
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("GuardLanWeb");
 app.UseAuthorization();
 
-app.MapGet("/api/health", () => Results.Ok(new
-{
-    Service = "GuardLAN API",
-    Status = "ok",
-    Utc = DateTime.UtcNow
-}));
+app.MapGet("/health", () => Results.Ok(CreateHealthResponse()));
+app.MapGet("/api/health", () => Results.Ok(CreateHealthResponse()));
 
 app.MapControllers();
 
 app.Run();
+
+static object CreateHealthResponse()
+{
+    return new
+    {
+        Service = "GuardLAN API",
+        Status = "ok",
+        Utc = DateTime.UtcNow
+    };
+}

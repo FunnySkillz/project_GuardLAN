@@ -21,9 +21,40 @@ The current implementation includes:
 * A queued network scanner flow backed by a worker service
 * An Angular dashboard wired to the backend overview endpoint
 * DNS overview API and Angular DNS activity page for stored DNS query data
-* Local Docker Compose infrastructure for PostgreSQL
+* Connection overview API and Angular connection activity page for stored connection metadata
+* Local Docker Compose infrastructure for the UI, API and PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.
+
+## First Start
+
+To run GuardLAN locally for the first time, use the repository-root Docker setup:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+- the Angular UI at http://localhost:4200
+- the ASP.NET Core API at http://localhost:5232
+- PostgreSQL at localhost:5432
+
+Useful follow-up commands:
+
+```bash
+docker compose down
+docker compose logs -f api
+docker compose ps
+```
+
+If you want to reset the local database volume completely, run:
+
+```bash
+docker compose down -v
+```
+
+For more details, see [docs/Docker.md](docs/Docker.md).
 
 ## Objectives
 
@@ -319,7 +350,9 @@ Useful API endpoints:
 GET   http://localhost:5232/api/health
 GET   http://localhost:5232/api/dashboard
 GET   http://localhost:5232/api/dashboard/overview
+GET   http://localhost:5232/api/connections/overview
 GET   http://localhost:5232/api/dns/overview
+POST  http://localhost:5232/api/dns/import/pihole
 GET   http://localhost:5232/api/devices
 PATCH http://localhost:5232/api/devices/{id}
 GET   http://localhost:5232/api/alerts
@@ -412,6 +445,7 @@ Do not use GuardLAN to monitor networks, systems, or people without appropriate 
 Detailed project conventions are documented separately:
 
 * [Implementation phases](docs/IMPLEMENTATION_PHASES.md)
+* [Docker local setup](docs/Docker.md)
 * [MDAC mobile collector plan](docs/MDAC/README.md)
 * [Backend architecture](GuardLAN.API/docs/BACKEND_ARCHITECTURE.md)
 * [Frontend architecture](GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md)
