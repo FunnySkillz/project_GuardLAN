@@ -1,14 +1,10 @@
 # GuardLAN Agent Instructions
 
-When creating or modifying backend API functionality, follow [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md).
+This repository is intentionally split into two top-level workspaces:
 
-When creating or modifying Angular frontend functionality under `src/GuardLan.Web`, follow [src/GuardLan.Web/AGENTS.md](src/GuardLan.Web/AGENTS.md).
+- `GuardLAN.API` for the ASP.NET Core backend, worker, persistence, and backend architecture guidance.
+- `GuardLAN.UI` for the Angular frontend and frontend architecture guidance.
 
-Key defaults:
+When editing backend code, follow [GuardLAN.API/AGENTS.md](GuardLAN.API/AGENTS.md).
 
-- Keep controllers thin and route business logic through application services.
-- Do not expose EF Core entities through API responses or bind them as request models.
-- Keep EF Core access inside Infrastructure.
-- Use DTOs, explicit mapping, cancellation tokens, async persistence, and UTC timestamps.
-- For new backend endpoints, migrate the touched feature toward the documented Unit of Work and repository structure.
-- Do not introduce alternative endpoint architecture patterns without explicit approval.
+When editing Angular frontend code, follow [GuardLAN.UI/AGENTS.md](GuardLAN.UI/AGENTS.md).

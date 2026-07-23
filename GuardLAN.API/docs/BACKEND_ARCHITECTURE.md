@@ -74,17 +74,24 @@ The API layer must never return EF Core entities.
 The preferred solution structure is:
 
 ```text
-GuardLAN.sln
+GuardLAN.API/
+  GuardLAN.API.sln
+  docker-compose.yml
+  docs/
 
-src/
-  GuardLAN.Api/
-  GuardLAN.Application/
-  GuardLAN.Domain/
-  GuardLAN.Infrastructure/
+  src/
+    GuardLan.Api/
+    GuardLan.Application/
+    GuardLan.Domain/
+    GuardLan.Infrastructure/
+    GuardLan.Worker/
 
-tests/
-  GuardLAN.UnitTests/
-  GuardLAN.IntegrationTests/
+  tests/
+    GuardLan.UnitTests/
+    GuardLan.IntegrationTests/
+
+GuardLAN.UI/
+  Angular frontend workspace
 ```
 
 ## GuardLAN.Api

@@ -14,10 +14,10 @@
 *.db-wal
 
 # Angular
-src/GuardLan.Web/node_modules/
-src/GuardLan.Web/dist/
-src/GuardLan.Web/.angular/
-src/GuardLan.Web/coverage/
+GuardLAN.UI/node_modules/
+GuardLAN.UI/dist/
+GuardLAN.UI/.angular/
+GuardLAN.UI/coverage/
 
 # Environment files
 .env

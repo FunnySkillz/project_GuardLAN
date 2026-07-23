@@ -18,35 +18,34 @@ The important constraint is also correct: the web app cannot observe the network
 
 This init establishes the Phase 1 foundation:
 
-- `GuardLan.Api` exposes health, dashboard, device, alert, and scan endpoints.
-- `GuardLan.Application` contains the first service contracts and DTOs.
-- `GuardLan.Domain` contains the core device, connection, DNS, alert, and scan entities.
-- `GuardLan.Infrastructure` contains PostgreSQL EF Core persistence and development seed data.
-- `GuardLan.Worker` is ready for the nmap scanner loop.
-- `GuardLan.Web` is an Angular dashboard shell shaped around the Phase 1 user experience.
+- `GuardLAN.API` contains the ASP.NET Core API, application layer, domain layer, infrastructure layer, worker, backend docs, and Docker Compose.
+- `GuardLAN.UI` contains the Angular dashboard shell and frontend docs.
 
 ## Architecture
 
-Backend endpoint work must follow the repository guidance in [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md). The root [AGENTS.md](AGENTS.md) points future coding-agent work at the same rules.
+Backend endpoint work must follow [GuardLAN.API/docs/BACKEND_ARCHITECTURE.md](GuardLAN.API/docs/BACKEND_ARCHITECTURE.md).
+
+Angular frontend work must follow [GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md](GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md).
 
 ## Run Locally
 
 Start PostgreSQL:
 
 ```powershell
+cd GuardLAN.API
 docker compose up -d postgres
 ```
 
 Run the API:
 
 ```powershell
-dotnet run --project src/GuardLan.Api
+dotnet run --project GuardLAN.API/src/GuardLan.Api
 ```
 
 Run the Angular app:
 
 ```powershell
-cd src/GuardLan.Web
+cd GuardLAN.UI
 npm start
 ```
 

@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "guardlan-web": {
+    "guardlan-ui": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -61,10 +61,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "guardlan-web:build:production"
+              "buildTarget": "guardlan-ui:build:production"
             },
             "development": {
-              "buildTarget": "guardlan-web:build:development"
+              "buildTarget": "guardlan-ui:build:development"
             }
           },
           "defaultConfiguration": "development"
