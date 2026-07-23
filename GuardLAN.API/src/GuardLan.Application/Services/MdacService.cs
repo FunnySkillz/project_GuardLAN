@@ -1,25 +1,51 @@
 using GuardLan.Application.Abstractions;
 using GuardLan.Application.Models;
+using GuardLan.Domain.Entities;
+using GuardLan.Domain.Repositories;
 
 namespace GuardLan.Application.Services;
 
-public sealed class MdacService : IMdacService
+public sealed class MdacService(
+    IUnitOfWork unitOfWork) : IMdacService
 {
-    private readonly Dictionary<Guid, SubmitSyncRequest> _syncRequests = new();
-
-    public Task<RegisterDeviceResponse> RegisterAsync(RegisterDeviceRequest request, CancellationToken cancellationToken)
+    public async Task<RegisterDeviceResponse> RegisterAsync(RegisterDeviceRequest request, CancellationToken cancellationToken)
     {
         var deviceId = Guid.NewGuid();
-        var response = new RegisterDeviceResponse(deviceId, "registered");
+        var registration = new MdacRegistration
+        {
+            Id = Guid.NewGuid(),
+            DeviceId = deviceId,
+            DeviceName = string.IsNullOrWhiteSpace(request.DeviceName) ? "Unknown device" : request.DeviceName.Trim(),
+            RegisteredUtc = DateTime.UtcNow
+        };
 
-        return Task.FromResult(response);
+        await unitOfWork.MdacRegistrations.AddAsync(registration, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new RegisterDeviceResponse(deviceId, "registered");
     }
 
-    public Task<SubmitSyncResponse> SubmitSyncAsync(SubmitSyncRequest request, CancellationToken cancellationToken)
+    public async Task<SubmitSyncResponse> SubmitSyncAsync(SubmitSyncRequest request, CancellationToken cancellationToken)
     {
-        _syncRequests[request.DeviceId] = request;
-        var response = new SubmitSyncResponse("accepted");
+        var registration = await unitOfWork.MdacRegistrations.GetByDeviceIdAsync(request.DeviceId, cancellationToken);
 
-        return Task.FromResult(response);
+        if (registration is null)
+        {
+            return new SubmitSyncResponse("rejected");
+        }
+
+        var syncRecord = new MdacSyncRecord
+        {
+            Id = Guid.NewGuid(),
+            DeviceId = request.DeviceId,
+            AppName = request.Usage.AppName,
+            ForegroundSeconds = request.Usage.ForegroundSeconds,
+            SyncedUtc = DateTime.UtcNow
+        };
+
+        await unitOfWork.MdacSyncRecords.AddAsync(syncRecord, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new SubmitSyncResponse("accepted");
     }
 }

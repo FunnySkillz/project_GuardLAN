@@ -18,6 +18,10 @@ public interface IUnitOfWork
 
     IIntegrationImportRunRepository IntegrationImportRuns { get; }
 
+    IMdacRegistrationRepository MdacRegistrations { get; }
+
+    IMdacSyncRecordRepository MdacSyncRecords { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

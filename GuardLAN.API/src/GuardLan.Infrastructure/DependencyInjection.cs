@@ -32,6 +32,8 @@ public static class DependencyInjection
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IDeviceRepository, DeviceRepository>();
         services.AddScoped<IDnsQueryRepository, DnsQueryRepository>();
+        services.AddScoped<IMdacRegistrationRepository, MdacRegistrationRepository>();
+        services.AddScoped<IMdacSyncRecordRepository, MdacSyncRecordRepository>();
         services.AddScoped<INetworkConnectionRepository, NetworkConnectionRepository>();
         services.AddScoped<ITlsObservationRepository, TlsObservationRepository>();
         services.AddScoped<INetworkScanRunRepository, NetworkScanRunRepository>();

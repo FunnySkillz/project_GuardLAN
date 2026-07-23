@@ -23,6 +23,10 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
 
     public DbSet<IntegrationImportRun> IntegrationImportRuns => Set<IntegrationImportRun>();
 
+    public DbSet<MdacRegistration> MdacRegistrations => Set<MdacRegistration>();
+
+    public DbSet<MdacSyncRecord> MdacSyncRecords => Set<MdacSyncRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<NetworkDevice>(entity =>
@@ -203,6 +207,23 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
             entity.Property(run => run.Kind).HasConversion<string>().HasMaxLength(32);
             entity.Property(run => run.Status).HasConversion<string>().HasMaxLength(32);
             entity.Property(run => run.Message).HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<MdacRegistration>(entity =>
+        {
+            entity.ToTable("mdac_registrations");
+            entity.HasKey(registration => registration.Id);
+            entity.HasIndex(registration => registration.DeviceId).IsUnique();
+            entity.Property(registration => registration.DeviceName).HasMaxLength(128);
+        });
+
+        modelBuilder.Entity<MdacSyncRecord>(entity =>
+        {
+            entity.ToTable("mdac_sync_records");
+            entity.HasKey(syncRecord => syncRecord.Id);
+            entity.HasIndex(syncRecord => syncRecord.DeviceId);
+            entity.HasIndex(syncRecord => syncRecord.SyncedUtc);
+            entity.Property(syncRecord => syncRecord.AppName).HasMaxLength(128);
         });
     }
 }

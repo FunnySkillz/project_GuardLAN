@@ -12,7 +12,9 @@ public sealed class UnitOfWork(
     INetworkScanRunRepository networkScanRuns,
     ISecurityAlertRepository securityAlerts,
     IIntegrationHealthRepository integrationHealth,
-    IIntegrationImportRunRepository integrationImportRuns) : IUnitOfWork
+    IIntegrationImportRunRepository integrationImportRuns,
+    IMdacRegistrationRepository mdacRegistrations,
+    IMdacSyncRecordRepository mdacSyncRecords) : IUnitOfWork
 {
     private IDbContextTransaction? _transaction;
 
@@ -31,6 +33,10 @@ public sealed class UnitOfWork(
     public IIntegrationHealthRepository IntegrationHealth { get; } = integrationHealth;
 
     public IIntegrationImportRunRepository IntegrationImportRuns { get; } = integrationImportRuns;
+
+    public IMdacRegistrationRepository MdacRegistrations { get; } = mdacRegistrations;
+
+    public IMdacSyncRecordRepository MdacSyncRecords { get; } = mdacSyncRecords;
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
