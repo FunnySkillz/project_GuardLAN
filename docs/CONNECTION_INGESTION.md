@@ -4,6 +4,8 @@ GuardLAN accepts normalized connection metadata through the backend API.
 
 This endpoint is intentionally source-agnostic. Zeek, firewall exports, router logs or future collectors should normalize their records into this shape before GuardLAN stores them.
 
+For the built-in Zeek `conn.log` reader, see [Zeek integration](ZEEK.md).
+
 ```text
 POST http://localhost:5232/api/connections/import
 ```

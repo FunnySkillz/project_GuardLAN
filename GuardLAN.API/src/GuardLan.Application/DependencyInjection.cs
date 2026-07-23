@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IConnectionIngestionService, ConnectionIngestionService>();
         services.AddScoped<IConnectionService, ConnectionService>();
+        services.AddScoped<IZeekConnectionImportService, ZeekConnectionImportService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IDeviceService, DeviceService>();
         services.AddScoped<IDnsService, DnsService>();

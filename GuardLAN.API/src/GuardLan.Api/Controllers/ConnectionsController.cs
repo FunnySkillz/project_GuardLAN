@@ -8,7 +8,8 @@ namespace GuardLan.Api.Controllers;
 [Route("api/connections")]
 public sealed class ConnectionsController(
     IConnectionService connectionService,
-    IConnectionIngestionService connectionIngestionService) : ControllerBase
+    IConnectionIngestionService connectionIngestionService,
+    IZeekConnectionImportService zeekConnectionImportService) : ControllerBase
 {
     [HttpGet("overview")]
     public Task<ConnectionOverviewDto> GetOverview(
@@ -24,5 +25,11 @@ public sealed class ConnectionsController(
         CancellationToken cancellationToken)
     {
         return connectionIngestionService.ImportAsync(batch, cancellationToken);
+    }
+
+    [HttpPost("import/zeek")]
+    public Task<ZeekConnectionImportResultDto> ImportZeek(CancellationToken cancellationToken)
+    {
+        return zeekConnectionImportService.ImportRecentAsync(cancellationToken);
     }
 }

@@ -96,7 +96,15 @@ Work order:
 
 Goal: populate DNS, connection, TLS, and protocol metadata from structured Zeek logs.
 
-Status: next.
+Status: active.
+
+Started:
+
+* Configurable Zeek `conn.log` reader
+* Manual Zeek connection import endpoint
+* Scheduled worker path for Zeek connection imports
+* Line-number checkpointing for incremental `conn.log` reads
+* Mapping from Zeek connection rows into the normalized connection ingestion contract
 
 Deliverables:
 

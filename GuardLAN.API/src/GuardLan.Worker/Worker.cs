@@ -14,7 +14,10 @@ public class Worker(
             Math.Max(5, configuration.GetValue("Scanner:IntervalSeconds", 60)));
         var dnsIngestionInterval = TimeSpan.FromSeconds(
             Math.Max(30, configuration.GetValue("DnsIngestion:IntervalSeconds", 300)));
+        var zeekIngestionInterval = TimeSpan.FromSeconds(
+            Math.Max(30, configuration.GetValue("Zeek:ConnLog:IntervalSeconds", 300)));
         var lastDnsIngestionUtc = DateTimeOffset.MinValue;
+        var lastZeekIngestionUtc = DateTimeOffset.MinValue;
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -67,6 +70,50 @@ public class Worker(
                     catch (Exception exception)
                     {
                         logger.LogError(exception, "GuardLAN DNS ingestion failed.");
+                    }
+                }
+
+                if (now - lastZeekIngestionUtc >= zeekIngestionInterval)
+                {
+                    lastZeekIngestionUtc = now;
+
+                    try
+                    {
+                        var zeekConnectionImportService =
+                            scope.ServiceProvider.GetRequiredService<IZeekConnectionImportService>();
+                        var zeekResult = await zeekConnectionImportService.ImportRecentAsync(stoppingToken);
+
+                        if (!zeekResult.SourceEnabled)
+                        {
+                            logger.LogDebug(
+                                "Zeek connection ingestion source {Source} is disabled.",
+                                zeekResult.Source);
+                        }
+                        else if (!zeekResult.SourceAvailable)
+                        {
+                            logger.LogWarning(
+                                "Zeek connection ingestion source {Source} is unavailable: {Message}",
+                                zeekResult.Source,
+                                zeekResult.Message);
+                        }
+                        else
+                        {
+                            logger.LogInformation(
+                                "Zeek connection ingestion from {Source}: imported {Imported}, skipped {SkippedDuplicates} duplicates, skipped {SkippedInvalid} invalid records.",
+                                zeekResult.Source,
+                                zeekResult.Imported,
+                                zeekResult.SkippedDuplicates,
+                                zeekResult.SkippedInvalidSourceRecords +
+                                zeekResult.SkippedInvalidConnectionRecords);
+                        }
+                    }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception)
+                    {
+                        logger.LogError(exception, "GuardLAN Zeek connection ingestion failed.");
                     }
                 }
             }

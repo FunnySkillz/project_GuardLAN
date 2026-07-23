@@ -7,4 +7,5 @@ This folder contains project-level documentation that does not belong exclusivel
 * [Docker local setup](Docker.md)
 * [Connection ingestion](CONNECTION_INGESTION.md)
 * [Pi-hole integration](PIHOLE.md)
+* [Zeek integration](ZEEK.md)
 * [MDAC - Mobile Device Activity Collector](MDAC/README.md)
