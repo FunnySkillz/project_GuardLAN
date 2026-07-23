@@ -86,7 +86,6 @@ public sealed class IntegrationHealthService(
             health.LastFailureUtc = checkedAtUtc;
         }
 
-        await unitOfWork.IntegrationImportRuns.EnsureSchemaAsync(cancellationToken);
         await unitOfWork.IntegrationImportRuns.AddAsync(
             new IntegrationImportRun
             {

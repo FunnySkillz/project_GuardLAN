@@ -127,6 +127,6 @@ Future production work should add:
 
 * Persistent multi-user accounts or an external identity provider.
 * Role-based authorization.
-* EF Core migrations instead of development `EnsureCreated`.
+* A deliberate production migration runner and rollback policy.
 * Structured audit logging for login and administrative actions.
 * Retention policies for DNS, connection, TLS and alert data.

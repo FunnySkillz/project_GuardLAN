@@ -17,6 +17,7 @@ The current implementation includes:
 * A separated backend and frontend workspace: `GuardLAN.API` and `GuardLAN.UI`
 * ASP.NET Core Web API with application, domain, infrastructure, and worker projects
 * PostgreSQL persistence through Entity Framework Core
+* EF Core migrations for the backend PostgreSQL schema
 * Device, alert, dashboard, and scan API endpoints
 * A queued network scanner flow backed by a worker service
 * An Angular dashboard wired to the backend overview endpoint
@@ -70,6 +71,8 @@ If you want to reset the local database volume completely, run:
 ```bash
 docker compose down -v
 ```
+
+Older local database volumes created before EF migrations may need this one-time reset.
 
 For more details, see [docs/Docker.md](docs/Docker.md).
 
@@ -353,6 +356,8 @@ npm start
 ```
 
 The Angular dev server proxies `/api` and `/hubs` requests to `http://localhost:5232`.
+
+The API applies pending EF Core migrations during development startup. Migration commands and Docker notes are in [docs/Docker.md](docs/Docker.md).
 
 Useful local URLs:
 

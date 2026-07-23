@@ -105,7 +105,15 @@ http://localhost:5232/health
 http://localhost:5232/api/health
 ```
 
-In the current development startup path, the API uses EF Core `EnsureCreated` and seeds development data when the database is reachable. Formal migration tooling is still a future hardening task.
+In the current development startup path, the API applies pending EF Core migrations and seeds development data when the database is reachable.
+
+Migration files live in:
+
+```text
+GuardLAN.API/src/GuardLan.Infrastructure/Persistence/Migrations
+```
+
+If you have an older local database volume that was created before migrations existed, reset the local volume once with `docker compose down --volumes` before starting the stack again.
 
 ### Worker
 
@@ -168,6 +176,31 @@ docker compose down --volumes
 ```
 
 That reset command permanently removes local PostgreSQL data stored by this Compose project.
+
+List EF migrations from the repository root:
+
+```bash
+dotnet ef migrations list \
+  --project GuardLAN.API/src/GuardLan.Infrastructure/GuardLan.Infrastructure.csproj \
+  --startup-project GuardLAN.API/src/GuardLan.Api/GuardLan.Api.csproj
+```
+
+Add a new EF migration after changing the persistence model:
+
+```bash
+dotnet ef migrations add DescriptiveMigrationName \
+  --project GuardLAN.API/src/GuardLan.Infrastructure/GuardLan.Infrastructure.csproj \
+  --startup-project GuardLAN.API/src/GuardLan.Api/GuardLan.Api.csproj \
+  --output-dir Persistence/Migrations
+```
+
+Apply migrations manually when running outside the development startup path:
+
+```bash
+dotnet ef database update \
+  --project GuardLAN.API/src/GuardLan.Infrastructure/GuardLan.Infrastructure.csproj \
+  --startup-project GuardLAN.API/src/GuardLan.Api/GuardLan.Api.csproj
+```
 
 ## Validation
 

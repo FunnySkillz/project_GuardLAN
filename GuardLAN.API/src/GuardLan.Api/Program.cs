@@ -99,7 +99,8 @@ if (app.Environment.IsDevelopment())
     {
         app.Logger.LogWarning(
             exception,
-            "GuardLAN database initialization skipped. Start PostgreSQL with docker compose up -d postgres.");
+            "GuardLAN database initialization skipped. Start PostgreSQL with docker compose up -d database " +
+            "from the repository root, or docker compose up -d postgres from GuardLAN.API.");
     }
 }
 

@@ -12,7 +12,7 @@ public static class DatabaseSeeder
         ILogger logger,
         CancellationToken cancellationToken = default)
     {
-        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+        await dbContext.Database.MigrateAsync(cancellationToken);
 
         if (await dbContext.Devices.AnyAsync(cancellationToken))
         {

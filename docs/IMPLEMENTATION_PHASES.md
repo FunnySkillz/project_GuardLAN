@@ -304,15 +304,15 @@ Deliverables:
 * UI source health table
 * Manual and worker import health recording
 
-Remaining hardening:
+Moved forward:
 
-* Replace the table bootstrap with EF migrations
+* Database bootstrap was replaced by EF migrations in Phase 11.
 
 ## Phase 10: Integration Freshness and Import History
 
 Goal: show stale sources, preserve recent import runs and let operators trigger imports manually.
 
-Status: complete enough for database migration work.
+Status: complete.
 
 Started:
 
@@ -333,6 +333,31 @@ Deliverables:
 
 Remaining hardening:
 
-* Replace the table bootstrap with EF migrations
 * Make freshness thresholds configurable per source type
 * Add history filters if the run list grows
+
+## Phase 11: EF Migrations and Schema Management
+
+Goal: make PostgreSQL schema changes explicit, repeatable and reviewable.
+
+Status: complete.
+
+Started:
+
+* EF Core design-time package on the API startup project
+* Initial EF migration for the current PostgreSQL schema
+* GuardLAN database model snapshot
+* Development startup migration application before seeding
+* Removal of integration health table bootstrap code
+* Docker and integration health documentation for migration workflow
+
+Deliverables:
+
+* `InitialCreate` migration covering devices, DNS queries, connections, TLS observations, alerts, scan runs, integration health and integration import history
+* Single EF-managed schema source for local development
+* Commands for listing, adding and applying migrations
+
+Remaining hardening:
+
+* Decide the production migration runner/deployment policy before exposing GuardLAN beyond local development
+* Add backup and retention automation

@@ -320,6 +320,10 @@ public sealed class ZeekIngestionTests
         public IIntegrationImportRunRepository IntegrationImportRuns { get; } =
             new ThrowingIntegrationImportRunRepository();
 
+        public IMdacRegistrationRepository MdacRegistrations => throw new NotSupportedException();
+
+        public IMdacSyncRecordRepository MdacSyncRecords => throw new NotSupportedException();
+
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(1);
@@ -565,10 +569,6 @@ public sealed class ZeekIngestionTests
             throw new NotSupportedException();
         }
 
-        public Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
-        {
-            throw new NotSupportedException();
-        }
     }
 
     private sealed class ThrowingIntegrationImportRunRepository
@@ -582,9 +582,5 @@ public sealed class ZeekIngestionTests
             throw new NotSupportedException();
         }
 
-        public Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
-        {
-            throw new NotSupportedException();
-        }
     }
 }

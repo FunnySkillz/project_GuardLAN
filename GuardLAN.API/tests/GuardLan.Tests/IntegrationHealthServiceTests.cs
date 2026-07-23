@@ -100,6 +100,10 @@ public sealed class IntegrationHealthServiceTests
 
         public IIntegrationImportRunRepository IntegrationImportRuns => Runs;
 
+        public IMdacRegistrationRepository MdacRegistrations => throw new NotSupportedException();
+
+        public IMdacSyncRecordRepository MdacSyncRecords => throw new NotSupportedException();
+
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(1);
@@ -142,10 +146,6 @@ public sealed class IntegrationHealthServiceTests
             return Task.FromResult(Items.FirstOrDefault(item => item.Source == source));
         }
 
-        public Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
     }
 
     private sealed class FakeIntegrationImportRunRepository
@@ -163,10 +163,6 @@ public sealed class IntegrationHealthServiceTests
                     .ToArray());
         }
 
-        public Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
     }
 
     private abstract class FakeRepository<TEntity> : IGenericRepository<TEntity>

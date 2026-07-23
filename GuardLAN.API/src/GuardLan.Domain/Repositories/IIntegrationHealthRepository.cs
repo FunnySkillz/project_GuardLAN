@@ -10,6 +10,4 @@ public interface IIntegrationHealthRepository : IGenericRepository<IntegrationHe
     Task<IntegrationHealth?> GetBySourceAsync(
         string source,
         CancellationToken cancellationToken = default);
-
-    Task EnsureSchemaAsync(CancellationToken cancellationToken = default);
 }

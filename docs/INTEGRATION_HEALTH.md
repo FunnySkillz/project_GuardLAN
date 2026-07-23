@@ -51,7 +51,7 @@ Duplicate records do not make a source unhealthy. They are expected during incre
 
 Latest health is stored in the `integration_health` table. Recent import runs are stored in the `integration_import_runs` table.
 
-GuardLAN does not have EF migration tooling yet, so the repositories create these tables with `CREATE TABLE IF NOT EXISTS` before reading or writing integration health rows. This is intentionally narrow and should be replaced by normal migrations when the database migration phase is implemented.
+Both tables are managed by EF Core migrations in `GuardLAN.API/src/GuardLan.Infrastructure/Persistence/Migrations`. In development, the API applies pending migrations during startup before seeding sample data.
 
 ## UI
 
@@ -86,6 +86,5 @@ Implemented in:
 
 ## Next Improvements
 
-* Replace the table bootstrap with EF migrations.
 * Make freshness thresholds configurable per source type.
 * Add filters for import history when the run list grows.

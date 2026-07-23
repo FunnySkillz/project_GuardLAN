@@ -7,6 +7,4 @@ public interface IIntegrationImportRunRepository : IGenericRepository<Integratio
     Task<IReadOnlyList<IntegrationImportRun>> GetRecentAsync(
         int limit,
         CancellationToken cancellationToken = default);
-
-    Task EnsureSchemaAsync(CancellationToken cancellationToken = default);
 }

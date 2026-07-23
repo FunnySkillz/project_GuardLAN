@@ -40,11 +40,11 @@ DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger, worker schedule, latest health, stale detection and import history exist, but live-appliance validation is still incomplete. | Validate response shapes against Pi-hole's local API docs. | API / Worker |
 | Zeek integration | Implemented | Configurable Zeek `conn.log`, `dns.log` and `ssl.log` readers feed normalized ingestion services through manual API and worker paths with line checkpointing, import diagnostics, parser tests, health reporting, stale detection and history. | Validate against live Zeek output. | API / Worker |
 | Suricata integration | Partially Implemented | A configurable Eve JSON alert importer feeds IDS alerts into GuardLAN through manual API and worker paths with checkpointing, duplicate prevention, severity mapping, evidence summaries, association, health reporting, stale detection and history. | Validate against a live Suricata sensor and add richer alert review workflows. | API / Worker |
-| Integration health reporting | Implemented | Latest health state, stale state and recent import runs are recorded for Pi-hole, Zeek and Suricata and exposed through an API plus Angular Integrations page with manual import actions. | Replace schema bootstrapping with EF migrations and make thresholds configurable. | API / Worker / UI |
+| Integration health reporting | Implemented | Latest health state, stale state and recent import runs are recorded for Pi-hole, Zeek and Suricata and exposed through an API plus Angular Integrations page with manual import actions. | Make thresholds configurable and add history filters if the run list grows. | API / Worker / UI |
 | SignalR real-time updates | Implemented | A protected SignalR hub, backend live-update abstraction, internal-key worker relay publisher and Angular live update service refresh dashboard, device, DNS and alert views after relevant events. | Add a backplane if the API is scaled horizontally. | API / Worker / UI |
 | Authentication and authorization | Partially Implemented | Local admin login, cookie sessions, protected API controllers, protected SignalR hub and Angular route guard are implemented. | Add persistent users, roles and audit logging if GuardLAN becomes multi-user. | API / UI |
-| Docker local development | Partially Implemented | A repository-root Compose setup builds and runs the UI, API, worker and PostgreSQL with health checks, auth env vars and `/api` plus `/hubs` proxying for local development. | Add EF migration tooling and production-grade secret management. | Infrastructure |
-| PostgreSQL persistence | Implemented | EF Core persistence, repositories and seeded development data are in place. | Add migration tooling and operational backup/retention practices. | Database |
+| Docker local development | Partially Implemented | A repository-root Compose setup builds and runs the UI, API, worker and PostgreSQL with health checks, auth env vars, `/api` plus `/hubs` proxying, and EF migration startup for local development. | Add production-grade secret management. | Infrastructure |
+| PostgreSQL persistence | Implemented | EF Core persistence, repositories, migrations and seeded development data are in place. | Add operational backup and retention practices. | Database |
 | Mobile Device Activity Collector | Planned | The MDAC design exists in documentation, but no implementation is present. | Create the mobile app and backend ingestion contract. | Mobile |
 
 ## Feature Details
@@ -365,11 +365,10 @@ Add connection detail pages and deeper traffic analytics beyond dashboard rollup
 - Live validation for Pi-hole integration
 - Live validation against Zeek output from a running sensor
 - Live validation against Suricata output from a running sensor
-- EF migrations for integration health and import run tables
 - Configurable freshness thresholds per source
 
 **Next Change**
-Replace ad hoc schema bootstrapping with EF migrations.
+Make integration freshness thresholds configurable per source type.
 
 ### Suricata Integration
 
@@ -397,7 +396,6 @@ Replace ad hoc schema bootstrapping with EF migrations.
 - Live validation against a real Suricata sensor
 - False-positive and reviewed alert states
 - Dedicated IDS alert detail and history UI
-- EF migrations for integration health and import run tables
 
 **Next Change**
 Validate against live Suricata Eve output and add alert review states.
@@ -487,11 +485,10 @@ Add persistent users or external identity only if GuardLAN needs more than one l
 - [docs/SECURITY_HARDENING.md](SECURITY_HARDENING.md)
 
 **Missing or Incomplete**
-- EF migration workflow for containerized development
 - Production-grade secret store integration
 
 **Next Change**
-Add EF migration tooling and replace development `EnsureCreated`.
+Add production-grade secret handling for deployments beyond local development.
 
 ### Mobile Device Activity Collector
 
@@ -512,9 +509,9 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 ## Current Development Focus
 
-EF migrations and database schema management.
+Alert review states and false-positive handling.
 
-Phase 10 now records stale source state and import history for Pi-hole, Zeek and Suricata, and exposes manual import actions from the Integrations page. The next implementation slice should replace the current schema bootstrapping with EF migrations.
+Phase 11 added EF migrations and removed the last ad hoc table bootstrap. The next implementation slice should deepen alert handling with reviewed, suppressed or false-positive states.
 
 ## Known Technical Gaps
 
@@ -523,7 +520,6 @@ Phase 10 now records stale source state and import history for Pi-hole, Zeek and
 - External integrations are only partially normalized behind shared ingestion contracts.
 - Device risk does not yet include suppression states or tuned behavioral baselines.
 - Integration freshness thresholds are fixed at 15 minutes and should become configurable per source type.
-- Integration health and history tables use narrow schema bootstrapping until EF migrations are added.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation.
 - Suricata IDS alert ingestion still needs live sensor validation and richer review workflows.
 - The local deployment story is containerized for first-run development, but production hardening remains incomplete.
