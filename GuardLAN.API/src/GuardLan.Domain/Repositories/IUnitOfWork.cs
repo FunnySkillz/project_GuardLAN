@@ -14,6 +14,8 @@ public interface IUnitOfWork
 
     ISecurityAlertRepository SecurityAlerts { get; }
 
+    IIntegrationHealthRepository IntegrationHealth { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

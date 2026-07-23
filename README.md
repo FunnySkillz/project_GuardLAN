@@ -27,6 +27,7 @@ The current implementation includes:
 * Local-user authentication with cookie sessions for the API, UI and SignalR hub
 * Explainable device risk signals based on alerts, DNS, connection and inventory evidence
 * Device evidence drill-down pages for inspecting recent alerts, DNS queries and connections
+* Integration health reporting for Pi-hole, Zeek and Suricata imports
 * Local Docker Compose infrastructure for the UI, API, worker and PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.
@@ -372,6 +373,7 @@ GET   http://localhost:5232/api/dashboard/overview
 GET   http://localhost:5232/api/connections/overview?page=1&pageSize=25&protocol=tcp&search=443
 POST  http://localhost:5232/api/connections/import
 POST  http://localhost:5232/api/connections/import/zeek
+GET   http://localhost:5232/api/integrations/health
 POST  http://localhost:5232/api/integrations/zeek/import
 POST  http://localhost:5232/api/integrations/suricata/import
 GET   http://localhost:5232/api/dns/overview
@@ -477,6 +479,7 @@ Detailed project conventions are documented separately:
 * [Security hardening](docs/SECURITY_HARDENING.md)
 * [Device risk signals](docs/DEVICE_RISK.md)
 * [Device evidence drill-down](docs/DEVICE_EVIDENCE.md)
+* [Integration health reporting](docs/INTEGRATION_HEALTH.md)
 * [MDAC mobile collector plan](docs/MDAC/README.md)
 * [Backend architecture](GuardLAN.API/docs/BACKEND_ARCHITECTURE.md)
 * [Frontend architecture](GuardLAN.UI/docs/FRONTEND_ARCHITECTURE.md)

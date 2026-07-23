@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IDeviceRiskEvaluator, DeviceRiskEvaluator>();
         services.AddScoped<IIdsAlertIngestionService, IdsAlertIngestionService>();
+        services.AddScoped<IIntegrationHealthService, IntegrationHealthService>();
         services.AddScoped<ISuricataAlertImportService, SuricataAlertImportService>();
         services.AddScoped<ITlsObservationIngestionService, TlsObservationIngestionService>();
         services.AddScoped<IZeekImportService, ZeekImportService>();

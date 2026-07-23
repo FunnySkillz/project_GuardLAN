@@ -10,7 +10,8 @@ public sealed class UnitOfWork(
     INetworkConnectionRepository networkConnections,
     ITlsObservationRepository tlsObservations,
     INetworkScanRunRepository networkScanRuns,
-    ISecurityAlertRepository securityAlerts) : IUnitOfWork
+    ISecurityAlertRepository securityAlerts,
+    IIntegrationHealthRepository integrationHealth) : IUnitOfWork
 {
     private IDbContextTransaction? _transaction;
 
@@ -25,6 +26,8 @@ public sealed class UnitOfWork(
     public INetworkScanRunRepository NetworkScanRuns { get; } = networkScanRuns;
 
     public ISecurityAlertRepository SecurityAlerts { get; } = securityAlerts;
+
+    public IIntegrationHealthRepository IntegrationHealth { get; } = integrationHealth;
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

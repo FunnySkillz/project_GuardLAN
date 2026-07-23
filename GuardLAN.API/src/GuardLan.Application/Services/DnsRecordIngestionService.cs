@@ -2,6 +2,7 @@ using GuardLan.Application.Abstractions;
 using GuardLan.Application.Dns;
 using GuardLan.Application.Models;
 using GuardLan.Domain.Entities;
+using GuardLan.Domain.Enums;
 using GuardLan.Domain.Repositories;
 using System.Net;
 
@@ -10,7 +11,8 @@ namespace GuardLan.Application.Services;
 public sealed class DnsRecordIngestionService(
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider,
-    ILiveUpdatePublisher liveUpdatePublisher) : IDnsRecordIngestionService
+    ILiveUpdatePublisher liveUpdatePublisher,
+    IIntegrationHealthService integrationHealthService) : IDnsRecordIngestionService
 {
     private static readonly DateTime MinimumAcceptedTimestampUtc =
         DateTime.SpecifyKind(DateTime.UnixEpoch, DateTimeKind.Utc);
@@ -25,7 +27,7 @@ public sealed class DnsRecordIngestionService(
 
         if (!sourceEnabled)
         {
-            return new DnsIngestionResultDto(
+            var result = new DnsIngestionResultDto(
                 sourceName,
                 SourceEnabled: false,
                 RecordsRead: 0,
@@ -35,6 +37,10 @@ public sealed class DnsRecordIngestionService(
                 MatchedDevices: 0,
                 importedAtUtc,
                 $"{sourceName} ingestion is disabled.");
+
+            await RecordHealthAsync(result, sourceAvailable: false, cancellationToken);
+
+            return result;
         }
 
         if (sourceRecords.Count == 0)
@@ -146,6 +152,8 @@ public sealed class DnsRecordIngestionService(
         DnsIngestionResultDto result,
         CancellationToken cancellationToken)
     {
+        await RecordHealthAsync(result, sourceAvailable: true, cancellationToken);
+
         await liveUpdatePublisher.PublishAsync(
             new LiveUpdateDto(
                 LiveUpdateTypes.DnsIngestionCompleted,
@@ -157,6 +165,25 @@ public sealed class DnsRecordIngestionService(
             cancellationToken);
 
         return result;
+    }
+
+    private Task RecordHealthAsync(
+        DnsIngestionResultDto result,
+        bool sourceAvailable,
+        CancellationToken cancellationToken)
+    {
+        return integrationHealthService.RecordAsync(
+            new IntegrationHealthRecord(
+                result.Source,
+                IntegrationKind.Dns,
+                result.SourceEnabled,
+                sourceAvailable,
+                result.RecordsRead,
+                result.Imported,
+                result.SkippedInvalid,
+                result.ImportedAtUtc,
+                result.Message),
+            cancellationToken);
     }
 
     private static NormalizedDnsRecord? NormalizeRecord(DnsIngestionRecord record, DateTime importedAtUtc)

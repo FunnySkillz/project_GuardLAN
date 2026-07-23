@@ -19,6 +19,8 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
 
     public DbSet<NetworkScanRun> NetworkScanRuns => Set<NetworkScanRun>();
 
+    public DbSet<IntegrationHealth> IntegrationHealth => Set<IntegrationHealth>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<NetworkDevice>(entity =>
@@ -168,6 +170,21 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
             entity.Property(scanRun => scanRun.Subnet).HasMaxLength(64);
             entity.Property(scanRun => scanRun.Status).HasConversion<string>().HasMaxLength(32);
             entity.Property(scanRun => scanRun.Notes).HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<IntegrationHealth>(entity =>
+        {
+            entity.ToTable("integration_health");
+            entity.HasKey(health => health.Id);
+            entity.HasIndex(health => health.Source).IsUnique();
+            entity.HasIndex(health => health.Kind);
+            entity.HasIndex(health => health.Status);
+            entity.HasIndex(health => health.LastCheckedUtc);
+
+            entity.Property(health => health.Source).HasMaxLength(96);
+            entity.Property(health => health.Kind).HasConversion<string>().HasMaxLength(32);
+            entity.Property(health => health.Status).HasConversion<string>().HasMaxLength(32);
+            entity.Property(health => health.Message).HasMaxLength(512);
         });
     }
 }

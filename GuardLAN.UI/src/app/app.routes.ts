@@ -51,6 +51,13 @@ export const routes: Routes = [
           import('./features/alerts/ui/alerts-page.component').then(
             (module) => module.AlertsPageComponent
           )
+      },
+      {
+        path: 'integrations',
+        loadComponent: () =>
+          import('./features/integrations/ui/integrations-page.component').then(
+            (module) => module.IntegrationsPageComponent
+          )
       }
     ]
   },

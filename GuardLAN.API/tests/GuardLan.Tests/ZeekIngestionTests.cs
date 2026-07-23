@@ -314,6 +314,9 @@ public sealed class ZeekIngestionTests
 
         public ISecurityAlertRepository SecurityAlerts { get; } = new ThrowingSecurityAlertRepository();
 
+        public IIntegrationHealthRepository IntegrationHealth { get; } =
+            new ThrowingIntegrationHealthRepository();
+
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(1);
@@ -537,6 +540,29 @@ public sealed class ZeekIngestionTests
             DateTime sinceUtc,
             int limit,
             CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    private sealed class ThrowingIntegrationHealthRepository
+        : ThrowingRepository<IntegrationHealth>,
+          IIntegrationHealthRepository
+    {
+        public Task<IReadOnlyList<IntegrationHealth>> GetAllOrderedAsync(
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<IntegrationHealth?> GetBySourceAsync(
+            string source,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
         {
             throw new NotSupportedException();
         }

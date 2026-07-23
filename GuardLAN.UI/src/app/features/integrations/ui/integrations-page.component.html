@@ -1,0 +1,107 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Telemetry Sources</p>
+    <h1>Integrations</h1>
+  </div>
+
+  <button class="secondary" type="button" (click)="retry()" [disabled]="facade.loading()">
+    {{ facade.loading() ? 'Refreshing...' : 'Refresh' }}
+  </button>
+</header>
+
+@if (facade.error(); as message) {
+  <section class="status-panel" role="status">
+    <span>{{ message }}</span>
+    <button class="secondary" type="button" (click)="retry()">Retry</button>
+  </section>
+}
+
+<section class="metrics" aria-label="Integration summary" [class.loading]="facade.loading()">
+  <article class="metric-card">
+    <span>Sources</span>
+    <strong>{{ facade.summary()?.totalSources ?? '-' }}</strong>
+    <small>checked integrations</small>
+  </article>
+
+  <article class="metric-card healthy">
+    <span>Healthy</span>
+    <strong>{{ facade.summary()?.healthySources ?? '-' }}</strong>
+    <small>available now</small>
+  </article>
+
+  <article class="metric-card warning">
+    <span>Warnings</span>
+    <strong>{{ facade.summary()?.warningSources ?? '-' }}</strong>
+    <small>rejected records</small>
+  </article>
+
+  <article class="metric-card danger">
+    <span>Unavailable</span>
+    <strong>{{ facade.summary()?.unavailableSources ?? '-' }}</strong>
+    <small>source missing</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Last check</span>
+    <strong>{{ formatRelativeTime(facade.summary()?.lastCheckedUtc ?? null) }}</strong>
+    <small>{{ facade.summary()?.disabledSources ?? 0 }} disabled</small>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Health</p>
+      <h2>{{ facade.sources().length }} sources</h2>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Source</th>
+          <th scope="col">Kind</th>
+          <th scope="col">Status</th>
+          <th scope="col">State</th>
+          <th scope="col">Records</th>
+          <th scope="col">Rejected</th>
+          <th scope="col">Checked</th>
+          <th scope="col">Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (facade.sources().length === 0) {
+          <tr>
+            <td class="empty-state table-empty" colspan="8">
+              {{ facade.loading() ? 'Loading integration health...' : 'No integration checks recorded' }}
+            </td>
+          </tr>
+        } @else {
+          @for (source of facade.sources(); track source.id) {
+            <tr>
+              <td>
+                <strong>{{ source.source }}</strong>
+                <small>success {{ formatRelativeTime(source.lastSuccessUtc) }}</small>
+              </td>
+              <td>{{ kindLabel(source.kind) }}</td>
+              <td>
+                <span class="status-pill" [class]="statusClass(source.status)">
+                  {{ statusLabel(source) }}
+                </span>
+              </td>
+              <td>{{ sourceState(source) }}</td>
+              <td>{{ recordFlow(source) }}</td>
+              <td>{{ source.recordsRejected }}</td>
+              <td>
+                <strong>{{ formatRelativeTime(source.lastCheckedUtc) }}</strong>
+                <small>failure {{ formatRelativeTime(source.lastFailureUtc) }}</small>
+              </td>
+              <td class="message-cell">{{ source.message }}</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

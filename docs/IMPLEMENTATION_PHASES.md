@@ -279,3 +279,34 @@ Remaining hardening:
 * Add deep links into future alert, DNS and connection detail pages
 * Add operator review notes or known-benign suppression
 * Add longer-range trend comparison after historical baselines exist
+
+## Phase 9: Integration Health Reporting
+
+Goal: show whether telemetry sources are enabled, reachable and recently checked.
+
+Status: complete enough for source freshness and import-history work.
+
+Started:
+
+* Persistent `IntegrationHealth` domain model
+* Health status values for healthy, warning, unavailable and disabled sources
+* Application health recorder and overview DTO
+* Health recording in Pi-hole DNS, Zeek connection, Zeek DNS, Zeek TLS and Suricata import paths
+* `GET /api/integrations/health` endpoint
+* Angular Integrations page with summary cards and source table
+* Sidebar navigation to the Integrations page
+* Documentation for health status rules and current storage approach
+
+Deliverables:
+
+* Latest health state per integration source
+* Summary endpoint for UI and operators
+* UI source health table
+* Manual and worker import health recording
+
+Remaining hardening:
+
+* Add freshness thresholds for stale but reachable sources
+* Add import history rather than latest state only
+* Add manual import controls to the Integrations page
+* Replace the table bootstrap with EF migrations

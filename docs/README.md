@@ -13,4 +13,5 @@ This folder contains project-level documentation that does not belong exclusivel
 * [Security hardening](SECURITY_HARDENING.md)
 * [Device risk signals](DEVICE_RISK.md)
 * [Device evidence drill-down](DEVICE_EVIDENCE.md)
+* [Integration health reporting](INTEGRATION_HEALTH.md)
 * [MDAC - Mobile Device Activity Collector](MDAC/README.md)
