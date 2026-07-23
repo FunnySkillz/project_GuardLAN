@@ -6,204 +6,26 @@
     </div>
 
     <nav class="nav-list">
-      <a class="nav-link active" href="/">Dashboard</a>
-      <a class="nav-link" href="/">Devices</a>
-      <a class="nav-link" href="/">Connections</a>
-      <a class="nav-link" href="/">DNS</a>
-      <a class="nav-link" href="/">Alerts</a>
-      <a class="nav-link" href="/">Settings</a>
+      <a
+        class="nav-link"
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        Dashboard
+      </a>
+      <a class="nav-link" routerLink="/devices" routerLinkActive="active" ariaCurrentWhenActive="page">
+        Devices
+      </a>
+      <span class="nav-link disabled">Connections</span>
+      <span class="nav-link disabled">DNS</span>
+      <span class="nav-link disabled">Alerts</span>
+      <span class="nav-link disabled">Settings</span>
     </nav>
   </aside>
 
   <main class="workspace">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Local subnet</p>
-        <h1>Network Overview</h1>
-      </div>
-
-      <div class="scan-control">
-        <span class="scan-state">{{ subnet }}</span>
-        <button type="button" (click)="startScan()" [disabled]="queueingScan()">
-          {{ queueingScan() ? 'Queueing...' : 'Start scan' }}
-        </button>
-      </div>
-    </header>
-
-    @if (error(); as message) {
-      <section class="status-panel" role="status">
-        <span>{{ message }}</span>
-        <button class="secondary" type="button" (click)="retry()">Retry</button>
-      </section>
-    }
-
-    <section class="metrics" aria-label="Network summary" [class.loading]="loading()">
-      <article class="metric-card">
-        <span>Online</span>
-        <strong>{{ summary()?.onlineDevices ?? '-' }}</strong>
-        <small>devices responding</small>
-      </article>
-
-      <article class="metric-card warning">
-        <span>Unknown</span>
-        <strong>{{ summary()?.unknownDevices ?? '-' }}</strong>
-        <small>needs review</small>
-      </article>
-
-      <article class="metric-card">
-        <span>Trusted</span>
-        <strong>{{ summary()?.trustedDevices ?? '-' }}</strong>
-        <small>known inventory</small>
-      </article>
-
-      <article class="metric-card danger">
-        <span>Alerts</span>
-        <strong>{{ summary()?.openAlerts ?? '-' }}</strong>
-        <small>open findings</small>
-      </article>
-
-      <article class="metric-card">
-        <span>DNS blocks</span>
-        <strong>{{ summary()?.blockedDomainsToday ?? '-' }}</strong>
-        <small>last 24 hours</small>
-      </article>
-    </section>
-
-    <section class="dashboard-grid">
-      <section class="panel device-panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">Inventory</p>
-            <h2>Devices</h2>
-          </div>
-          <span>{{ devices().length }} tracked</span>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Device</th>
-                <th scope="col">Address</th>
-                <th scope="col">Type</th>
-                <th scope="col">Trust</th>
-                <th scope="col">Traffic</th>
-                <th scope="col">Seen</th>
-              </tr>
-            </thead>
-            <tbody>
-              @if (devices().length === 0) {
-                <tr>
-                  <td class="empty-state table-empty" colspan="6">
-                    {{ loading() ? 'Loading devices...' : 'No devices tracked yet' }}
-                  </td>
-                </tr>
-              } @else {
-                @for (device of devices(); track device.id) {
-                  <tr>
-                    <td>
-                      <strong>{{ deviceName(device) }}</strong>
-                      <small>{{ deviceVendor(device) }}</small>
-                    </td>
-                    <td>
-                      <code>{{ device.ipAddress }}</code>
-                      <small>{{ device.macAddress }}</small>
-                    </td>
-                    <td>{{ deviceTypeLabel(device) }}</td>
-                    <td>
-                      <span class="trust-pill" [class.untrusted]="!device.isTrusted">
-                        {{ device.isTrusted ? 'Trusted' : 'Review' }}
-                      </span>
-                    </td>
-                    <td>{{ deviceTraffic(device.id) }}</td>
-                    <td>{{ formatRelativeTime(device.lastSeenUtc) }}</td>
-                  </tr>
-                }
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">Security</p>
-            <h2>Alerts</h2>
-          </div>
-        </div>
-
-        <div class="alert-list">
-          @if (alerts().length === 0) {
-            <p class="empty-state">{{ loading() ? 'Loading alerts...' : 'No open alerts' }}</p>
-          } @else {
-            @for (alert of alerts(); track alert.id) {
-              <article
-                class="alert-row"
-                [class.high]="alert.severity === 'High' || alert.severity === 'Critical'"
-              >
-                <span class="severity">{{ alert.severity }}</span>
-                <div>
-                  <strong>{{ alert.type }}</strong>
-                  <small>{{ alertDevice(alert) }} | {{ formatRelativeTime(alert.createdUtc) }}</small>
-                </div>
-              </article>
-            }
-          }
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">DNS</p>
-            <h2>Top Domains</h2>
-          </div>
-        </div>
-
-        <div class="domain-list">
-          @if (domains().length === 0) {
-            <p class="empty-state">{{ loading() ? 'Loading DNS...' : 'No DNS activity yet' }}</p>
-          } @else {
-            @for (domain of domains(); track domain.domain) {
-              <article class="domain-row">
-                <div>
-                  <strong>{{ domain.domain }}</strong>
-                  <small>{{ domain.requests }} requests</small>
-                </div>
-                <span [class.blocked]="domain.blockedRequests > 0">
-                  {{ domain.blockedRequests }} blocked
-                </span>
-              </article>
-            }
-          }
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">Scanner</p>
-            <h2>Scan History</h2>
-          </div>
-        </div>
-
-        <div class="scan-list">
-          @if (scans().length === 0) {
-            <p class="empty-state">{{ loading() ? 'Loading scans...' : 'No scans queued yet' }}</p>
-          } @else {
-            @for (scan of scans(); track scan.id) {
-              <article class="scan-row">
-                <div>
-                  <strong>{{ scan.subnet }}</strong>
-                  <small>{{ scanRequested(scan) }}</small>
-                </div>
-                <span>{{ scanResult(scan) }}</span>
-              </article>
-            }
-          }
-        </div>
-      </section>
-    </section>
+    <router-outlet />
   </main>
 </div>

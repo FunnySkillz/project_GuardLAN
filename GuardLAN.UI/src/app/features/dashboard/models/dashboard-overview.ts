@@ -1,14 +1,4 @@
-export type DeviceType =
-  | 'Unknown'
-  | 'Desktop'
-  | 'Laptop'
-  | 'Phone'
-  | 'Tablet'
-  | 'SmartTv'
-  | 'Iot'
-  | 'Router'
-  | 'Printer'
-  | 'Server';
+import { DeviceDto } from '../../../shared/models/network-device';
 
 export type AlertSeverity = 'Low' | 'Medium' | 'High' | 'Critical';
 
@@ -57,19 +47,6 @@ export interface AlertDto {
   readonly message: string;
   readonly createdUtc: string;
   readonly resolvedUtc: string | null;
-}
-
-export interface DeviceDto {
-  readonly id: string;
-  readonly ipAddress: string;
-  readonly macAddress: string;
-  readonly hostname: string | null;
-  readonly vendor: string | null;
-  readonly deviceType: DeviceType;
-  readonly isTrusted: boolean;
-  readonly firstSeenUtc: string;
-  readonly lastSeenUtc: string;
-  readonly isOnline: boolean;
 }
 
 export interface NetworkScanDto {

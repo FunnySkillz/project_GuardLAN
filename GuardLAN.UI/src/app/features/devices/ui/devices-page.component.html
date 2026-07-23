@@ -1,0 +1,179 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Inventory</p>
+    <h1>Devices</h1>
+  </div>
+
+  <button class="secondary" type="button" (click)="retry()" [disabled]="facade.loading()">
+    {{ facade.loading() ? 'Refreshing...' : 'Refresh' }}
+  </button>
+</header>
+
+@if (facade.error(); as message) {
+  <section class="status-panel" role="status">
+    <span>{{ message }}</span>
+    <button class="secondary" type="button" (click)="retry()">Retry</button>
+  </section>
+}
+
+<section class="metrics" aria-label="Device summary" [class.loading]="facade.loading()">
+  <article class="metric-card">
+    <span>Total</span>
+    <strong>{{ facade.summary().total }}</strong>
+    <small>tracked devices</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Online</span>
+    <strong>{{ facade.summary().online }}</strong>
+    <small>responding now</small>
+  </article>
+
+  <article class="metric-card warning">
+    <span>Review</span>
+    <strong>{{ facade.summary().review }}</strong>
+    <small>unknown or untrusted</small>
+  </article>
+
+  <article class="metric-card danger">
+    <span>Offline</span>
+    <strong>{{ facade.summary().offline }}</strong>
+    <small>last observed earlier</small>
+  </article>
+</section>
+
+<section class="toolbar" aria-label="Device controls">
+  <div class="filter-group" role="group" aria-label="Device filter">
+    @for (filter of filters; track filter.value) {
+      <button
+        class="filter-button"
+        type="button"
+        [class.active]="isFilterActive(filter.value)"
+        (click)="setFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  <label class="search-field">
+    <span>Search</span>
+    <input
+      type="search"
+      [value]="facade.search()"
+      (input)="updateSearch($event)"
+      placeholder="Hostname, IP, MAC, vendor"
+    />
+  </label>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Editable Inventory</p>
+      <h2>{{ facade.filteredDevices().length }} devices</h2>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Device</th>
+          <th scope="col">Address</th>
+          <th scope="col">Type</th>
+          <th scope="col">Trust</th>
+          <th scope="col">State</th>
+          <th scope="col">Seen</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (facade.filteredDevices().length === 0) {
+          <tr>
+            <td class="empty-state table-empty" colspan="7">
+              {{ facade.loading() ? 'Loading devices...' : 'No devices match this view' }}
+            </td>
+          </tr>
+        } @else {
+          @for (device of facade.filteredDevices(); track device.id) {
+            <tr [class.review-row]="needsReview(device)" [class.offline-row]="!device.isOnline">
+              <td>
+                <label class="device-name-field">
+                  <span>{{ deviceName(device) }}</span>
+                  <input
+                    type="text"
+                    [value]="draftHostname(device)"
+                    (input)="updateHostname(device, $event)"
+                    [disabled]="saving(device)"
+                    [attr.aria-label]="'Display name for ' + device.ipAddress"
+                    placeholder="Display name"
+                  />
+                </label>
+                <small>{{ deviceVendor(device) }}</small>
+              </td>
+              <td>
+                <code>{{ device.ipAddress }}</code>
+                <small>{{ device.macAddress }}</small>
+              </td>
+              <td>
+                <select
+                  [value]="draftDeviceType(device)"
+                  (change)="updateDeviceType(device, $event)"
+                  [disabled]="saving(device)"
+                  [attr.aria-label]="'Device type for ' + device.ipAddress"
+                >
+                  @for (type of deviceTypes; track type.value) {
+                    <option [value]="type.value">{{ type.label }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <label class="trust-toggle">
+                  <input
+                    type="checkbox"
+                    [checked]="draftTrusted(device)"
+                    (change)="updateTrust(device, $event)"
+                    [disabled]="saving(device)"
+                  />
+                  <span>{{ draftTrusted(device) ? 'Trusted' : 'Needs review' }}</span>
+                </label>
+              </td>
+              <td>
+                <span class="status-pill" [class.offline]="!device.isOnline">
+                  {{ device.isOnline ? 'Online' : 'Offline' }}
+                </span>
+                @if (needsReview(device)) {
+                  <span class="status-pill warning">Review</span>
+                }
+              </td>
+              <td>
+                <strong>{{ formatRelativeTime(device.lastSeenUtc) }}</strong>
+                <small>first {{ formatRelativeTime(device.firstSeenUtc) }}</small>
+              </td>
+              <td>
+                <div class="action-group">
+                  <button
+                    type="button"
+                    (click)="save(device)"
+                    [disabled]="!hasDraftChanges(device) || saving(device)"
+                  >
+                    {{ saving(device) ? 'Saving...' : 'Save' }}
+                  </button>
+                  <button
+                    class="secondary"
+                    type="button"
+                    (click)="reset(device)"
+                    [disabled]="!hasDraftChanges(device) || saving(device)"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
