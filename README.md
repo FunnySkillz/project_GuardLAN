@@ -25,6 +25,10 @@ This init establishes the Phase 1 foundation:
 - `GuardLan.Worker` is ready for the nmap scanner loop.
 - `GuardLan.Web` is an Angular dashboard shell shaped around the Phase 1 user experience.
 
+## Architecture
+
+Backend endpoint work must follow the repository guidance in [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md). The root [AGENTS.md](AGENTS.md) points future coding-agent work at the same rules.
+
 ## Run Locally
 
 Start PostgreSQL:
