@@ -284,7 +284,7 @@ Remaining hardening:
 
 Goal: show whether telemetry sources are enabled, reachable and recently checked.
 
-Status: complete enough for source freshness and import-history work.
+Status: complete.
 
 Started:
 
@@ -306,7 +306,33 @@ Deliverables:
 
 Remaining hardening:
 
-* Add freshness thresholds for stale but reachable sources
-* Add import history rather than latest state only
-* Add manual import controls to the Integrations page
 * Replace the table bootstrap with EF migrations
+
+## Phase 10: Integration Freshness and Import History
+
+Goal: show stale sources, preserve recent import runs and let operators trigger imports manually.
+
+Status: complete enough for database migration work.
+
+Started:
+
+* `Stale` integration health status
+* 15-minute stale threshold for previously healthy or warning sources
+* Persistent `IntegrationImportRun` history model
+* Recent import runs returned by `GET /api/integrations/health`
+* Angular summary card for stale sources
+* Recent import run table on the Integrations page
+* Manual import buttons for Pi-hole, Zeek and Suricata
+
+Deliverables:
+
+* Stale source detection
+* Import run history
+* Manual import actions from the UI
+* Updated integration health docs
+
+Remaining hardening:
+
+* Replace the table bootstrap with EF migrations
+* Make freshness thresholds configurable per source type
+* Add history filters if the run list grows

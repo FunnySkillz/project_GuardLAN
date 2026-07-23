@@ -5,5 +5,6 @@ public enum IntegrationHealthStatus
     Healthy = 0,
     Warning = 1,
     Unavailable = 2,
-    Disabled = 3
+    Disabled = 3,
+    Stale = 4
 }

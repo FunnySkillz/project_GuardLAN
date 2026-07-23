@@ -15,10 +15,13 @@ GET /api/integrations/health
 The response contains:
 
 * Summary counts for healthy, warning, unavailable and disabled sources
+* Stale source count
 * One row per recorded telemetry source
 * Last check, last success and last failure timestamps
+* Stale-after timestamp
 * Records read, imported and rejected
 * The last import message
+* Recent import runs
 
 ## Recorded Sources
 
@@ -40,14 +43,15 @@ Health is updated by both manual API-triggered imports and scheduled worker impo
 | Warning | Source is enabled and available, but the latest check rejected invalid or unmatched records. |
 | Unavailable | Source is enabled but the latest check could not read from the source. |
 | Disabled | Source is configured off. |
+| Stale | Source was previously healthy or warning, but has not checked in for 15 minutes. |
 
 Duplicate records do not make a source unhealthy. They are expected during incremental imports and restart/replay scenarios.
 
 ## Storage
 
-Health is stored in the `integration_health` table.
+Latest health is stored in the `integration_health` table. Recent import runs are stored in the `integration_import_runs` table.
 
-GuardLAN does not have EF migration tooling yet, so the repository creates this table with `CREATE TABLE IF NOT EXISTS` before reading or writing health rows. This is intentionally narrow and should be replaced by normal migrations when the database migration phase is implemented.
+GuardLAN does not have EF migration tooling yet, so the repositories create these tables with `CREATE TABLE IF NOT EXISTS` before reading or writing integration health rows. This is intentionally narrow and should be replaced by normal migrations when the database migration phase is implemented.
 
 ## UI
 
@@ -59,20 +63,29 @@ The Angular route is:
 
 The page shows summary cards and a source table with status, source state, record flow, rejection count, last check time and last message.
 
+It also includes manual import buttons for:
+
+* Pi-hole
+* Zeek
+* Suricata
+
+The lower history table shows the latest recorded import runs.
+
 ## Current Implementation
 
 Implemented in:
 
 * [GuardLAN.API/src/GuardLan.Domain/Entities/IntegrationHealth.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/IntegrationHealth.cs)
+* [GuardLAN.API/src/GuardLan.Domain/Entities/IntegrationImportRun.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/IntegrationImportRun.cs)
 * [GuardLAN.API/src/GuardLan.Application/Services/IntegrationHealthService.cs](../GuardLAN.API/src/GuardLan.Application/Services/IntegrationHealthService.cs)
 * [GuardLAN.API/src/GuardLan.Infrastructure/Persistence/Repositories/IntegrationHealthRepository.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Persistence/Repositories/IntegrationHealthRepository.cs)
+* [GuardLAN.API/src/GuardLan.Infrastructure/Persistence/Repositories/IntegrationImportRunRepository.cs](../GuardLAN.API/src/GuardLan.Infrastructure/Persistence/Repositories/IntegrationImportRunRepository.cs)
 * [GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs)
 * [GuardLAN.UI/src/app/features/integrations/ui/integrations-page.component.ts](../GuardLAN.UI/src/app/features/integrations/ui/integrations-page.component.ts)
 * [GuardLAN.UI/src/app/features/integrations/data-access/integrations.facade.ts](../GuardLAN.UI/src/app/features/integrations/data-access/integrations.facade.ts)
 
 ## Next Improvements
 
-* Add source freshness thresholds so a source can become stale even if the last check succeeded.
-* Add manual import buttons from the Integrations page.
-* Add import history, not only latest state.
 * Replace the table bootstrap with EF migrations.
+* Make freshness thresholds configurable per source type.
+* Add filters for import history when the run list grows.

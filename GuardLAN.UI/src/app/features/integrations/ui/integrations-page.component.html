@@ -4,9 +4,35 @@
     <h1>Integrations</h1>
   </div>
 
-  <button class="secondary" type="button" (click)="retry()" [disabled]="facade.loading()">
-    {{ facade.loading() ? 'Refreshing...' : 'Refresh' }}
-  </button>
+  <div class="header-actions">
+    <button
+      class="secondary"
+      type="button"
+      (click)="importNow('pihole')"
+      [disabled]="facade.importingTarget() !== null"
+    >
+      {{ importing('pihole') ? 'Running...' : 'Pi-hole import' }}
+    </button>
+    <button
+      class="secondary"
+      type="button"
+      (click)="importNow('zeek')"
+      [disabled]="facade.importingTarget() !== null"
+    >
+      {{ importing('zeek') ? 'Running...' : 'Zeek import' }}
+    </button>
+    <button
+      class="secondary"
+      type="button"
+      (click)="importNow('suricata')"
+      [disabled]="facade.importingTarget() !== null"
+    >
+      {{ importing('suricata') ? 'Running...' : 'Suricata import' }}
+    </button>
+    <button class="secondary" type="button" (click)="retry()" [disabled]="facade.loading()">
+      {{ facade.loading() ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </div>
 </header>
 
 @if (facade.error(); as message) {
@@ -41,6 +67,12 @@
     <small>source missing</small>
   </article>
 
+  <article class="metric-card stale">
+    <span>Stale</span>
+    <strong>{{ facade.summary()?.staleSources ?? '-' }}</strong>
+    <small>check overdue</small>
+  </article>
+
   <article class="metric-card">
     <span>Last check</span>
     <strong>{{ formatRelativeTime(facade.summary()?.lastCheckedUtc ?? null) }}</strong>
@@ -67,13 +99,14 @@
           <th scope="col">Records</th>
           <th scope="col">Rejected</th>
           <th scope="col">Checked</th>
+          <th scope="col">Stale after</th>
           <th scope="col">Message</th>
         </tr>
       </thead>
       <tbody>
         @if (facade.sources().length === 0) {
           <tr>
-            <td class="empty-state table-empty" colspan="8">
+            <td class="empty-state table-empty" colspan="9">
               {{ facade.loading() ? 'Loading integration health...' : 'No integration checks recorded' }}
             </td>
           </tr>
@@ -97,7 +130,61 @@
                 <strong>{{ formatRelativeTime(source.lastCheckedUtc) }}</strong>
                 <small>failure {{ formatRelativeTime(source.lastFailureUtc) }}</small>
               </td>
+              <td>{{ formatRelativeTime(source.staleAfterUtc) }}</td>
               <td class="message-cell">{{ source.message }}</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel history-panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">History</p>
+      <h2>{{ facade.recentRuns().length }} recent runs</h2>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Completed</th>
+          <th scope="col">Source</th>
+          <th scope="col">Kind</th>
+          <th scope="col">Status</th>
+          <th scope="col">Records</th>
+          <th scope="col">Rejected</th>
+          <th scope="col">Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (facade.recentRuns().length === 0) {
+          <tr>
+            <td class="empty-state table-empty" colspan="7">
+              {{ facade.loading() ? 'Loading import history...' : 'No import runs recorded' }}
+            </td>
+          </tr>
+        } @else {
+          @for (run of facade.recentRuns(); track run.id) {
+            <tr>
+              <td>{{ formatRelativeTime(run.completedUtc) }}</td>
+              <td>
+                <strong>{{ run.source }}</strong>
+                <small>{{ run.sourceAvailable ? 'available' : 'not available' }}</small>
+              </td>
+              <td>{{ kindLabel(run.kind) }}</td>
+              <td>
+                <span class="status-pill" [class]="statusClass(run.status)">
+                  {{ run.status }}
+                </span>
+              </td>
+              <td>{{ runRecordFlow(run) }}</td>
+              <td>{{ run.recordsRejected }}</td>
+              <td class="message-cell">{{ run.message }}</td>
             </tr>
           }
         }

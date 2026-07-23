@@ -21,6 +21,8 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
 
     public DbSet<IntegrationHealth> IntegrationHealth => Set<IntegrationHealth>();
 
+    public DbSet<IntegrationImportRun> IntegrationImportRuns => Set<IntegrationImportRun>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<NetworkDevice>(entity =>
@@ -180,11 +182,27 @@ public sealed class GuardLanDbContext(DbContextOptions<GuardLanDbContext> option
             entity.HasIndex(health => health.Kind);
             entity.HasIndex(health => health.Status);
             entity.HasIndex(health => health.LastCheckedUtc);
+            entity.HasIndex(health => health.StaleAfterUtc);
 
             entity.Property(health => health.Source).HasMaxLength(96);
             entity.Property(health => health.Kind).HasConversion<string>().HasMaxLength(32);
             entity.Property(health => health.Status).HasConversion<string>().HasMaxLength(32);
             entity.Property(health => health.Message).HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<IntegrationImportRun>(entity =>
+        {
+            entity.ToTable("integration_import_runs");
+            entity.HasKey(run => run.Id);
+            entity.HasIndex(run => run.Source);
+            entity.HasIndex(run => run.Kind);
+            entity.HasIndex(run => run.Status);
+            entity.HasIndex(run => run.CompletedUtc);
+
+            entity.Property(run => run.Source).HasMaxLength(96);
+            entity.Property(run => run.Kind).HasConversion<string>().HasMaxLength(32);
+            entity.Property(run => run.Status).HasConversion<string>().HasMaxLength(32);
+            entity.Property(run => run.Message).HasMaxLength(512);
         });
     }
 }

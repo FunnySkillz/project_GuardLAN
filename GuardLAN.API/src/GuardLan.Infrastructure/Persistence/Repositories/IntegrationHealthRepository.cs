@@ -49,6 +49,7 @@ public sealed class IntegrationHealthRepository(GuardLanDbContext dbContext)
                 "SourceEnabled" boolean NOT NULL,
                 "SourceAvailable" boolean NOT NULL,
                 "LastCheckedUtc" timestamp with time zone NOT NULL,
+                "StaleAfterUtc" timestamp with time zone NULL,
                 "LastSuccessUtc" timestamp with time zone NULL,
                 "LastFailureUtc" timestamp with time zone NULL,
                 "RecordsRead" integer NOT NULL,
@@ -66,6 +67,9 @@ public sealed class IntegrationHealthRepository(GuardLanDbContext dbContext)
                 ON integration_health ("Status");
             CREATE INDEX IF NOT EXISTS "IX_integration_health_LastCheckedUtc"
                 ON integration_health ("LastCheckedUtc");
+
+            ALTER TABLE integration_health
+                ADD COLUMN IF NOT EXISTS "StaleAfterUtc" timestamp with time zone NULL;
             """,
             cancellationToken);
 

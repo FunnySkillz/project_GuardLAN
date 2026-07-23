@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IAlertService, AlertService>();
         services.AddScoped<INetworkScanService, NetworkScanService>();
         services.AddScoped<IScanExecutionService, ScanExecutionService>();
+        services.AddScoped<IMdacService, MdacService>();
 
         return services;
     }

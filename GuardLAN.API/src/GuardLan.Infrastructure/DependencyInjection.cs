@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<INetworkScanRunRepository, NetworkScanRunRepository>();
         services.AddScoped<ISecurityAlertRepository, SecurityAlertRepository>();
         services.AddScoped<IIntegrationHealthRepository, IntegrationHealthRepository>();
+        services.AddScoped<IIntegrationImportRunRepository, IntegrationImportRunRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<INetworkScanner, NmapNetworkScanner>();
         services.AddScoped<IDnsQuerySource, PiHoleDnsQuerySource>();

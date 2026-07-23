@@ -5,6 +5,8 @@ import { IntegrationsFacade } from '../data-access/integrations.facade';
 import {
   IntegrationHealthDto,
   IntegrationHealthStatus,
+  IntegrationImportRunDto,
+  IntegrationImportTarget,
   IntegrationKind
 } from '../models/integration-health';
 import { LiveUpdatesService } from '../../../shared/live-updates/live-updates.service';
@@ -31,6 +33,14 @@ export class IntegrationsPageComponent implements OnInit {
 
   protected retry(): void {
     this.facade.load();
+  }
+
+  protected importNow(target: IntegrationImportTarget): void {
+    this.facade.importNow(target);
+  }
+
+  protected importing(target: IntegrationImportTarget): boolean {
+    return this.facade.importingTarget() === target;
   }
 
   protected kindLabel(kind: IntegrationKind): string {
@@ -61,6 +71,10 @@ export class IntegrationsPageComponent implements OnInit {
       return 'Warning';
     }
 
+    if (source.status === 'Stale') {
+      return 'Stale';
+    }
+
     return 'Healthy';
   }
 
@@ -74,6 +88,10 @@ export class IntegrationsPageComponent implements OnInit {
 
   protected recordFlow(source: IntegrationHealthDto): string {
     return `${source.recordsImported} imported / ${source.recordsRead} read`;
+  }
+
+  protected runRecordFlow(run: IntegrationImportRunDto): string {
+    return `${run.recordsImported} imported / ${run.recordsRead} read`;
   }
 
   protected formatRelativeTime(value: string | null): string {

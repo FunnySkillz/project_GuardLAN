@@ -27,7 +27,7 @@ The current implementation includes:
 * Local-user authentication with cookie sessions for the API, UI and SignalR hub
 * Explainable device risk signals based on alerts, DNS, connection and inventory evidence
 * Device evidence drill-down pages for inspecting recent alerts, DNS queries and connections
-* Integration health reporting for Pi-hole, Zeek and Suricata imports
+* Integration health, freshness and import history for Pi-hole, Zeek and Suricata imports
 * Local Docker Compose infrastructure for the UI, API, worker and PostgreSQL
 
 GuardLAN is not intended to replace a commercial SIEM, IDS, endpoint detection platform, or managed SOC service.

@@ -6,13 +6,24 @@ using GuardLan.Domain.Repositories;
 
 namespace GuardLan.Application.Services;
 
-public sealed class IntegrationHealthService(IUnitOfWork unitOfWork) : IIntegrationHealthService
+public sealed class IntegrationHealthService(
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider) : IIntegrationHealthService
 {
+    private static readonly TimeSpan StaleAfter = TimeSpan.FromMinutes(15);
+    private const int RecentRunLimit = 20;
+
     public async Task<IntegrationHealthOverviewDto> GetOverviewAsync(
         CancellationToken cancellationToken = default)
     {
         var sources = await unitOfWork.IntegrationHealth.GetAllOrderedAsync(cancellationToken);
-        var dtos = sources.Select(IntegrationHealthDto.FromEntity).ToArray();
+        var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+        var dtos = sources
+            .Select(source => IntegrationHealthDto.FromEntity(source, ResolveEffectiveStatus(source, nowUtc)))
+            .ToArray();
+        var recentRuns = await unitOfWork.IntegrationImportRuns.GetRecentAsync(
+            RecentRunLimit,
+            cancellationToken);
 
         return new IntegrationHealthOverviewDto(
             new IntegrationHealthSummaryDto(
@@ -21,8 +32,10 @@ public sealed class IntegrationHealthService(IUnitOfWork unitOfWork) : IIntegrat
                 dtos.Count(source => source.Status == IntegrationHealthStatus.Warning),
                 dtos.Count(source => source.Status == IntegrationHealthStatus.Unavailable),
                 dtos.Count(source => source.Status == IntegrationHealthStatus.Disabled),
+                dtos.Count(source => source.Status == IntegrationHealthStatus.Stale),
                 dtos.Length == 0 ? null : dtos.Max(source => source.LastCheckedUtc)),
-            dtos);
+            dtos,
+            recentRuns.Select(IntegrationImportRunDto.FromEntity).ToArray());
     }
 
     public async Task RecordAsync(
@@ -37,6 +50,9 @@ public sealed class IntegrationHealthService(IUnitOfWork unitOfWork) : IIntegrat
 
         var checkedAtUtc = NormalizeUtc(record.CheckedAtUtc);
         var status = ResolveStatus(record);
+        var staleAfterUtc = status is IntegrationHealthStatus.Healthy or IntegrationHealthStatus.Warning
+            ? checkedAtUtc.Add(StaleAfter)
+            : (DateTime?)null;
         var health = await unitOfWork.IntegrationHealth.GetBySourceAsync(source, cancellationToken);
 
         if (health is null)
@@ -55,6 +71,7 @@ public sealed class IntegrationHealthService(IUnitOfWork unitOfWork) : IIntegrat
         health.SourceEnabled = record.SourceEnabled;
         health.SourceAvailable = record.SourceAvailable;
         health.LastCheckedUtc = checkedAtUtc;
+        health.StaleAfterUtc = staleAfterUtc;
         health.RecordsRead = Math.Max(0, record.RecordsRead);
         health.RecordsImported = Math.Max(0, record.RecordsImported);
         health.RecordsRejected = Math.Max(0, record.RecordsRejected);
@@ -69,7 +86,39 @@ public sealed class IntegrationHealthService(IUnitOfWork unitOfWork) : IIntegrat
             health.LastFailureUtc = checkedAtUtc;
         }
 
+        await unitOfWork.IntegrationImportRuns.EnsureSchemaAsync(cancellationToken);
+        await unitOfWork.IntegrationImportRuns.AddAsync(
+            new IntegrationImportRun
+            {
+                Id = Guid.NewGuid(),
+                Source = source,
+                Kind = record.Kind,
+                Status = status,
+                SourceEnabled = record.SourceEnabled,
+                SourceAvailable = record.SourceAvailable,
+                CompletedUtc = checkedAtUtc,
+                RecordsRead = Math.Max(0, record.RecordsRead),
+                RecordsImported = Math.Max(0, record.RecordsImported),
+                RecordsRejected = Math.Max(0, record.RecordsRejected),
+                Message = Truncate(record.Message.Trim(), 512)
+            },
+            cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private static IntegrationHealthStatus ResolveEffectiveStatus(
+        IntegrationHealth health,
+        DateTime nowUtc)
+    {
+        if (health.Status is IntegrationHealthStatus.Disabled or IntegrationHealthStatus.Unavailable)
+        {
+            return health.Status;
+        }
+
+        return health.StaleAfterUtc.HasValue && health.StaleAfterUtc <= nowUtc
+            ? IntegrationHealthStatus.Stale
+            : health.Status;
     }
 
     private static IntegrationHealthStatus ResolveStatus(IntegrationHealthRecord record)

@@ -2,7 +2,7 @@ using GuardLan.Domain.Enums;
 
 namespace GuardLan.Domain.Entities;
 
-public class IntegrationHealth
+public class IntegrationImportRun
 {
     public Guid Id { get; set; }
 
@@ -16,13 +16,7 @@ public class IntegrationHealth
 
     public bool SourceAvailable { get; set; }
 
-    public DateTime LastCheckedUtc { get; set; }
-
-    public DateTime? StaleAfterUtc { get; set; }
-
-    public DateTime? LastSuccessUtc { get; set; }
-
-    public DateTime? LastFailureUtc { get; set; }
+    public DateTime CompletedUtc { get; set; }
 
     public int RecordsRead { get; set; }
 
