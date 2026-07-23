@@ -23,39 +23,48 @@
       </div>
 
       <div class="scan-control">
-        <span class="scan-state">192.168.1.0/24</span>
-        <button type="button">Start scan</button>
+        <span class="scan-state">{{ subnet }}</span>
+        <button type="button" (click)="startScan()" [disabled]="queueingScan()">
+          {{ queueingScan() ? 'Queueing...' : 'Start scan' }}
+        </button>
       </div>
     </header>
 
-    <section class="metrics" aria-label="Network summary">
+    @if (error(); as message) {
+      <section class="status-panel" role="status">
+        <span>{{ message }}</span>
+        <button class="secondary" type="button" (click)="retry()">Retry</button>
+      </section>
+    }
+
+    <section class="metrics" aria-label="Network summary" [class.loading]="loading()">
       <article class="metric-card">
         <span>Online</span>
-        <strong>{{ onlineDevices }}</strong>
+        <strong>{{ summary()?.onlineDevices ?? '-' }}</strong>
         <small>devices responding</small>
       </article>
 
       <article class="metric-card warning">
         <span>Unknown</span>
-        <strong>{{ unknownDevices }}</strong>
+        <strong>{{ summary()?.unknownDevices ?? '-' }}</strong>
         <small>needs review</small>
       </article>
 
       <article class="metric-card">
         <span>Trusted</span>
-        <strong>{{ trustedDevices }}</strong>
+        <strong>{{ summary()?.trustedDevices ?? '-' }}</strong>
         <small>known inventory</small>
       </article>
 
       <article class="metric-card danger">
         <span>Alerts</span>
-        <strong>{{ alerts.length }}</strong>
+        <strong>{{ summary()?.openAlerts ?? '-' }}</strong>
         <small>open findings</small>
       </article>
 
       <article class="metric-card">
         <span>DNS blocks</span>
-        <strong>{{ blockedDomains }}</strong>
+        <strong>{{ summary()?.blockedDomainsToday ?? '-' }}</strong>
         <small>last 24 hours</small>
       </article>
     </section>
@@ -67,7 +76,7 @@
             <p class="eyebrow">Inventory</p>
             <h2>Devices</h2>
           </div>
-          <span>{{ devices.length }} tracked</span>
+          <span>{{ devices().length }} tracked</span>
         </div>
 
         <div class="table-wrap">
@@ -83,25 +92,33 @@
               </tr>
             </thead>
             <tbody>
-              @for (device of devices; track device.macAddress) {
+              @if (devices().length === 0) {
                 <tr>
-                  <td>
-                    <strong>{{ device.name }}</strong>
-                    <small>{{ device.vendor }}</small>
+                  <td class="empty-state table-empty" colspan="6">
+                    {{ loading() ? 'Loading devices...' : 'No devices tracked yet' }}
                   </td>
-                  <td>
-                    <code>{{ device.ipAddress }}</code>
-                    <small>{{ device.macAddress }}</small>
-                  </td>
-                  <td>{{ device.type }}</td>
-                  <td>
-                    <span class="trust-pill" [class.untrusted]="!device.trusted">
-                      {{ device.trusted ? 'Trusted' : 'Review' }}
-                    </span>
-                  </td>
-                  <td>{{ formatTraffic(device.trafficMb) }}</td>
-                  <td>{{ device.lastSeen }}</td>
                 </tr>
+              } @else {
+                @for (device of devices(); track device.id) {
+                  <tr>
+                    <td>
+                      <strong>{{ deviceName(device) }}</strong>
+                      <small>{{ deviceVendor(device) }}</small>
+                    </td>
+                    <td>
+                      <code>{{ device.ipAddress }}</code>
+                      <small>{{ device.macAddress }}</small>
+                    </td>
+                    <td>{{ deviceTypeLabel(device) }}</td>
+                    <td>
+                      <span class="trust-pill" [class.untrusted]="!device.isTrusted">
+                        {{ device.isTrusted ? 'Trusted' : 'Review' }}
+                      </span>
+                    </td>
+                    <td>{{ deviceTraffic(device.id) }}</td>
+                    <td>{{ formatRelativeTime(device.lastSeenUtc) }}</td>
+                  </tr>
+                }
               }
             </tbody>
           </table>
@@ -117,14 +134,21 @@
         </div>
 
         <div class="alert-list">
-          @for (alert of alerts; track alert.type + alert.created) {
-            <article class="alert-row" [class.high]="alert.severity === 'High'">
-              <span class="severity">{{ alert.severity }}</span>
-              <div>
-                <strong>{{ alert.type }}</strong>
-                <small>{{ alert.device }} | {{ alert.created }}</small>
-              </div>
-            </article>
+          @if (alerts().length === 0) {
+            <p class="empty-state">{{ loading() ? 'Loading alerts...' : 'No open alerts' }}</p>
+          } @else {
+            @for (alert of alerts(); track alert.id) {
+              <article
+                class="alert-row"
+                [class.high]="alert.severity === 'High' || alert.severity === 'Critical'"
+              >
+                <span class="severity">{{ alert.severity }}</span>
+                <div>
+                  <strong>{{ alert.type }}</strong>
+                  <small>{{ alertDevice(alert) }} | {{ formatRelativeTime(alert.createdUtc) }}</small>
+                </div>
+              </article>
+            }
           }
         </div>
       </section>
@@ -138,14 +162,20 @@
         </div>
 
         <div class="domain-list">
-          @for (domain of domains; track domain.domain) {
-            <article class="domain-row">
-              <div>
-                <strong>{{ domain.domain }}</strong>
-                <small>{{ domain.requests }} requests</small>
-              </div>
-              <span [class.blocked]="domain.blocked > 0">{{ domain.blocked }} blocked</span>
-            </article>
+          @if (domains().length === 0) {
+            <p class="empty-state">{{ loading() ? 'Loading DNS...' : 'No DNS activity yet' }}</p>
+          } @else {
+            @for (domain of domains(); track domain.domain) {
+              <article class="domain-row">
+                <div>
+                  <strong>{{ domain.domain }}</strong>
+                  <small>{{ domain.requests }} requests</small>
+                </div>
+                <span [class.blocked]="domain.blockedRequests > 0">
+                  {{ domain.blockedRequests }} blocked
+                </span>
+              </article>
+            }
           }
         </div>
       </section>
@@ -159,14 +189,18 @@
         </div>
 
         <div class="scan-list">
-          @for (scan of scans; track scan.requested) {
-            <article class="scan-row">
-              <div>
-                <strong>{{ scan.subnet }}</strong>
-                <small>{{ scan.requested }}</small>
-              </div>
-              <span>{{ scan.discovered }} devices</span>
-            </article>
+          @if (scans().length === 0) {
+            <p class="empty-state">{{ loading() ? 'Loading scans...' : 'No scans queued yet' }}</p>
+          } @else {
+            @for (scan of scans(); track scan.id) {
+              <article class="scan-row">
+                <div>
+                  <strong>{{ scan.subnet }}</strong>
+                  <small>{{ scanRequested(scan) }}</small>
+                </div>
+                <span>{{ scanResult(scan) }}</span>
+              </article>
+            }
           }
         </div>
       </section>

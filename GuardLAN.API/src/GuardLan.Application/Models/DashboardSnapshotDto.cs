@@ -13,6 +13,11 @@ public sealed record DashboardSnapshotDto(
     IReadOnlyList<DomainActivityDto> MostContactedExternalDomains,
     IReadOnlyList<AlertDto> RecentAlerts);
 
+public sealed record DashboardOverviewDto(
+    DashboardSnapshotDto Summary,
+    IReadOnlyList<DeviceDto> Devices,
+    IReadOnlyList<NetworkScanDto> RecentScans);
+
 public sealed record DeviceActivityDto(
     Guid DeviceId,
     string Name,

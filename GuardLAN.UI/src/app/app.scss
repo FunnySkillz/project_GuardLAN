@@ -128,11 +128,49 @@ button:hover {
   background: #18584d;
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+button.secondary {
+  border: 1px solid #cbd6d1;
+  background: #ffffff;
+  color: #1f6d5f;
+}
+
+button.secondary:hover {
+  background: #eef4f1;
+}
+
+.status-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #e2aaa1;
+  border-radius: 8px;
+  background: #fff8f6;
+  color: #7f352a;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+}
+
+.status-panel span {
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(5, minmax(140px, 1fr));
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.metrics.loading {
+  opacity: 0.76;
 }
 
 .metric-card {
@@ -280,6 +318,17 @@ code {
   display: grid;
 }
 
+.empty-state {
+  color: #66756f;
+  font-size: 0.88rem;
+  margin: 0;
+  padding: 18px 16px;
+}
+
+.table-empty {
+  text-align: center;
+}
+
 .alert-row,
 .domain-row,
 .scan-row {
@@ -405,6 +454,11 @@ code {
     align-items: stretch;
     flex-direction: column;
     width: 100%;
+  }
+
+  .status-panel {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   button {

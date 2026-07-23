@@ -1,5 +1,6 @@
 using GuardLan.Application.Abstractions;
 using GuardLan.Application.Models;
+using GuardLan.Domain.Entities;
 using GuardLan.Domain.Enums;
 using GuardLan.Domain.Repositories;
 
@@ -8,6 +9,24 @@ namespace GuardLan.Application.Services;
 public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timeProvider) : IDashboardService
 {
     public async Task<DashboardSnapshotDto> GetSnapshotAsync(CancellationToken cancellationToken)
+    {
+        var data = await LoadDashboardDataAsync(cancellationToken);
+
+        return BuildSnapshot(data);
+    }
+
+    public async Task<DashboardOverviewDto> GetOverviewAsync(CancellationToken cancellationToken)
+    {
+        var data = await LoadDashboardDataAsync(cancellationToken);
+        var scanRuns = await unitOfWork.NetworkScanRuns.GetRecentAsync(cancellationToken);
+
+        return new DashboardOverviewDto(
+            BuildSnapshot(data),
+            data.Devices.Select(DeviceDto.FromEntity).ToArray(),
+            scanRuns.Select(NetworkScanDto.FromEntity).ToArray());
+    }
+
+    private async Task<DashboardData> LoadDashboardDataAsync(CancellationToken cancellationToken)
     {
         var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
         var todayUtc = nowUtc.Date;
@@ -18,9 +37,14 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
         var dnsQueries = await unitOfWork.DnsQueries.GetSinceAsync(todayUtc, cancellationToken);
         var connections = await unitOfWork.NetworkConnections.GetSinceAsync(sinceUtc, cancellationToken);
 
-        var deviceLookup = devices.ToDictionary(device => device.Id);
+        return new DashboardData(devices, alerts, dnsQueries, connections, todayUtc);
+    }
 
-        var mostActiveDevices = connections
+    private static DashboardSnapshotDto BuildSnapshot(DashboardData data)
+    {
+        var deviceLookup = data.Devices.ToDictionary(device => device.Id);
+
+        var mostActiveDevices = data.Connections
             .GroupBy(connection => connection.DeviceId)
             .Select(group =>
             {
@@ -38,7 +62,7 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
             .Take(5)
             .ToArray();
 
-        var topDomains = dnsQueries
+        var topDomains = data.DnsQueries
             .GroupBy(query => query.Domain)
             .Select(group => new DomainActivityDto(
                 group.Key,
@@ -48,7 +72,7 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
             .Take(5)
             .ToArray();
 
-        var recentAlerts = alerts
+        var recentAlerts = data.Alerts
             .Where(alert => alert.ResolvedUtc is null)
             .OrderByDescending(alert => alert.CreatedUtc)
             .Take(5)
@@ -56,16 +80,23 @@ public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timePr
             .ToArray();
 
         return new DashboardSnapshotDto(
-            devices.Count(device => device.IsOnline),
-            devices.Count(device => device.DeviceType == DeviceType.Unknown || !device.IsTrusted),
-            devices.Count(device => device.FirstSeenUtc >= todayUtc),
-            devices.Count(device => device.IsTrusted),
-            dnsQueries.Count,
-            dnsQueries.Count(query => query.WasBlocked),
-            alerts.Count(alert => alert.ResolvedUtc is null),
-            alerts.Count(alert => alert.ResolvedUtc is null && alert.Severity >= AlertSeverity.Critical),
+            data.Devices.Count(device => device.IsOnline),
+            data.Devices.Count(device => device.DeviceType == DeviceType.Unknown || !device.IsTrusted),
+            data.Devices.Count(device => device.FirstSeenUtc >= data.TodayUtc),
+            data.Devices.Count(device => device.IsTrusted),
+            data.DnsQueries.Count,
+            data.DnsQueries.Count(query => query.WasBlocked),
+            data.Alerts.Count(alert => alert.ResolvedUtc is null),
+            data.Alerts.Count(alert => alert.ResolvedUtc is null && alert.Severity >= AlertSeverity.Critical),
             mostActiveDevices,
             topDomains,
             recentAlerts);
     }
+
+    private sealed record DashboardData(
+        IReadOnlyList<NetworkDevice> Devices,
+        IReadOnlyList<SecurityAlert> Alerts,
+        IReadOnlyList<DnsQuery> DnsQueries,
+        IReadOnlyList<NetworkConnection> Connections,
+        DateTime TodayUtc);
 }

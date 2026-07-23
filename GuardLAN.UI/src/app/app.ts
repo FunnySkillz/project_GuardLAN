@@ -1,144 +1,141 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
 
-interface DeviceRow {
-  name: string;
-  ipAddress: string;
-  macAddress: string;
-  vendor: string;
-  type: string;
-  trusted: boolean;
-  online: boolean;
-  lastSeen: string;
-  trafficMb: number;
-}
-
-interface AlertRow {
-  severity: 'High' | 'Medium' | 'Low';
-  type: string;
-  device: string;
-  created: string;
-}
-
-interface DomainRow {
-  domain: string;
-  requests: number;
-  blocked: number;
-}
-
-interface ScanRow {
-  subnet: string;
-  status: string;
-  discovered: number;
-  requested: string;
-}
+import { DashboardFacade } from './features/dashboard/data-access/dashboard.facade';
+import {
+  AlertDto,
+  DeviceDto,
+  NetworkScanDto
+} from './features/dashboard/models/dashboard-overview';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class App {
-  protected readonly devices: DeviceRow[] = [
-    {
-      name: 'gateway',
-      ipAddress: '192.168.1.1',
-      macAddress: '02:00:00:00:00:01',
-      vendor: 'OPNsense',
-      type: 'Router',
-      trusted: true,
-      online: true,
-      lastSeen: '1 min ago',
-      trafficMb: 824
-    },
-    {
-      name: 'desktop-pc',
-      ipAddress: '192.168.1.22',
-      macAddress: '02:00:00:00:00:22',
-      vendor: 'Intel',
-      type: 'Desktop',
-      trusted: true,
-      online: true,
-      lastSeen: '3 min ago',
-      trafficMb: 2627
-    },
-    {
-      name: 'living-room-tv',
-      ipAddress: '192.168.1.32',
-      macAddress: 'AA:BB:CC:DD:EE:FF',
-      vendor: 'Samsung',
-      type: 'Smart TV',
-      trusted: true,
-      online: true,
-      lastSeen: '2 min ago',
-      trafficMb: 85373
-    },
-    {
-      name: 'Unidentified',
-      ipAddress: '192.168.1.71',
-      macAddress: '02:00:00:00:00:71',
-      vendor: 'Unknown',
-      type: 'Unknown',
-      trusted: false,
-      online: true,
-      lastSeen: '4 min ago',
-      trafficMb: 197
+export class App implements OnInit {
+  private readonly defaultSubnet = '192.168.1.0/24';
+  protected readonly dashboard = inject(DashboardFacade);
+  protected readonly summary = computed(() => this.dashboard.data()?.summary ?? null);
+  protected readonly devices = this.dashboard.devices;
+  protected readonly alerts = this.dashboard.alerts;
+  protected readonly domains = this.dashboard.domains;
+  protected readonly scans = this.dashboard.scans;
+  protected readonly loading = this.dashboard.loading;
+  protected readonly error = this.dashboard.error;
+  protected readonly queueingScan = this.dashboard.queueingScan;
+  protected readonly subnet = this.defaultSubnet;
+
+  ngOnInit(): void {
+    this.dashboard.load();
+  }
+
+  protected retry(): void {
+    this.dashboard.load();
+  }
+
+  protected startScan(): void {
+    this.dashboard.queueScan(this.defaultSubnet);
+  }
+
+  protected deviceName(device: DeviceDto): string {
+    return device.hostname?.trim() || device.ipAddress;
+  }
+
+  protected deviceVendor(device: DeviceDto): string {
+    return device.vendor?.trim() || 'Unknown vendor';
+  }
+
+  protected deviceTypeLabel(device: DeviceDto): string {
+    switch (device.deviceType) {
+      case 'SmartTv':
+        return 'Smart TV';
+      case 'Iot':
+        return 'IoT';
+      default:
+        return device.deviceType;
     }
-  ];
-
-  protected readonly alerts: AlertRow[] = [
-    {
-      severity: 'High',
-      type: 'Unknown device connected',
-      device: '192.168.1.71',
-      created: '2 hours ago'
-    },
-    {
-      severity: 'Medium',
-      type: 'New domain observed',
-      device: 'Unidentified',
-      created: '8 min ago'
-    },
-    {
-      severity: 'Low',
-      type: 'Device disappeared',
-      device: 'garage-camera',
-      created: '1 day ago'
-    }
-  ];
-
-  protected readonly domains: DomainRow[] = [
-    { domain: 'streaming.example', requests: 312, blocked: 0 },
-    { domain: 'github.com', requests: 188, blocked: 0 },
-    { domain: 'ads.streaming.example', requests: 73, blocked: 73 },
-    { domain: 'new-device-check.example', requests: 12, blocked: 0 }
-  ];
-
-  protected readonly scans: ScanRow[] = [
-    { subnet: '192.168.1.0/24', status: 'Completed', discovered: 4, requested: '5 min ago' },
-    { subnet: '192.168.1.0/24', status: 'Completed', discovered: 3, requested: '65 min ago' }
-  ];
-
-  protected get onlineDevices(): number {
-    return this.devices.filter((device) => device.online).length;
   }
 
-  protected get unknownDevices(): number {
-    return this.devices.filter((device) => !device.trusted || device.type === 'Unknown').length;
-  }
+  protected deviceTraffic(deviceId: string): string {
+    const activity = this.summary()?.mostActiveDevices.find((device) => device.deviceId === deviceId);
 
-  protected get trustedDevices(): number {
-    return this.devices.filter((device) => device.trusted).length;
-  }
-
-  protected get blockedDomains(): number {
-    return this.domains.reduce((total, domain) => total + domain.blocked, 0);
-  }
-
-  protected formatTraffic(megabytes: number): string {
-    if (megabytes >= 1024) {
-      return `${(megabytes / 1024).toFixed(1)} GB`;
+    if (!activity) {
+      return '0 MB';
     }
 
-    return `${megabytes} MB`;
+    return this.formatBytes(activity.bytesSent + activity.bytesReceived);
+  }
+
+  protected alertDevice(alert: AlertDto): string {
+    if (!alert.deviceId) {
+      return 'Network';
+    }
+
+    const device = this.devices().find((candidate) => candidate.id === alert.deviceId);
+
+    return device ? this.deviceName(device) : alert.deviceId;
+  }
+
+  protected scanRequested(scan: NetworkScanDto): string {
+    return this.formatRelativeTime(scan.requestedUtc);
+  }
+
+  protected scanResult(scan: NetworkScanDto): string {
+    if (scan.status === 'Completed') {
+      return `${scan.devicesDiscovered} devices`;
+    }
+
+    return scan.status;
+  }
+
+  protected formatRelativeTime(value: string | null): string {
+    if (!value) {
+      return 'Pending';
+    }
+
+    const timestamp = new Date(value).getTime();
+
+    if (Number.isNaN(timestamp)) {
+      return 'Unknown';
+    }
+
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+
+    if (elapsedSeconds < 60) {
+      return 'just now';
+    }
+
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+
+    if (elapsedMinutes < 60) {
+      return `${elapsedMinutes} min ago`;
+    }
+
+    const elapsedHours = Math.floor(elapsedMinutes / 60);
+
+    if (elapsedHours < 24) {
+      return `${elapsedHours} hr ago`;
+    }
+
+    const elapsedDays = Math.floor(elapsedHours / 24);
+
+    return `${elapsedDays} day${elapsedDays === 1 ? '' : 's'} ago`;
+  }
+
+  private formatBytes(bytes: number): string {
+    if (bytes >= 1024 * 1024 * 1024) {
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+    }
+
+    if (bytes >= 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    if (bytes >= 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${bytes} B`;
   }
 }

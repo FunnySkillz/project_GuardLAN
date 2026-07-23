@@ -13,4 +13,10 @@ public sealed class DashboardController(IDashboardService dashboardService) : Co
     {
         return dashboardService.GetSnapshotAsync(cancellationToken);
     }
+
+    [HttpGet("overview")]
+    public Task<DashboardOverviewDto> GetOverview(CancellationToken cancellationToken)
+    {
+        return dashboardService.GetOverviewAsync(cancellationToken);
+    }
 }
