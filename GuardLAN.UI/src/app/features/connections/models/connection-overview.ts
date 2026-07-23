@@ -3,7 +3,17 @@ export interface ConnectionOverviewDto {
   readonly topProtocols: readonly ConnectionProtocolSummaryDto[];
   readonly topDestinations: readonly ConnectionDestinationSummaryDto[];
   readonly topDevices: readonly ConnectionDeviceSummaryDto[];
-  readonly recentConnections: readonly ConnectionDto[];
+  readonly recentConnections: ConnectionPageDto;
+}
+
+export type ConnectionProtocolFilter = 'all' | 'tcp' | 'udp' | 'other';
+
+export interface ConnectionOverviewQuery {
+  readonly hours: number;
+  readonly page: number;
+  readonly pageSize: number;
+  readonly protocol: ConnectionProtocolFilter;
+  readonly search: string;
 }
 
 export interface ConnectionOverviewSummaryDto {
@@ -12,6 +22,14 @@ export interface ConnectionOverviewSummaryDto {
   readonly uniqueDestinations: number;
   readonly totalBytesSent: number;
   readonly totalBytesReceived: number;
+}
+
+export interface ConnectionPageDto {
+  readonly items: readonly ConnectionDto[];
+  readonly page: number;
+  readonly pageSize: number;
+  readonly totalCount: number;
+  readonly totalPages: number;
 }
 
 export interface ConnectionProtocolSummaryDto {

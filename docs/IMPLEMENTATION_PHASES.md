@@ -68,6 +68,7 @@ Started:
 * Stored connection overview API
 * Connection activity page in the Angular app
 * Protocol, destination and device traffic summaries from stored connection data
+* Backend pagination and server-side protocol/search filtering for connection history
 
 Deliverables:
 

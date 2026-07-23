@@ -10,10 +10,9 @@ public sealed class ConnectionsController(IConnectionService connectionService) 
 {
     [HttpGet("overview")]
     public Task<ConnectionOverviewDto> GetOverview(
-        [FromQuery] int hours = 24,
-        [FromQuery] int limit = 100,
+        [FromQuery] ConnectionOverviewQueryDto query,
         CancellationToken cancellationToken = default)
     {
-        return connectionService.GetOverviewAsync(hours, limit, cancellationToken);
+        return connectionService.GetOverviewAsync(query, cancellationToken);
     }
 }

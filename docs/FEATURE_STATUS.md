@@ -35,13 +35,13 @@ DNS visibility now has a first ingestion path through Pi-hole. Network connectio
 | Dashboard summary | Implemented | Dashboard endpoints and UI provide overview metrics, device activity and recent alerts. | Add richer time-based analytics and deeper drill-down views. | API / UI |
 | Alert management | Implemented | Alerts are created, listed, and resolved through API and UI. | Add richer correlation, severity handling and alert history. | API / UI |
 | DNS monitoring | Partially Implemented | Stored DNS queries are exposed through a DNS overview API and Angular DNS activity page, with a configurable Pi-hole ingestion pipeline for importing DNS history. | Validate the importer against a live Pi-hole instance and add retention plus newly contacted domain detection. | API / Worker / UI |
-| Network connection monitoring | Partially Implemented | Connection entities, dashboard aggregation, a connection overview API and an Angular connection activity page exist, but no full telemetry ingestion path is implemented. | Add backend pagination and a normalized Zeek connection ingestion path. | API / Worker / UI |
+| Network connection monitoring | Partially Implemented | Connection entities, dashboard aggregation, a paged connection overview API and an Angular connection activity page exist, but no full telemetry ingestion path is implemented. | Add a normalized Zeek connection ingestion path. | API / Worker / UI |
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger and worker schedule exist, but live-appliance validation and operational diagnostics are still incomplete. | Validate response shapes against Pi-hole's local API docs and add import health reporting. | API / Worker |
 | Zeek integration | Planned | No ingestion flow exists yet. | Add a normalized ingestion contract for Zeek metadata. | API / Worker |
 | Suricata integration | Planned | No integration exists yet. | Add alert and event ingestion for IDS telemetry. | API / Worker |
 | SignalR real-time updates | Planned | No real-time transport is implemented. | Add live updates for dashboards and alerts. | API / UI |
 | Authentication and authorization | Not Started | No auth layer exists in the repository. | Introduce user identity and permission rules. | API |
-| Docker local development | Partially Implemented | A PostgreSQL compose setup exists, but the full UI/API/database stack is not yet assembled at the repository root. | Add a complete multi-service compose setup and health checks. | Infrastructure |
+| Docker local development | Partially Implemented | A repository-root Compose setup builds and runs the UI, API and PostgreSQL with health checks for local development. | Add migration tooling, secret handling and production deployment guidance. | Infrastructure |
 | PostgreSQL persistence | Implemented | EF Core persistence, repositories and seeded development data are in place. | Add migration tooling and operational backup/retention practices. | Database |
 | Mobile Device Activity Collector | Planned | The MDAC design exists in documentation, but no implementation is present. | Create the mobile app and backend ingestion contract. | Mobile |
 
@@ -239,7 +239,8 @@ Validate the Pi-hole ingestion pipeline against a live instance, then add import
 - Network connection entities, repositories and persistence models exist.
 - The dashboard uses connection data to calculate active-device traffic summaries.
 - Stored connection metadata is exposed through a dedicated connection overview API.
-- The Angular UI includes a connection activity page with summary metrics, protocol filtering, search and recent connection history.
+- Connection history supports backend pagination, protocol filtering and search.
+- The Angular UI includes a connection activity page with summary metrics, server-backed protocol filtering, search and paged recent connection history.
 
 **Implemented In**
 - [GuardLAN.API/src/GuardLan.Domain/Entities/NetworkConnection.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/NetworkConnection.cs)
@@ -253,11 +254,10 @@ Validate the Pi-hole ingestion pipeline against a live instance, then add import
 
 **Missing or Incomplete**
 - Production ingestion of connection metadata
-- Backend pagination and server-side filtering for large history sets
 - Connection detail pages and richer traffic analytics
 
 **Next Change**
-Add backend pagination for connection history, then introduce a normalized ingestion contract for Zeek connection telemetry.
+Introduce a normalized ingestion contract for Zeek connection telemetry.
 
 ### External Security Integrations
 
@@ -358,7 +358,7 @@ Define the first MDAC delivery scope and implement a basic mobile-to-API sync pa
 
 Phase 2: Network Connection Model.
 
-The current phase now exposes stored connection metadata through a backend overview endpoint and Angular page. The next implementation slice should add backend pagination and define the normalized ingestion contract that Zeek will populate.
+The current phase now exposes stored connection metadata through a backend overview endpoint and Angular page with backend pagination and server-side filters. The next implementation slice should define the normalized ingestion contract that Zeek will populate.
 
 ## Known Technical Gaps
 
@@ -367,7 +367,7 @@ The current phase now exposes stored connection metadata through a backend overv
 - External integrations are only partially normalized behind shared ingestion contracts.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation and operational diagnostics.
 - Connection telemetry has stored-data reporting, but it is not yet backed by a complete ingestion pipeline.
-- The local deployment story is only partially containerized.
+- The local deployment story is containerized for first-run development, but production hardening remains incomplete.
 
 ## Update Rules
 

@@ -9,33 +9,46 @@ public sealed class ConnectionService(IUnitOfWork unitOfWork, TimeProvider timeP
 {
     private const int DefaultHours = 24;
     private const int MaxHours = 168;
-    private const int DefaultLimit = 100;
-    private const int MaxLimit = 500;
+    private const int DefaultPage = 1;
+    private const int DefaultPageSize = 25;
+    private const int MaxPageSize = 100;
+    private const int MaxSearchLength = 128;
 
     public async Task<ConnectionOverviewDto> GetOverviewAsync(
-        int hours,
-        int limit,
+        ConnectionOverviewQueryDto query,
         CancellationToken cancellationToken = default)
     {
-        var sanitizedHours = hours <= 0 ? DefaultHours : Math.Min(hours, MaxHours);
-        var sanitizedLimit = limit <= 0 ? DefaultLimit : Math.Min(limit, MaxLimit);
+        var sanitizedHours = query.Hours <= 0 ? DefaultHours : Math.Min(query.Hours, MaxHours);
+        var sanitizedPage = query.Page <= 0 ? DefaultPage : query.Page;
+        var sanitizedPageSize = query.PageSize <= 0
+            ? DefaultPageSize
+            : Math.Min(query.PageSize, MaxPageSize);
+        var sanitizedProtocol = NormalizeProtocol(query.Protocol);
+        var sanitizedSearch = NormalizeSearch(query.Search);
         var sinceUtc = timeProvider.GetUtcNow().UtcDateTime.AddHours(-sanitizedHours);
         var connections = await unitOfWork.NetworkConnections.GetSinceWithDevicesAsync(
             sinceUtc,
             cancellationToken);
-        var orderedConnections = connections
-            .OrderByDescending(connection => connection.LastSeenUtc)
-            .ToArray();
+        var connectionPage = await unitOfWork.NetworkConnections.GetPageSinceWithDevicesAsync(
+            new NetworkConnectionQuery(
+                sinceUtc,
+                sanitizedPage,
+                sanitizedPageSize,
+                sanitizedProtocol,
+                sanitizedSearch),
+            cancellationToken);
 
         return new ConnectionOverviewDto(
             BuildSummary(connections),
             BuildTopProtocols(connections),
             BuildTopDestinations(connections),
             BuildTopDevices(connections),
-            orderedConnections
-                .Take(sanitizedLimit)
-                .Select(ConnectionDto.FromEntity)
-                .ToArray());
+            new ConnectionPageDto(
+                connectionPage.Items.Select(ConnectionDto.FromEntity).ToArray(),
+                connectionPage.Page,
+                connectionPage.PageSize,
+                connectionPage.TotalCount,
+                CalculateTotalPages(connectionPage.TotalCount, connectionPage.PageSize)));
     }
 
     private static ConnectionOverviewSummaryDto BuildSummary(IReadOnlyList<NetworkConnection> connections)
@@ -117,5 +130,31 @@ public sealed class ConnectionService(IUnitOfWork unitOfWork, TimeProvider timeP
         return string.IsNullOrWhiteSpace(connection.DestinationDomain)
             ? connection.DestinationIp
             : connection.DestinationDomain;
+    }
+
+    private static string? NormalizeProtocol(string? protocol)
+    {
+        var normalized = protocol?.Trim().ToLowerInvariant();
+
+        return normalized is "tcp" or "udp" or "other" ? normalized : null;
+    }
+
+    private static string? NormalizeSearch(string? search)
+    {
+        var normalized = search?.Trim();
+
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        return normalized.Length <= MaxSearchLength
+            ? normalized
+            : normalized[..MaxSearchLength];
+    }
+
+    private static int CalculateTotalPages(int totalCount, int pageSize)
+    {
+        return totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
     }
 }

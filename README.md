@@ -350,7 +350,7 @@ Useful API endpoints:
 GET   http://localhost:5232/api/health
 GET   http://localhost:5232/api/dashboard
 GET   http://localhost:5232/api/dashboard/overview
-GET   http://localhost:5232/api/connections/overview
+GET   http://localhost:5232/api/connections/overview?page=1&pageSize=25&protocol=tcp&search=443
 GET   http://localhost:5232/api/dns/overview
 POST  http://localhost:5232/api/dns/import/pihole
 GET   http://localhost:5232/api/devices

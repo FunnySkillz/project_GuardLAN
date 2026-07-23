@@ -7,7 +7,14 @@ public sealed record ConnectionOverviewDto(
     IReadOnlyList<ConnectionProtocolSummaryDto> TopProtocols,
     IReadOnlyList<ConnectionDestinationSummaryDto> TopDestinations,
     IReadOnlyList<ConnectionDeviceSummaryDto> TopDevices,
-    IReadOnlyList<ConnectionDto> RecentConnections);
+    ConnectionPageDto RecentConnections);
+
+public sealed record ConnectionPageDto(
+    IReadOnlyList<ConnectionDto> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    int TotalPages);
 
 public sealed record ConnectionOverviewSummaryDto(
     int TotalConnections,

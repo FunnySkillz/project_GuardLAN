@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 
 import {
-  ConnectionProtocolFilter,
   ConnectionsFacade
 } from '../data-access/connections.facade';
 import {
   ConnectionDestinationSummaryDto,
   ConnectionDto,
+  ConnectionProtocolFilter,
   ConnectionProtocolSummaryDto
 } from '../models/connection-overview';
 
@@ -29,6 +29,7 @@ export class ConnectionsPageComponent implements OnInit {
     { value: 'udp', label: 'UDP' },
     { value: 'other', label: 'Other' }
   ];
+  protected readonly pageSizes: readonly number[] = [10, 25, 50, 100];
 
   ngOnInit(): void {
     this.facade.load();
@@ -47,6 +48,18 @@ export class ConnectionsPageComponent implements OnInit {
 
     if (target instanceof HTMLInputElement) {
       this.facade.setSearch(target.value);
+    }
+  }
+
+  protected applySearch(): void {
+    this.facade.applySearch();
+  }
+
+  protected updatePageSize(event: Event): void {
+    const target = event.target;
+
+    if (target instanceof HTMLSelectElement) {
+      this.facade.setPageSize(Number(target.value));
     }
   }
 
@@ -99,6 +112,19 @@ export class ConnectionsPageComponent implements OnInit {
     }
 
     return `${scaledValue.toFixed(scaledValue >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+  }
+
+  protected resultRange(): string {
+    const page = this.facade.pagination();
+
+    if (page.totalCount === 0) {
+      return '0 of 0';
+    }
+
+    const start = (page.page - 1) * page.pageSize + 1;
+    const end = start + page.items.length - 1;
+
+    return `${start}-${end} of ${page.totalCount}`;
   }
 
   protected formatRelativeTime(value: string): string {

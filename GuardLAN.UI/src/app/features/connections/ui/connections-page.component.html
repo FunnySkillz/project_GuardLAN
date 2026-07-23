@@ -69,9 +69,14 @@
       type="search"
       [value]="facade.search()"
       (input)="updateSearch($event)"
+      (keydown.enter)="applySearch()"
       placeholder="Device, destination, protocol, port"
     />
   </label>
+
+  <button class="secondary" type="button" (click)="applySearch()" [disabled]="facade.loading()">
+    Search
+  </button>
 </section>
 
 <section class="connection-grid">
@@ -79,7 +84,7 @@
     <div class="panel-header">
       <div>
         <p class="eyebrow">History</p>
-        <h2>{{ facade.filteredConnections().length }} connections</h2>
+        <h2>{{ facade.pagination().totalCount }} connections</h2>
       </div>
     </div>
 
@@ -95,14 +100,14 @@
           </tr>
         </thead>
         <tbody>
-          @if (facade.filteredConnections().length === 0) {
+          @if (facade.connections().length === 0) {
             <tr>
               <td class="empty-state table-empty" colspan="5">
                 {{ facade.loading() ? 'Loading connections...' : 'No connections match this view' }}
               </td>
             </tr>
           } @else {
-            @for (connection of facade.filteredConnections(); track connection.id) {
+            @for (connection of facade.connections(); track connection.id) {
               <tr>
                 <td>
                   <strong>{{ connection.deviceName }}</strong>
@@ -128,6 +133,39 @@
           }
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination-bar" aria-label="Connection history pagination">
+      <span>{{ resultRange() }}</span>
+
+      <label class="page-size-field">
+        <span>Rows</span>
+        <select [value]="facade.pageSize()" (change)="updatePageSize($event)">
+          @for (pageSize of pageSizes; track pageSize) {
+            <option [value]="pageSize">{{ pageSize }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="pagination-actions">
+        <button
+          class="secondary"
+          type="button"
+          (click)="facade.goToPreviousPage()"
+          [disabled]="facade.loading() || !facade.hasPreviousPage()"
+        >
+          Previous
+        </button>
+        <span>Page {{ facade.pagination().page }} of {{ facade.pagination().totalPages || 1 }}</span>
+        <button
+          class="secondary"
+          type="button"
+          (click)="facade.goToNextPage()"
+          [disabled]="facade.loading() || !facade.hasNextPage()"
+        >
+          Next
+        </button>
+      </div>
     </div>
   </section>
 

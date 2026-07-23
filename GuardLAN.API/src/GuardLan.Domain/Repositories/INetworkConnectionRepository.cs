@@ -9,4 +9,8 @@ public interface INetworkConnectionRepository : IGenericRepository<NetworkConnec
     Task<IReadOnlyList<NetworkConnection>> GetSinceWithDevicesAsync(
         DateTime sinceUtc,
         CancellationToken cancellationToken = default);
+
+    Task<NetworkConnectionPage> GetPageSinceWithDevicesAsync(
+        NetworkConnectionQuery query,
+        CancellationToken cancellationToken = default);
 }

@@ -5,7 +5,6 @@ namespace GuardLan.Application.Abstractions;
 public interface IConnectionService
 {
     Task<ConnectionOverviewDto> GetOverviewAsync(
-        int hours,
-        int limit,
+        ConnectionOverviewQueryDto query,
         CancellationToken cancellationToken = default);
 }
