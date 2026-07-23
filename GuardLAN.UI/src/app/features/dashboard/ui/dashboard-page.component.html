@@ -126,7 +126,7 @@
           >
             <span class="severity">{{ alert.severity }}</span>
             <div>
-              <strong>{{ alert.type }}</strong>
+              <strong>{{ alertType(alert) }}</strong>
               <small>{{ alertDevice(alert) }} | {{ formatRelativeTime(alert.createdUtc) }}</small>
             </div>
           </article>

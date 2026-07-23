@@ -15,7 +15,7 @@ public sealed class AlertService(IUnitOfWork unitOfWork, TimeProvider timeProvid
 
     public async Task<AlertDto?> ResolveAsync(Guid id, CancellationToken cancellationToken)
     {
-        var alert = await unitOfWork.SecurityAlerts.GetByIdAsync(id, cancellationToken);
+        var alert = await unitOfWork.SecurityAlerts.GetByIdWithDeviceAsync(id, cancellationToken);
 
         if (alert is null)
         {

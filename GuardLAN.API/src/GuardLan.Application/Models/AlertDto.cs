@@ -6,6 +6,9 @@ namespace GuardLan.Application.Models;
 public sealed record AlertDto(
     Guid Id,
     Guid? DeviceId,
+    string? DeviceName,
+    string? DeviceIpAddress,
+    string? DeviceMacAddress,
     AlertSeverity Severity,
     string Type,
     string Message,
@@ -17,6 +20,9 @@ public sealed record AlertDto(
         return new AlertDto(
             alert.Id,
             alert.DeviceId,
+            alert.Device?.Hostname ?? alert.Device?.IpAddress,
+            alert.Device?.IpAddress,
+            alert.Device?.MacAddress,
             alert.Severity,
             alert.Type,
             alert.Message,

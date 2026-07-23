@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
 
 import { DashboardFacade } from '../data-access/dashboard.facade';
-import { AlertDto, NetworkScanDto } from '../models/dashboard-overview';
+import { NetworkScanDto } from '../models/dashboard-overview';
 import {
   DeviceDto,
   deviceDisplayName,
   deviceTypeLabel
 } from '../../../shared/models/network-device';
+import { AlertDto, alertTypeLabel } from '../../../shared/models/security-alert';
 
 @Component({
   selector: 'app-dashboard-page',
@@ -62,6 +63,14 @@ export class DashboardPageComponent implements OnInit {
   }
 
   protected alertDevice(alert: AlertDto): string {
+    if (alert.deviceName) {
+      return alert.deviceName;
+    }
+
+    if (alert.deviceIpAddress) {
+      return alert.deviceIpAddress;
+    }
+
     if (!alert.deviceId) {
       return 'Network';
     }
@@ -69,6 +78,10 @@ export class DashboardPageComponent implements OnInit {
     const device = this.devices().find((candidate) => candidate.id === alert.deviceId);
 
     return device ? this.deviceName(device) : alert.deviceId;
+  }
+
+  protected alertType(alert: AlertDto): string {
+    return alertTypeLabel(alert.type);
   }
 
   protected scanRequested(scan: NetworkScanDto): string {

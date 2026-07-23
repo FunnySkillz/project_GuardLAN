@@ -26,5 +26,6 @@ describe('App', () => {
     expect(compiled.querySelector('.brand-name')?.textContent).toContain('GuardLAN');
     expect(navText).toContain('Dashboard');
     expect(navText).toContain('Devices');
+    expect(navText).toContain('Alerts');
   });
 });

@@ -1,6 +1,5 @@
 import { DeviceDto } from '../../../shared/models/network-device';
-
-export type AlertSeverity = 'Low' | 'Medium' | 'High' | 'Critical';
+import { AlertDto } from '../../../shared/models/security-alert';
 
 export type NetworkScanStatus = 'Queued' | 'Running' | 'Completed' | 'Failed';
 
@@ -37,16 +36,6 @@ export interface DomainActivityDto {
   readonly domain: string;
   readonly requests: number;
   readonly blockedRequests: number;
-}
-
-export interface AlertDto {
-  readonly id: string;
-  readonly deviceId: string | null;
-  readonly severity: AlertSeverity;
-  readonly type: string;
-  readonly message: string;
-  readonly createdUtc: string;
-  readonly resolvedUtc: string | null;
 }
 
 export interface NetworkScanDto {

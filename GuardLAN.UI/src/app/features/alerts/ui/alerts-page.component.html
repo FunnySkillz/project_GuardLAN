@@ -1,0 +1,125 @@
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Security</p>
+    <h1>Alerts</h1>
+  </div>
+
+  <button class="secondary" type="button" (click)="retry()" [disabled]="facade.loading()">
+    {{ facade.loading() ? 'Refreshing...' : 'Refresh' }}
+  </button>
+</header>
+
+@if (facade.error(); as message) {
+  <section class="status-panel" role="status">
+    <span>{{ message }}</span>
+    <button class="secondary" type="button" (click)="retry()">Retry</button>
+  </section>
+}
+
+<section class="metrics" aria-label="Alert summary" [class.loading]="facade.loading()">
+  <article class="metric-card danger">
+    <span>Open</span>
+    <strong>{{ facade.summary().open }}</strong>
+    <small>active findings</small>
+  </article>
+
+  <article class="metric-card warning">
+    <span>High priority</span>
+    <strong>{{ facade.summary().high }}</strong>
+    <small>high or critical</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Resolved</span>
+    <strong>{{ facade.summary().resolved }}</strong>
+    <small>closed findings</small>
+  </article>
+
+  <article class="metric-card">
+    <span>Total</span>
+    <strong>{{ facade.summary().total }}</strong>
+    <small>recent alerts</small>
+  </article>
+</section>
+
+<section class="toolbar" aria-label="Alert controls">
+  <div class="filter-group" role="group" aria-label="Alert filter">
+    @for (filter of filters; track filter.value) {
+      <button
+        class="filter-button"
+        type="button"
+        [class.active]="isFilterActive(filter.value)"
+        [attr.aria-pressed]="isFilterActive(filter.value)"
+        (click)="setFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  <label class="search-field">
+    <span>Search</span>
+    <input
+      type="search"
+      [value]="facade.search()"
+      (input)="updateSearch($event)"
+      placeholder="Type, message, device, IP"
+    />
+  </label>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Review Queue</p>
+      <h2>{{ facade.filteredAlerts().length }} alerts</h2>
+    </div>
+  </div>
+
+  <div class="alert-list">
+    @if (facade.filteredAlerts().length === 0) {
+      <p class="empty-state">{{ facade.loading() ? 'Loading alerts...' : 'No alerts match this view' }}</p>
+    } @else {
+      @for (alert of facade.filteredAlerts(); track alert.id) {
+        <article class="alert-row" [class.resolved]="!isOpen(alert)">
+          <div class="alert-main">
+            <span
+              class="severity-pill"
+              [class.severity-medium]="alert.severity === 'Medium'"
+              [class.severity-high]="alert.severity === 'High'"
+              [class.severity-critical]="alert.severity === 'Critical'"
+            >
+              {{ alert.severity }}
+            </span>
+            <div>
+              <div class="alert-title">
+                <strong>{{ alertType(alert) }}</strong>
+                <span>{{ priorityLabel(alert) }}</span>
+              </div>
+              <p>{{ alert.message }}</p>
+              <small>
+                {{ alertDevice(alert) }}
+                @if (alert.deviceMacAddress) {
+                  <span>| {{ alert.deviceMacAddress }}</span>
+                }
+              </small>
+            </div>
+          </div>
+
+          <div class="alert-meta">
+            <span>Created {{ formatRelativeTime(alert.createdUtc) }}</span>
+            <span>{{ isOpen(alert) ? 'Open' : 'Resolved ' + formatRelativeTime(alert.resolvedUtc) }}</span>
+          </div>
+
+          <button
+            type="button"
+            (click)="resolve(alert)"
+            [disabled]="!isOpen(alert) || isResolving(alert)"
+          >
+            {{ isResolving(alert) ? 'Resolving...' : isOpen(alert) ? 'Resolve' : 'Resolved' }}
+          </button>
+        </article>
+      }
+    }
+  </div>
+</section>

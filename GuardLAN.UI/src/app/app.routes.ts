@@ -16,6 +16,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'alerts',
+    loadComponent: () =>
+      import('./features/alerts/ui/alerts-page.component').then(
+        (module) => module.AlertsPageComponent
+      )
+  },
+  {
     path: '**',
     redirectTo: ''
   }
