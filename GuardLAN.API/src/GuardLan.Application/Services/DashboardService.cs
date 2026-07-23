@@ -1,10 +1,11 @@
 using GuardLan.Application.Abstractions;
 using GuardLan.Application.Models;
 using GuardLan.Domain.Enums;
+using GuardLan.Domain.Repositories;
 
 namespace GuardLan.Application.Services;
 
-public sealed class DashboardService(IGuardLanRepository repository, TimeProvider timeProvider) : IDashboardService
+public sealed class DashboardService(IUnitOfWork unitOfWork, TimeProvider timeProvider) : IDashboardService
 {
     public async Task<DashboardSnapshotDto> GetSnapshotAsync(CancellationToken cancellationToken)
     {
@@ -12,10 +13,10 @@ public sealed class DashboardService(IGuardLanRepository repository, TimeProvide
         var todayUtc = nowUtc.Date;
         var sinceUtc = nowUtc.AddHours(-24);
 
-        var devices = await repository.ListDevicesAsync(cancellationToken);
-        var alerts = await repository.ListAlertsAsync(cancellationToken);
-        var dnsQueries = await repository.ListDnsQueriesSinceAsync(todayUtc, cancellationToken);
-        var connections = await repository.ListConnectionsSinceAsync(sinceUtc, cancellationToken);
+        var devices = await unitOfWork.Devices.GetInventoryAsync(cancellationToken);
+        var alerts = await unitOfWork.SecurityAlerts.GetRecentAsync(cancellationToken);
+        var dnsQueries = await unitOfWork.DnsQueries.GetSinceAsync(todayUtc, cancellationToken);
+        var connections = await unitOfWork.NetworkConnections.GetSinceAsync(sinceUtc, cancellationToken);
 
         var deviceLookup = devices.ToDictionary(device => device.Id);
 

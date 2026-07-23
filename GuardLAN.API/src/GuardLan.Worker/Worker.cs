@@ -1,18 +1,47 @@
+using GuardLan.Application.Scanning;
+
 namespace GuardLan.Worker;
 
-public class Worker(ILogger<Worker> logger) : BackgroundService
+public class Worker(
+    IServiceScopeFactory serviceScopeFactory,
+    IConfiguration configuration,
+    ILogger<Worker> logger) : BackgroundService
 {
-    private static readonly TimeSpan ScannerInterval = TimeSpan.FromSeconds(60);
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var scannerInterval = TimeSpan.FromSeconds(
+            Math.Max(5, configuration.GetValue("Scanner:IntervalSeconds", 60)));
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation(
-                "GuardLAN scanner heartbeat at {Time}. nmap execution will be wired into this loop next.",
-                DateTimeOffset.UtcNow);
+            try
+            {
+                using var scope = serviceScopeFactory.CreateScope();
+                var scanExecutionService = scope.ServiceProvider.GetRequiredService<IScanExecutionService>();
+                var result = await scanExecutionService.ExecuteNextQueuedScanAsync(stoppingToken);
 
-            await Task.Delay(ScannerInterval, stoppingToken);
+                if (result.ScanProcessed)
+                {
+                    logger.LogInformation(
+                        "Processed scan {ScanRunId}: {Message}",
+                        result.ScanRunId,
+                        result.Message);
+                }
+                else
+                {
+                    logger.LogDebug("No queued GuardLAN scan found.");
+                }
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(exception, "GuardLAN scanner worker failed while processing queued scans.");
+            }
+
+            await Task.Delay(scannerInterval, stoppingToken);
         }
     }
 }

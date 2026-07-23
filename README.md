@@ -42,6 +42,12 @@ Run the API:
 dotnet run --project GuardLAN.API/src/GuardLan.Api
 ```
 
+Run the scanner worker in a second terminal:
+
+```powershell
+dotnet run --project GuardLAN.API/src/GuardLan.Worker
+```
+
 Run the Angular app:
 
 ```powershell
@@ -56,5 +62,8 @@ GET  http://localhost:5232/api/health
 GET  http://localhost:5232/api/dashboard
 GET  http://localhost:5232/api/devices
 GET  http://localhost:5232/api/alerts
+GET  http://localhost:5232/api/scans
 POST http://localhost:5232/api/scans
 ```
+
+The worker processes queued scans using `nmap -sn <subnet>`, so nmap must be installed and available on `PATH` before real network discovery will run.

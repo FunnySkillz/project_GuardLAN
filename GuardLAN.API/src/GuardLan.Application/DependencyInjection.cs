@@ -1,4 +1,5 @@
 using GuardLan.Application.Abstractions;
+using GuardLan.Application.Scanning;
 using GuardLan.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IDeviceService, DeviceService>();
         services.AddScoped<IAlertService, AlertService>();
         services.AddScoped<INetworkScanService, NetworkScanService>();
+        services.AddScoped<IScanExecutionService, ScanExecutionService>();
 
         return services;
     }
