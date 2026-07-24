@@ -1,16 +1,18 @@
 using GuardLan.Application.Abstractions;
 using GuardLan.Application.Models;
+using GuardLan.Application.Options;
 using GuardLan.Domain.Entities;
 using GuardLan.Domain.Enums;
 using GuardLan.Domain.Repositories;
+using Microsoft.Extensions.Options;
 
 namespace GuardLan.Application.Services;
 
 public sealed class IntegrationHealthService(
     IUnitOfWork unitOfWork,
-    TimeProvider timeProvider) : IIntegrationHealthService
+    TimeProvider timeProvider,
+    IOptions<IntegrationHealthOptions> options) : IIntegrationHealthService
 {
-    private static readonly TimeSpan StaleAfter = TimeSpan.FromMinutes(15);
     private const int RecentRunLimit = 20;
 
     public async Task<IntegrationHealthOverviewDto> GetOverviewAsync(
@@ -51,7 +53,7 @@ public sealed class IntegrationHealthService(
         var checkedAtUtc = NormalizeUtc(record.CheckedAtUtc);
         var status = ResolveStatus(record);
         var staleAfterUtc = status is IntegrationHealthStatus.Healthy or IntegrationHealthStatus.Warning
-            ? checkedAtUtc.Add(StaleAfter)
+            ? checkedAtUtc.Add(options.Value.ResolveStaleAfter(record.Kind, source))
             : (DateTime?)null;
         var health = await unitOfWork.IntegrationHealth.GetBySourceAsync(source, cancellationToken);
 

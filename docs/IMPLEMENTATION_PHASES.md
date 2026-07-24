@@ -316,7 +316,7 @@ Status: complete.
 Started:
 
 * `Stale` integration health status
-* 15-minute stale threshold for previously healthy or warning sources
+* Configurable stale threshold for previously healthy or warning sources, with a 15-minute default
 * Persistent `IntegrationImportRun` history model
 * Recent import runs returned by `GET /api/integrations/health`
 * Angular summary card for stale sources
@@ -332,7 +332,6 @@ Deliverables:
 
 Remaining hardening:
 
-* Make freshness thresholds configurable per source type
 * Add history filters if the run list grows
 
 ## Phase 11: EF Migrations and Schema Management

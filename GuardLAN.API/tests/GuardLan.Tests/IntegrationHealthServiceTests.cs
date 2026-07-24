@@ -1,8 +1,10 @@
 using GuardLan.Application.Models;
+using GuardLan.Application.Options;
 using GuardLan.Application.Services;
 using GuardLan.Domain.Entities;
 using GuardLan.Domain.Enums;
 using GuardLan.Domain.Repositories;
+using Microsoft.Extensions.Options;
 
 namespace GuardLan.Tests;
 
@@ -15,7 +17,8 @@ public sealed class IntegrationHealthServiceTests
         var unitOfWork = new FakeUnitOfWork();
         var service = new IntegrationHealthService(
             unitOfWork,
-            new FixedTimeProvider(new DateTimeOffset(nowUtc)));
+            new FixedTimeProvider(new DateTimeOffset(nowUtc)),
+            Options.Create(new IntegrationHealthOptions()));
 
         await service.RecordAsync(
             new IntegrationHealthRecord(
@@ -61,13 +64,88 @@ public sealed class IntegrationHealthServiceTests
             });
         var service = new IntegrationHealthService(
             unitOfWork,
-            new FixedTimeProvider(new DateTimeOffset(nowUtc)));
+            new FixedTimeProvider(new DateTimeOffset(nowUtc)),
+            Options.Create(new IntegrationHealthOptions()));
 
         var overview = await service.GetOverviewAsync();
 
         Assert.Equal(0, overview.Summary.HealthySources);
         Assert.Equal(1, overview.Summary.StaleSources);
         Assert.Equal(IntegrationHealthStatus.Stale, overview.Sources[0].Status);
+    }
+
+    [Fact]
+    public async Task RecordAsyncUsesConfiguredKindStaleWindow()
+    {
+        var nowUtc = new DateTime(2026, 7, 23, 12, 0, 0, DateTimeKind.Utc);
+        var unitOfWork = new FakeUnitOfWork();
+        var service = new IntegrationHealthService(
+            unitOfWork,
+            new FixedTimeProvider(new DateTimeOffset(nowUtc)),
+            Options.Create(
+                new IntegrationHealthOptions
+                {
+                    DefaultStaleAfterMinutes = 15,
+                    StaleAfterMinutesByKind = new Dictionary<string, int>
+                    {
+                        ["Zeek"] = 45
+                    }
+                }));
+
+        await service.RecordAsync(
+            new IntegrationHealthRecord(
+                "Zeek conn.log",
+                IntegrationKind.Zeek,
+                SourceEnabled: true,
+                SourceAvailable: true,
+                RecordsRead: 1,
+                RecordsImported: 1,
+                RecordsRejected: 0,
+                nowUtc,
+                "Imported one connection."));
+
+        var overview = await service.GetOverviewAsync();
+
+        Assert.Equal(nowUtc.AddMinutes(45), overview.Sources[0].StaleAfterUtc);
+    }
+
+    [Fact]
+    public async Task RecordAsyncLetsSourceOverrideKindStaleWindow()
+    {
+        var nowUtc = new DateTime(2026, 7, 23, 12, 0, 0, DateTimeKind.Utc);
+        var unitOfWork = new FakeUnitOfWork();
+        var service = new IntegrationHealthService(
+            unitOfWork,
+            new FixedTimeProvider(new DateTimeOffset(nowUtc)),
+            Options.Create(
+                new IntegrationHealthOptions
+                {
+                    DefaultStaleAfterMinutes = 15,
+                    StaleAfterMinutesByKind = new Dictionary<string, int>
+                    {
+                        ["Zeek"] = 45
+                    },
+                    StaleAfterMinutesBySource = new Dictionary<string, int>
+                    {
+                        ["Zeek dns.log"] = 10
+                    }
+                }));
+
+        await service.RecordAsync(
+            new IntegrationHealthRecord(
+                "Zeek dns.log",
+                IntegrationKind.Zeek,
+                SourceEnabled: true,
+                SourceAvailable: true,
+                RecordsRead: 1,
+                RecordsImported: 1,
+                RecordsRejected: 0,
+                nowUtc,
+                "Imported one DNS query."));
+
+        var overview = await service.GetOverviewAsync();
+
+        Assert.Equal(nowUtc.AddMinutes(10), overview.Sources[0].StaleAfterUtc);
     }
 
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider

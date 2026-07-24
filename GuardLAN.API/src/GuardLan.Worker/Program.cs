@@ -1,5 +1,6 @@
 using GuardLan.Application;
 using GuardLan.Application.Abstractions;
+using GuardLan.Application.Options;
 using GuardLan.Infrastructure;
 using GuardLan.Worker;
 using GuardLan.Worker.Realtime;
@@ -7,6 +8,8 @@ using GuardLan.Worker.Realtime;
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddGuardLanApplication();
 builder.Services.AddGuardLanInfrastructure(builder.Configuration);
+builder.Services.Configure<IntegrationHealthOptions>(
+    builder.Configuration.GetSection(IntegrationHealthOptions.SectionName));
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ILiveUpdatePublisher, ApiWorkerLiveUpdatePublisher>();
 builder.Services.AddHostedService<Worker>();

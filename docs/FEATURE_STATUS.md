@@ -40,7 +40,7 @@ DNS visibility now has a first ingestion path through Pi-hole and Zeek `dns.log`
 | Pi-hole integration | Partially Implemented | A configurable Pi-hole query importer, manual API trigger, worker schedule, latest health, stale detection and import history exist, but live-appliance validation is still incomplete. | Validate response shapes against Pi-hole's local API docs. | API / Worker |
 | Zeek integration | Implemented | Configurable Zeek `conn.log`, `dns.log` and `ssl.log` readers feed normalized ingestion services through manual API and worker paths with line checkpointing, import diagnostics, parser tests, health reporting, stale detection and history. | Validate against live Zeek output. | API / Worker |
 | Suricata integration | Partially Implemented | A configurable Eve JSON alert importer feeds IDS alerts into GuardLAN through manual API and worker paths with checkpointing, duplicate prevention, severity mapping, evidence summaries, association, health reporting, stale detection and history. | Validate against a live Suricata sensor and add richer alert review workflows. | API / Worker |
-| Integration health reporting | Implemented | Latest health state, stale state and recent import runs are recorded for Pi-hole, Zeek and Suricata and exposed through an API plus Angular Integrations page with manual import actions. | Make thresholds configurable and add history filters if the run list grows. | API / Worker / UI |
+| Integration health reporting | Implemented | Latest health state, configurable stale state and recent import runs are recorded for Pi-hole, Zeek and Suricata and exposed through an API plus Angular Integrations page with manual import actions. | Add history filters if the run list grows. | API / Worker / UI |
 | SignalR real-time updates | Implemented | A protected SignalR hub, backend live-update abstraction, internal-key worker relay publisher and Angular live update service refresh dashboard, device, DNS and alert views after relevant events. | Add a backplane if the API is scaled horizontally. | API / Worker / UI |
 | Authentication and authorization | Partially Implemented | Local admin login, cookie sessions, protected API controllers, protected SignalR hub and Angular route guard are implemented. | Add persistent users, roles and audit logging if GuardLAN becomes multi-user. | API / UI |
 | Docker local development | Partially Implemented | A repository-root Compose setup builds and runs the UI, API, worker and PostgreSQL with health checks, auth env vars, `/api` plus `/hubs` proxying, and EF migration startup for local development. | Add production-grade secret management. | Infrastructure |
@@ -339,6 +339,7 @@ Add connection detail pages and deeper traffic analytics beyond dashboard rollup
 - Suricata Eve JSON alert ingestion feeds IDS alerts through manual API and worker paths.
 - Pi-hole, Zeek and Suricata import services record their latest health state and recent import runs.
 - The API exposes integration health, stale source state and import history.
+- Stale thresholds can be configured globally, by integration kind or by exact source name.
 - The Angular UI includes an Integrations page with manual import buttons.
 
 **Implemented In**
@@ -350,6 +351,7 @@ Add connection detail pages and deeper traffic analytics beyond dashboard rollup
 - [docs/SURICATA.md](SURICATA.md)
 - [docs/INTEGRATION_HEALTH.md](INTEGRATION_HEALTH.md)
 - [GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs](../GuardLAN.API/src/GuardLan.Api/Controllers/IntegrationsController.cs)
+- [GuardLAN.API/src/GuardLan.Application/Options/IntegrationHealthOptions.cs](../GuardLAN.API/src/GuardLan.Application/Options/IntegrationHealthOptions.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/IntegrationHealthService.cs](../GuardLAN.API/src/GuardLan.Application/Services/IntegrationHealthService.cs)
 - [GuardLAN.API/src/GuardLan.Domain/Entities/IntegrationImportRun.cs](../GuardLAN.API/src/GuardLan.Domain/Entities/IntegrationImportRun.cs)
 - [GuardLAN.API/src/GuardLan.Application/Services/ZeekConnectionImportService.cs](../GuardLAN.API/src/GuardLan.Application/Services/ZeekConnectionImportService.cs)
@@ -371,10 +373,9 @@ Add connection detail pages and deeper traffic analytics beyond dashboard rollup
 - Live validation for Pi-hole integration
 - Live validation against Zeek output from a running sensor
 - Live validation against Suricata output from a running sensor
-- Configurable freshness thresholds per source
 
 **Next Change**
-Make integration freshness thresholds configurable per source type.
+Validate live integration output and add import history filters if the run list grows.
 
 ### Suricata Integration
 
@@ -524,7 +525,6 @@ Phase 13 added a dedicated alert detail page with full history and related evide
 - Live updates have no cross-instance SignalR backplane yet.
 - External integrations are only partially normalized behind shared ingestion contracts.
 - Device risk still needs tuned behavioral baselines.
-- Integration freshness thresholds are fixed at 15 minutes and should become configurable per source type.
 - DNS visibility has an API, UI and Pi-hole importer, but the importer still needs live validation.
 - Suricata IDS alert ingestion still needs live sensor validation and noisy-signature suppression rules.
 - The local deployment story is containerized for first-run development, but production hardening remains incomplete.

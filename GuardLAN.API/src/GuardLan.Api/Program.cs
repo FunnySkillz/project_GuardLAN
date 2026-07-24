@@ -3,6 +3,7 @@ using GuardLan.Api.Hubs;
 using GuardLan.Api.Realtime;
 using GuardLan.Application;
 using GuardLan.Application.Abstractions;
+using GuardLan.Application.Options;
 using GuardLan.Infrastructure;
 using GuardLan.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -26,6 +27,8 @@ if (allowedOrigins.Length == 0)
 
 builder.Services.AddGuardLanApplication();
 builder.Services.AddGuardLanInfrastructure(builder.Configuration);
+builder.Services.Configure<IntegrationHealthOptions>(
+    builder.Configuration.GetSection(IntegrationHealthOptions.SectionName));
 builder.Services.Configure<GuardLanAuthOptions>(
     builder.Configuration.GetSection(GuardLanAuthOptions.SectionName));
 builder.Services.AddSingleton<LocalUserAuthenticator>();

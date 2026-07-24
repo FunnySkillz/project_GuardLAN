@@ -1,4 +1,5 @@
 using GuardLan.Application.Abstractions;
+using GuardLan.Application.Options;
 using GuardLan.Application.Scanning;
 using GuardLan.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ public static class DependencyInjection
     public static IServiceCollection AddGuardLanApplication(this IServiceCollection services)
     {
         services.AddSingleton(TimeProvider.System);
+        services.AddOptions<IntegrationHealthOptions>();
         services.TryAddScoped<ILiveUpdatePublisher, NoOpLiveUpdatePublisher>();
         services.AddScoped<IConnectionIngestionService, ConnectionIngestionService>();
         services.AddScoped<IConnectionService, ConnectionService>();
